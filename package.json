@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/sembauke/curriculum-helpers/issues"
   },
-  "homepage": "https://github.com/sembauke/curriculum-helpers#readme"
+  "homepage": "https://github.com/sembauke/curriculum-helpers#readme",
+  "dependencies": {
+    "@freecodecamp/strip-comments": "^3.0.1"
+  }
 }
