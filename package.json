@@ -1,0 +1,71 @@
+{
+  "name": "curriculum-helpers",
+  "version": "0.0.0",
+  "description": "Helper functions to test challenges in freeCodecamp's curriculum",
+  "homepage": "https://freecodecamp.org",
+  "author": {
+    "name": "freeCodeCamp.org",
+    "email": "team@freecodecamp.org",
+    "url": "https://freecodecamp.org"
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "keywords": [
+    ""
+  ],
+  "devDependencies": {
+    "eslint": "^6.6.0",
+    "prettier": "^1.19.1",
+    "husky": "^3.0.9",
+    "lint-staged": "^9.4.3",
+    "eslint-config-prettier": "^6.6.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-config-xo": "^0.27.2",
+    "jest": "^26.1.0"
+  },
+  "engines": {
+    "npm": ">= 4.0.0"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.json": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "xo",
+      "prettier"
+    ],
+    "env": {
+      "jest": true,
+      "node": true
+    },
+    "rules": {
+      "prettier/prettier": "error"
+    },
+    "plugins": [
+      "prettier"
+    ]
+  },
+  "scripts": {
+    "pretest": "eslint .",
+    "test": "jest"
+  },
+  "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "license": "BSD-3-Clause"
+}
