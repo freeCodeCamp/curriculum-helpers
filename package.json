@@ -1,0 +1,19 @@
+{
+  "name": "curriculum-helpers",
+  "version": "1.0.0",
+  "description": "These helper functions help freeCodeCamp test challenges",
+  "main": "curriculum-helpers.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sembauke/curriculum-helpers.git"
+  },
+  "author": "freeCodeCamp",
+  "license": "BSD 2-clause",
+  "bugs": {
+    "url": "https://github.com/sembauke/curriculum-helpers/issues"
+  },
+  "homepage": "https://github.com/sembauke/curriculum-helpers#readme"
+}
