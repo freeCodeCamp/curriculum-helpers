@@ -49,3 +49,4 @@ const curriculumHelpers = {
   isCalledWithNoArgs,
   CSSHelp,
 };
+export default curriculumHelpers;
