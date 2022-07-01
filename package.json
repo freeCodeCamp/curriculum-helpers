@@ -1,5 +1,5 @@
 {
-  "name": "curriculum-helpers",
+  "name": "@freeCodeCamp/curriculum-helpers",
   "version": "1.0.0",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
@@ -11,7 +11,7 @@
   "files": [
     "lib"
   ],
-  "main": "lib/index.js",
+  "main": "lib/index",
   "keywords": [
     ""
   ],
@@ -66,7 +66,6 @@
   },
   "scripts": {
     "pretest": "eslint .",
-    "test": "jest",
     "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
