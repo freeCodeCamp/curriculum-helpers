@@ -66,7 +66,8 @@
   },
   "scripts": {
     "pretest": "eslint .",
-    "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline"
+    "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline",
+    "test": "jest"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {

@@ -1,5 +1,5 @@
 import strip from "@freecodecamp/strip-comments";
-import CSSHelp from "./css-helper";
+import { CSSHelp } from "./css-helper"; 
 
 export function initCSSHelper(doc: HTMLDocument): CSSHelp {
   return new CSSHelp(doc);
@@ -21,8 +21,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export function removeCssComments(str: string): string {
+export function removeCssComments(str: string): string {
   return str.replace(/\/\*[\s\S]+?\*\//g, "");
 }
 
@@ -32,8 +31,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export  function removeWhiteSpace(str: string): string {
+export function removeWhiteSpace(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -43,8 +41,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export function escapeRegExp(exp: string): string {
+export function escapeRegExp(exp: string): string {
   return exp.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -55,8 +52,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {Boolean}
  */
 
-
- export  function isCalledWithNoArgs(
+export function isCalledWithNoArgs(
   calledFuncName: string,
   callingCode: string
 ): boolean {

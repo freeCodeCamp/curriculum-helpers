@@ -21,7 +21,7 @@ export interface ExtendedStyleRule extends CSSStyleRule {
     ).indexOf(previousStyleRule);
     return currPosition > prevPosition;
   };
-  class CSSHelp {
+ export class CSSHelp {
     doc: HTMLDocument;
     constructor(doc: HTMLDocument) {
       this.doc = doc;
@@ -114,6 +114,4 @@ export interface ExtendedStyleRule extends CSSStyleRule {
       return Array.from(styleSheet?.cssRules || []);
     }
   }
-  
-  export default CSSHelp;
   
