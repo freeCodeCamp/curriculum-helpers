@@ -32,7 +32,7 @@ describe("removeWhiteSpace", () => {
     );
   });
 
-  it("returns a string with no white space characters", () => {
+  it('returns a string with no white space characters', () => {
     expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
       stringWithWhiteSpaceCharsRemoved
     );

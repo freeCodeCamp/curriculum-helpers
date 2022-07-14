@@ -48,7 +48,7 @@ export function removeJSComments(codeStr: string): string  {
  */
 
 export function removeWhiteSpace(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/\s/g, '');
 }
 
 /**
