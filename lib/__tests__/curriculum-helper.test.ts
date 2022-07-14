@@ -1,13 +1,13 @@
 import cssTestValues from "../__fixtures__/curriculum-helper-css";
 import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
 import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
-//import whiteSpaceTestValues from "../__fixtures__/curriculum-helpers-remove-white-space";
+import whiteSpaceTestValues from '../__fixtures__/curriculum-helpers-remove-white-space';
 import * as helper from "../index";
 
-// const {
-//   stringWithWhiteSpaceChars,
-//   stringWithWhiteSpaceCharsRemoved
-// } = whiteSpaceTestValues;
+const {
+  stringWithWhiteSpaceChars,
+  stringWithWhiteSpaceCharsRemoved
+} = whiteSpaceTestValues;
 
 const { cssFullExample, cssCodeWithCommentsRemoved } = cssTestValues;
 
@@ -32,35 +32,36 @@ describe("removeWhiteSpace", () => {
     );
   });
 
-  // it("returns a string with no white space characters", () => {
-  //   expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
-  //     stringWithWhiteSpaceCharsRemoved
-  //   );
-  // });
+  it("returns a string with no white space characters", () => {
+    expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
+      stringWithWhiteSpaceCharsRemoved
+    );
+  });
 });
 
-// describe("removeJSComments", () => {
-//   it("returns a string", () => {
-//     expect(typeof removeJSComments('const should = "return a string"')).toBe(
-//       "string"
-//     );
-//   });
+describe('removeJSComments', () => {
+  const { removeJSComments } = helper;
+   it('returns a string', () => {
+    expect(typeof removeJSComments('const should = "return a string"')).toBe(
+      'string'
+    );
+  });
 
-//   it("returns a string with no single or multi-line comments", () => {
-//     expect(removeJSComments(jsCodeWithSingleAndMultLineComments)).toBe(
-//       jsCodeWithSingleAndMultLineCommentsRemoved
-//     );
-//   });
+  it('returns a string with no single or multi-line comments', () => {
+    expect(removeJSComments(jsCodeWithSingleAndMultLineComments)).toBe(
+      jsCodeWithSingleAndMultLineCommentsRemoved
+    );
+  });
 
-//   it("leaves malformed JS unchanged", () => {
-//     const actual = "/ unclosed regex";
-//     expect(removeJSComments(actual)).toBe(actual);
-//   });
+  it('leaves malformed JS unchanged', () => {
+    const actual = '/ unclosed regex';
+    expect(removeJSComments(actual)).toBe(actual);
+  });
 
-//   it("does not remove a url found in JS code", () => {
-//     expect(removeJSComments(jsCodeWithUrl)).toBe(jsCodeWithUrlUnchanged);
-//   });
-// });
+  it('does not remove a url found in JS code', () => {
+    expect(removeJSComments(jsCodeWithUrl)).toBe(jsCodeWithUrlUnchanged);
+  });
+});
 
 describe("removeCssComments", () => {
   const { removeCssComments } = helper;
