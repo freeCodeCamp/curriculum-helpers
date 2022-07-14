@@ -30,6 +30,7 @@ a {
   flex: 1;
   flex-direction: row;
 }
+
 @media screen and (max-width: 300px) {
   body {
     background-color: blue;
