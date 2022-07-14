@@ -9,7 +9,7 @@ jobs:
 
       # Install Node 12
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@2fddd8803e2f5c9604345a0b591c3020ee971a93 # tag=v3
         with:
           node-version: 12
 
