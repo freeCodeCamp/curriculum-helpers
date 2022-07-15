@@ -11,7 +11,7 @@
   "files": [
     "dist"
   ],
-  "main": "dist",
+  "main": "dist/",
   "keywords": [
     ""
   ],
