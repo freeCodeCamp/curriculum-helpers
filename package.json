@@ -1,6 +1,6 @@
 {
   "name": "@freecodecamp/curriculum-helpers",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
   "author": {
@@ -9,9 +9,9 @@
     "url": "https://freecodecamp.org"
   },
   "files": [
-    "lib"
+    "dist"
   ],
-  "main": "lib/index",
+  "main": "dist/",
   "keywords": [
     ""
   ],
@@ -69,7 +69,8 @@
   },
   "scripts": {
     "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline --ignore ./lib/__tests__,./lib/__fixtures__",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "npm run build"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
