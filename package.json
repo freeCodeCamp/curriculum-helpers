@@ -9,7 +9,8 @@
     "url": "https://freecodecamp.org"
   },
   "files": [
-    "dist"
+    "dist",
+    "lib"
   ],
   "main": "dist/",
   "keywords": [
