@@ -1,9 +1,5 @@
 import strip from "@freecodecamp/strip-comments";
-import CSSHelp from "./css-helper";
-
-export function initCSSHelper(doc: HTMLDocument): CSSHelp {
-  return new CSSHelp(doc);
-}
+import { CSSHelp } from "./css-helper"; 
 
 /**
  * Removes every HTML-comment from the string that is provided
@@ -21,10 +17,25 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export function removeCssComments(str: string): string {
+export function removeCssComments(str: string): string {
   return str.replace(/\/\*[\s\S]+?\*\//g, "");
 }
+
+/**
+ * Removes every JS-comment from the string that is provided
+ * @param {String} codeStr a JS-string where the comments need to be removed of
+ * @returns {String}
+ */
+
+export function removeJSComments(codeStr: string): string  {
+  // TODO: publish type declarations and re-enable eslint
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    return strip(codeStr) as string;
+  } catch (err) {
+    return codeStr;
+  }
+};
 
 /**
  * Removes every white-space from the string that is provided
@@ -32,9 +43,8 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export  function removeWhiteSpace(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export function removeWhiteSpace(str: string): string {
+  return str.replace(/\s/g, '');
 }
 
 /**
@@ -43,8 +53,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {String}
  */
 
-
- export function escapeRegExp(exp: string): string {
+export function escapeRegExp(exp: string): string {
   return exp.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
@@ -55,8 +64,7 @@ export function removeHtmlComments(str: string): string {
  * @returns {Boolean}
  */
 
-
- export  function isCalledWithNoArgs(
+export function isCalledWithNoArgs(
   calledFuncName: string,
   callingCode: string
 ): boolean {
@@ -65,3 +73,5 @@ export function removeHtmlComments(str: string): string {
   const matches = new RegExp(funcExp, "gm").exec(noCommentsCallingCode) ?? [];
   return Boolean(matches.length);
 }
+
+export { CSSHelp }

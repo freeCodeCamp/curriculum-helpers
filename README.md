@@ -1,20 +1,11 @@
-# curriculum-helpers [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
-> Helper functions to test challenges in freeCodecamp&#39;s curriculum
-
-## Installation
-
-```sh
-$ npm install --save curriculum-helpers
-```
-
-## Usage
-
+setup:
 ```js
-const curriculumHelpers = require('curriculum-helpers');
+import * as helpers from '@freeCodeCamp/curriculum-helpers'
 
-curriculumHelpers('Rainbow');
+new helpers.CSSHelp(document).getCSSRules();
+
+helpers.removeHtmlComments('<!-- HTML COMMENT --> <h1> Hello world </h1>');
 ```
-## License
 
 BSD-3-Clause © [freeCodeCamp.org](https://freecodecamp.org)
 
