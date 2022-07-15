@@ -1,5 +1,14 @@
-### Documentation coming soon!
+setup:
+```js
+import * as helpers from '@freeCodeCamp/curriculum-helpers'
 
+
+const cssHelper = helpers.initCSSHelper(document);
+cssHelper.getCSSRules();
+
+
+helpers.removeHtmlComments('<!-- HTML COMMENT --> <h1> Hello world </h1>');
+```
 
 BSD-3-Clause © [freeCodeCamp.org](https://freecodecamp.org)
 
