@@ -115,5 +115,3 @@ export interface ExtendedStyleRule extends CSSStyleRule {
     }
   }
   
-  export default CSSHelp;
-  
