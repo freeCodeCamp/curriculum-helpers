@@ -1,10 +1,6 @@
 import strip from "@freecodecamp/strip-comments";
 import { CSSHelp } from "./css-helper"; 
 
-export function initCSSHelper(doc: HTMLDocument): CSSHelp {
-  return new CSSHelp(doc);
-}
-
 /**
  * Removes every HTML-comment from the string that is provided
  * @param {String} str a HTML-string where the comments need to be removed of
@@ -77,3 +73,5 @@ export function isCalledWithNoArgs(
   const matches = new RegExp(funcExp, "gm").exec(noCommentsCallingCode) ?? [];
   return Boolean(matches.length);
 }
+
+export { CSSHelp }

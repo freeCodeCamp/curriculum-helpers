@@ -2,10 +2,7 @@ setup:
 ```js
 import * as helpers from '@freeCodeCamp/curriculum-helpers'
 
-
-const cssHelper = helpers.initCSSHelper(document);
-cssHelper.getCSSRules();
-
+new helpers.CSSHelp(document).getCSSRules();
 
 helpers.removeHtmlComments('<!-- HTML COMMENT --> <h1> Hello world </h1>');
 ```
