@@ -9,16 +9,16 @@
     "url": "https://freecodecamp.org"
   },
   "files": [
-    "dist"
+    "/dist"
   ],
   "main": "dist/",
   "keywords": [
     ""
   ],
   "devDependencies": {
-    "@babel/cli": "7.18.6",
-    "@babel/core": "7.18.6",
-    "@babel/preset-env": "7.18.6",
+    "@babel/cli": "7.18.9",
+    "@babel/core": "7.18.9",
+    "@babel/preset-env": "7.18.9",
     "@babel/preset-typescript": "7.18.6",
     "@types/jest": "27.5.2",
     "eslint": "6.8.0",
@@ -70,7 +70,7 @@
   "scripts": {
     "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline --ignore ./lib/__tests__,./lib/__fixtures__",
     "test": "jest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && tsc"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
