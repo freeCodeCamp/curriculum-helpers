@@ -78,6 +78,7 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@freecodecamp/strip-comments": "^3.0.1"
+    "@freecodecamp/strip-comments": "^3.0.1",
+    "browserify": "^17.0.0"
   }
 }
