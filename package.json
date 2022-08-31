@@ -21,6 +21,7 @@
     "@babel/preset-env": "^7.18.9",
     "@babel/preset-typescript": "7.18.6",
     "@types/jest": "27.5.2",
+    "babel-plugin-add-import-extension": "^1.6.0",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.15.0",
     "eslint-config-xo": "0.27.2",
@@ -70,7 +71,7 @@
   "scripts": {
     "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline --ignore ./lib/__tests__,./lib/__fixtures__",
     "test": "jest",
-    "prepublishOnly": "npm run build && tsc"
+    "prepublishOnly": "tsc"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
@@ -78,7 +79,6 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@freecodecamp/strip-comments": "^3.0.1",
     "browserify": "^17.0.0"
   }
 }
