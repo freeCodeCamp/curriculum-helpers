@@ -1,5 +1,5 @@
-import { CodeNodeType } from './class/node';
-import { options } from './option-types';
+import { CodeNodeType } from './class/node.js';
+import { options } from './option-types.js';
 
 
 export const compile = (cst, options :Partial<options>= {}) => {

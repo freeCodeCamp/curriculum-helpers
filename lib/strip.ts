@@ -7,8 +7,8 @@
  * Copyright (c) 2014-present, Jon Schlinkert.
  * Released under the MIT License.
  */
-import { compile } from './compile';
-import { parse } from './parse'
+import { compile } from './compile.js';
+import { parse } from './parse.js'
 
 /**
  * Strip all code comments from the given `input`, including protected
