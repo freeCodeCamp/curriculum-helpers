@@ -69,7 +69,7 @@
     ]
   },
   "scripts": {
-    "build": "babel lib --out-dir dist --extensions \".ts,.tsx\" --source-maps inline --ignore ./lib/__tests__,./lib/__fixtures__",
+    "build": "tsc",
     "test": "jest",
     "prepublishOnly": "tsc"
   },
