@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { cssString } from "../__fixtures__/curriculum-helper-css";
-import { CSSHelp } from "../css-helper";
+import { CSSHelp } from "../index";
 
 describe('css-help', () => {
   const doc = document;
