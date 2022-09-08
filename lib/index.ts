@@ -67,7 +67,7 @@ export function isCalledWithNoArgs(
   calledFuncName: string,
   callingCode: string
 ): boolean {
-  const noCommentsCallingCode = strip(callingCode, {});
+  const noCommentsCallingCode = strip(callingCode);
   const funcExp = `^\\s*?${escapeRegExp(calledFuncName)}\\(\\s*?\\)`;
   const matches = new RegExp(funcExp, "gm").exec(noCommentsCallingCode) ?? [];
   return Boolean(matches.length);
