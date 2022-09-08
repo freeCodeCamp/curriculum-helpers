@@ -12,7 +12,7 @@ const constants = {
 
 
 
-export const parse = (input: string, options?: Partial<options> = {}) => {
+export const parse = (input: string, options: Partial<options> = {}) => {
   if (typeof input !== 'string') {
     throw new TypeError('Expected input to be a string');
   }
