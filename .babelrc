@@ -7,6 +7,5 @@
       }
     }]
     
-  ],
-  //"plugins": ["babel-plugin-add-import-extension"]
+  ]
 }

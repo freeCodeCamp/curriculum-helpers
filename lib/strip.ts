@@ -31,7 +31,7 @@ import { parse } from './parse.js'
  * @api public
  */
 
-export const strip = ((input, options) => {
+export const strip = ((input, options?) => {
   const opts = { ...options, block: true, line: true };
   return compile(parse(input, opts), opts);
 });
@@ -52,7 +52,7 @@ export const strip = ((input, options) => {
  * @api public
  */
 
-strip.block= (input, options)=> {
+strip.block= (input, options?)=> {
   const opts = { ...options, block: true };
   return compile(parse(input, opts), opts);
 };
@@ -72,7 +72,7 @@ strip.block= (input, options)=> {
  * @api public
  */
 
-strip.line = (input, options) => {
+strip.line = (input, options?) => {
   const opts = { ...options, line: true };
   return compile(parse(input, opts), opts);
 };
@@ -93,7 +93,7 @@ strip.line = (input, options) => {
  * @api public
  */
 
-strip.first = (input, options) => {
+strip.first = (input, options?) => {
   const opts = { ...options, block: true, line: true, first: true };
   return compile(parse(input, opts), opts);
 };

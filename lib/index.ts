@@ -30,7 +30,7 @@ export function removeJSComments(codeStr: string): string  {
   // TODO: publish type declarations and re-enable eslint
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    return strip(codeStr, {});
+    return strip(codeStr);
   } catch (err) {
     return codeStr;
   }
