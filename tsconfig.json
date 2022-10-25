@@ -1,5 +1,5 @@
 {
-  "exclude": ["lib/__tests__", "lib/__fixtures__"],
+  "exclude": ["lib/__tests__", "lib/__fixtures__", "*.test.ts"],
   "include": ["lib/", "declarations.d.ts", "dist/declarations.d.ts"],
   "compilerOptions": {
     "module": "ES6",
@@ -8,7 +8,8 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "declaration": true,
-    "skipLibCheck": true,                     
-    "forceConsistentCasingInFileNames": true   
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node"
   }
 }

@@ -1,14 +1,12 @@
-setup:
-```js
-import * as helpers from '@freeCodeCamp/curriculum-helpers'
+# Curriculum Helpers
 
-new helpers.CSSHelp(document).getCSSRules();
+## [Babeliser](./lib/babeliser)
 
-helpers.removeHtmlComments('<!-- HTML COMMENT --> <h1> Hello world </h1>');
-```
+## [CSSHelp](./lib/css-help)
+
+## [miscellaneous](./lib/index.ts)
 
 BSD-3-Clause © [freeCodeCamp.org](https://freecodecamp.org)
-
 
 [npm-image]: https://badge.fury.io/js/curriculum-helpers.svg
 [npm-url]: https://npmjs.org/package/curriculum-helpers
