@@ -1,4 +1,8 @@
 import { strip } from "./strip.js";
+import { Babeliser } from "./babeliser/index.js";
+import { CSSHelp } from "./css-help/index.js";
+
+export { Babeliser, CSSHelp };
 
 /**
  * Removes every HTML-comment from the string that is provided

@@ -11,7 +11,7 @@
   "files": [
     "/dist"
   ],
-  "main": "dist/",
+  "//main": "dist/",
   "keywords": [
     ""
   ],
@@ -32,7 +32,12 @@
     "logover": "2.0.0",
     "mocha": "10.1.0",
     "prettier": "2.7.1",
-    "ts-mocha": "10.0.0"
+    "snowpack": "^3.8.8",
+    "tsdx": "^0.14.1",
+    "vite": "^3.2.2",
+    "@size-limit/preset-small-lib": "^8.1.0",
+    "size-limit": "^8.1.0",
+    "tslib": "^2.4.1"
   },
   "publishConfig": {
     "access": "public"
@@ -72,11 +77,22 @@
     ]
   },
   "scripts": {
-    "build": "tsc",
+    "build:vite": "vite build",
+    "build": "snowpack build",
+    "build:snowpack": "snowpack build",
     "pretest": "npm run build",
     "test": "jest",
     "prepublishOnly": "tsc",
-    "test:babeliser": "ts-mocha --esm ./lib/babeliser/index.test.ts"
+    "test:babeliser": "mocha -r ts-node/register lib/babeliser/*.test.ts",
+    "test:vite": "vite build ./dist/babeliser/index.test.ts",
+    "test:snowpack": "NODE_ENV=test npm run build:snowpack && mocha snowpack/babeliser/index.test.js",
+    "start": "tsdx watch",
+    "build:tsdx": "tsdx build",
+    "test:tsdx": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
@@ -90,5 +106,18 @@
     "@babel/generator": "7.X",
     "@babel/parser": "7.X",
     "@babel/types": "7.X"
-  }
+  },
+  "size-limit": [
+    {
+      "path": "dist/curriculum-helpers.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/curriculum-helpers.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "module": "dist/curriculum-helpers.esm.js",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts"
 }

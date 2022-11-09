@@ -133,3 +133,10 @@ dist
 
 # build folder
 /dist
+
+# build folders
+/snowpack
+/vite
+/tsdx
+/microbundle
+/parcel
