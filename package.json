@@ -17,8 +17,8 @@
   ],
   "devDependencies": {
     "@types/jest": "27.5.2",
-    "@babel/core": "7.21.8",
-    "@babel/preset-env": "7.21.5",
+    "@babel/core": "7.22.1",
+    "@babel/preset-env": "7.22.2",
     "@babel/preset-typescript": "7.21.5",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.15.0",
