@@ -277,3 +277,18 @@ assert.equal(innerNumericLiteral.value, 24);
 ```
 
 </details>
+
+<details>
+  <summary><code>generateCode</code></summary>
+
+```javascript
+const functionDeclaration = t.getFunctionDeclarations().find((c) => {
+  return c.id?.name === "add";
+});
+const blockStatement = functionDeclaration?.body;
+const actualCodeString = t.generateCode(blockStatement, {
+  compact: true, // Minifies the code without mangling
+});
+const expectedCodeString = `const tot=param1+param2`;
+assert.deepInclude(actualCodeString, expectedCodeString);
+```
