@@ -16,13 +16,13 @@
     ""
   ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^8.1.0",
-    "babel-jest": "^29.3.1",
-    "chai": "4.3.6",
-    "@types/jest": "27.5.2",
     "@babel/core": "7.22.1",
     "@babel/preset-env": "7.22.2",
     "@babel/preset-typescript": "7.21.5",
+    "@size-limit/preset-small-lib": "^8.1.0",
+    "@types/jest": "27.5.2",
+    "babel-jest": "^29.3.1",
+    "chai": "4.3.6",
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.15.0",
     "eslint-config-xo": "0.27.2",
@@ -32,8 +32,6 @@
     "jest-environment-jsdom": "^29.3.1",
     "jest-ts-webcompat-resolver": "1.0.0",
     "lint-staged": "9.5.0",
-    "logover": "2.0.0",
-    "mocha": "10.1.0",
     "prettier": "2.8.8",
     "size-limit": "^8.1.0",
     "snowpack": "^3.8.8",
@@ -86,9 +84,7 @@
     "pretest": "npm run build",
     "test": "jest",
     "prepublishOnly": "tsc",
-    "test:babeliser": "mocha -r ts-node/register lib/babeliser/*.test.ts",
-    "test:vite": "vite build ./dist/babeliser/index.test.ts",
-    "test:snowpack": "NODE_ENV=test npm run build:snowpack && mocha snowpack/babeliser/index.test.js",
+    "test:snowpack": "NODE_ENV=test npm run build:snowpack",
     "start": "tsdx watch",
     "build:tsdx": "tsdx build",
     "test:tsdx": "tsdx test",
@@ -100,6 +96,7 @@
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "babeliser": "0.6.0",
     "browserify": "^17.0.0"
   },
   "peerDependencies": {

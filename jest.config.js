@@ -1,4 +1,4 @@
 module.exports = {
   testEnvironment: "jsdom",
-  transformIgnorePatterns: ["node_modules/(?!logover)"],
+  transformIgnorePatterns: ["node_modules/(?!babeliser)"],
 };

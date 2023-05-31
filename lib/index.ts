@@ -1,5 +1,5 @@
 import { strip } from "./strip";
-import { Babeliser } from "./babeliser/index";
+import { Babeliser } from "babeliser";
 import { CSSHelp } from "./css-help/index";
 
 export { Babeliser, CSSHelp };
