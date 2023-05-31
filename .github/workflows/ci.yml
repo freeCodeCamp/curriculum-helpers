@@ -9,9 +9,9 @@ jobs:
 
       # Install Node 12
       - name: Setup Node
-        uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1
+        uses: actions/setup-node@a8fa4ffb1e079baa97134bf07d82b2d4ae552712baea0b5f0cf7fdb1b5e19965
         with:
-          node-version: 12
+          node-version: 18
 
       # Install dependencies
       - run: npm ci
