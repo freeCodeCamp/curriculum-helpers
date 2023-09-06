@@ -1,8 +1,8 @@
-'use strict';
+"use strict";
 
-import { CodeNode, Block } from './class/node';
-import { options } from './option-types'
-import { languages } from './languages';
+import { CodeNode, Block } from "./class/node.js";
+import { options } from "./option-types.js";
+import { languages } from "./languages.js";
 
 const constants = {
   ESCAPED_CHAR_REGEX: /^\\./,
@@ -10,19 +10,17 @@ const constants = {
   NEWLINE_REGEX: /^\r*\n/,
 };
 
-
-
 export const parse = (input: string, options: Partial<options> = {}) => {
-  if (typeof input !== 'string') {
-    throw new TypeError('Expected input to be a string');
+  if (typeof input !== "string") {
+    throw new TypeError("Expected input to be a string");
   }
 
-  const cst = new Block({ type: 'root', nodes: [] });
+  const cst = new Block({ type: "root", nodes: [] });
   const stack = [cst];
-  const name = (options.language || 'javascript').toLowerCase();
+  const name = (options.language || "javascript").toLowerCase();
   const lang = languages[name];
 
-  if (typeof lang === 'undefined') {
+  if (typeof lang === "undefined") {
     throw new Error(`Language "${name}" is not supported by strip-comments`);
   }
 
@@ -43,12 +41,12 @@ export const parse = (input: string, options: Partial<options> = {}) => {
    * Helpers
    */
 
-  const consume = (value = remaining[0] || '') => {
+  const consume = (value = remaining[0] || "") => {
     remaining = remaining.slice(value.length);
     return value;
   };
 
-  const scan = (regex, type = 'text') => {
+  const scan = (regex, type = "text") => {
     const match = regex.exec(remaining);
     if (match) {
       consume(match[0]);
@@ -57,7 +55,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   };
 
   const push = (node) => {
-    if (prev && prev.type === 'text' && node.type === 'text') {
+    if (prev && prev.type === "text" && node.type === "text") {
       prev.value += node.value;
       return;
     }
@@ -70,8 +68,8 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   };
 
   const pop = () => {
-    if (block.type === 'root') {
-      throw new SyntaxError('Unclosed block comment');
+    if (block.type === "root") {
+      throw new SyntaxError("Unclosed block comment");
     }
     stack.pop();
     block = stack[stack.length - 1];
@@ -81,27 +79,27 @@ export const parse = (input: string, options: Partial<options> = {}) => {
    * Parse input string
    */
 
-  while (remaining !== '') {
+  while (remaining !== "") {
     // escaped characters
-    if ((token = scan(constants.ESCAPED_CHAR_REGEX, 'text'))) {
+    if ((token = scan(constants.ESCAPED_CHAR_REGEX, "text"))) {
       push(new CodeNode(token));
       continue;
     }
 
     // quoted strings
     if (
-      block.type !== 'block' &&
+      block.type !== "block" &&
       (!prev || !/\w$/.test(prev.value)) &&
       !(tripleQuotes && remaining.startsWith('"""'))
     ) {
-      if ((token = scan(constants.QUOTED_STRING_REGEX, 'text'))) {
+      if ((token = scan(constants.QUOTED_STRING_REGEX, "text"))) {
         push(new CodeNode(token));
         continue;
       }
     }
 
     // newlines
-    if ((token = scan(constants.NEWLINE_REGEX, 'newline'))) {
+    if ((token = scan(constants.NEWLINE_REGEX, "newline"))) {
       push(new CodeNode(token));
       continue;
     }
@@ -110,19 +108,19 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     if (
       BLOCK_OPEN_REGEX &&
       options.block &&
-      !(tripleQuotes && block.type === 'block')
+      !(tripleQuotes && block.type === "block")
     ) {
-      if ((token = scan(BLOCK_OPEN_REGEX, 'open'))) {
-        push(new Block({ type: 'block' }));
+      if ((token = scan(BLOCK_OPEN_REGEX, "open"))) {
+        push(new Block({ type: "block" }));
         push(new CodeNode(token));
         continue;
       }
     }
 
     // block comment close
-    if (BLOCK_CLOSE_REGEX && block.type === 'block' && options.block) {
-      if ((token = scan(BLOCK_CLOSE_REGEX, 'close'))) {
-        token.newline = token.match[1] || '';
+    if (BLOCK_CLOSE_REGEX && block.type === "block" && options.block) {
+      if ((token = scan(BLOCK_CLOSE_REGEX, "close"))) {
+        token.newline = token.match[1] || "";
         push(new CodeNode(token));
         pop();
         continue;
@@ -130,22 +128,21 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     }
 
     // line comment
-    if (LINE_REGEX && block.type !== 'block' && options.line) {
-      if ((token = scan(LINE_REGEX, 'line'))) {
+    if (LINE_REGEX && block.type !== "block" && options.line) {
+      if ((token = scan(LINE_REGEX, "line"))) {
         push(new CodeNode(token));
         continue;
       }
     }
 
     // Plain text (skip "C" since some languages use "C" to start comments)
-    if ((token = scan(/^[a-zABD-Z0-9\t ]+/, 'text'))) {
+    if ((token = scan(/^[a-zABD-Z0-9\t ]+/, "text"))) {
       push(new CodeNode(token));
       continue;
     }
 
-    push(new CodeNode({ type: 'text', value: consume(remaining[0]) }));
+    push(new CodeNode({ type: "text", value: consume(remaining[0]) }));
   }
 
   return cst;
 };
-

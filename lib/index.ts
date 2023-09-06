@@ -1,6 +1,6 @@
-import { strip } from "./strip";
+import { strip } from "./strip.js";
 import { Babeliser } from "babeliser";
-import { CSSHelp } from "./css-help/index";
+import { CSSHelp } from "./css-help/index.js";
 
 export { Babeliser, CSSHelp };
 
