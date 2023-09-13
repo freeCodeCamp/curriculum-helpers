@@ -1,6 +1,6 @@
 # Curriculum Helpers
 
-## [Babeliser](./lib/babeliser)
+## [Babeliser](https://github.com/ShaunSHamilton/babeliser)
 
 ## [CSSHelp](./lib/css-help)
 
