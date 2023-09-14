@@ -1,2 +1,2 @@
 tasks:
-  - init: npm install && npm run build
+  - init: curl -fsSL https://bun.sh/install | bash && npm install
