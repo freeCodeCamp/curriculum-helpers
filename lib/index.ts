@@ -128,6 +128,18 @@ export class CSSHelp {
     };
     return style;
   }
+  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
+  getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
+    for (const selector of selectors) {
+      const style = this.getStyle(selector);
+      
+      if (style) {
+        return style;
+      }
+    }
+
+    return null;
+  }
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(
       ele => ele?.selectorText === selector

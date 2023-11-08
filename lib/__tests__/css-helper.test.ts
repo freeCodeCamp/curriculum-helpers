@@ -32,6 +32,14 @@ describe('css-help', () => {
       );
     });
   });
+  describe('getStyleAny', () => {
+    it('should return an ExtendedCSSStyleDeclartion object of length 1', () => {
+      expect(t.getStyleAny(['.earth', '.sky'])?.length).toEqual(1);
+    });
+    it('should return null', () => {
+      expect(t.getStyleAny(['.sun', '.earth', '.moon'])).toBeNull();
+    });
+  });
   describe('isPropertyUsed', () => {
     it('should return true on existing properties', () => {
       expect(t.isPropertyUsed('height')).toBeTruthy();
