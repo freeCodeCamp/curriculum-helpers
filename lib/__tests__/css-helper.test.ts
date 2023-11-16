@@ -100,6 +100,37 @@ describe('css-help', () => {
       );
     });
   });
+  describe('selectorsFromSelector', () => {
+    it('should return an empty array', () => {
+      setupDocument();
+      expect(t.selectorsFromSelector('.void')).toEqual([]);
+    });
+    it('should return an array with 9 members', () => {
+      setupDocument();
+      expect(t.selectorsFromSelector('a')).toEqual([
+        'a',
+        'label > a',
+        'label a',
+        'form > label > a',
+        'form label a',
+        'body > form > label > a',
+        'body form label a',
+        'html > body > form > label > a',
+        'html body form label a',
+      ]);
+    });
+
+    function setupDocument() {
+      const form = doc.createElement('form');
+      form.innerHTML = `
+        <label>
+          <input type="checkbox" /> I accept the <a href="#">terms and conditions</a>
+        </label>
+        <input type="submit" value="Submit" />
+      `;
+      doc.body.appendChild(form);
+    }
+  });
   afterEach(() => {
     document.body.innerHTML = '';
     document.head.innerHTML = '';
