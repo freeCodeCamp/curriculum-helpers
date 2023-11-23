@@ -128,6 +128,18 @@ export class CSSHelp {
     };
     return style;
   }
+  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
+  getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
+    for (const selector of selectors) {
+      const style = this.getStyle(selector);
+      
+      if (style) {
+        return style;
+      }
+    }
+
+    return null;
+  }
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(
       ele => ele?.selectorText === selector
@@ -199,5 +211,38 @@ export class CSSHelp {
     styleSheet: ReturnType<CSSHelp['getStyleSheet']>
   ): CSSRule[] {
     return Array.from(styleSheet?.cssRules || []);
+  }
+  // takes a CSS selector, returns all equivelant selectors from the current document
+  // or an empty array if there are no matches
+  selectorsFromSelector(selector: string): string[] {
+    const elements = this.doc.querySelectorAll(selector);
+    const allSelectors = Array.from(elements).map((element: Element) => {
+      let directPath = [];
+      let indirectPath = [];
+      let allPaths = [];
+
+      while (element.parentNode) {
+        let tag = element.tagName.toLowerCase();
+        let siblings = Array.from(element.parentNode.children);
+
+        if (siblings.filter(e => e.tagName === element.tagName).length > 1) {
+          let allSiblings = Array.from(element.parentNode.childNodes);
+          let index = allSiblings.indexOf(element);
+          tag += `:nth-child(${index + 1})`;
+        }
+
+        directPath.unshift(tag);
+        indirectPath.unshift(tag);
+        allPaths.push([directPath.join(' > '), indirectPath.join(' ')]);
+        
+        // traverse up the DOM tree
+        element = element.parentNode as Element;
+      }
+
+      return allPaths.flat();
+    }).flat();
+
+    // remove duplicates
+    return [...new Set(allSelectors)];
   }
 }

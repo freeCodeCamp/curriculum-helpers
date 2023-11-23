@@ -32,6 +32,14 @@ describe('css-help', () => {
       );
     });
   });
+  describe('getStyleAny', () => {
+    it('should return an ExtendedCSSStyleDeclartion object of length 1', () => {
+      expect(t.getStyleAny(['.earth', '.sky'])?.length).toEqual(1);
+    });
+    it('should return null', () => {
+      expect(t.getStyleAny(['.sun', '.earth', '.moon'])).toBeNull();
+    });
+  });
   describe('isPropertyUsed', () => {
     it('should return true on existing properties', () => {
       expect(t.isPropertyUsed('height')).toBeTruthy();
@@ -91,6 +99,37 @@ describe('css-help', () => {
     )`
       );
     });
+  });
+  describe('selectorsFromSelector', () => {
+    it('should return an empty array', () => {
+      setupDocument();
+      expect(t.selectorsFromSelector('.void')).toEqual([]);
+    });
+    it('should return an array with 9 members', () => {
+      setupDocument();
+      expect(t.selectorsFromSelector('a')).toEqual([
+        'a',
+        'label > a',
+        'label a',
+        'form > label > a',
+        'form label a',
+        'body > form > label > a',
+        'body form label a',
+        'html > body > form > label > a',
+        'html body form label a',
+      ]);
+    });
+
+    function setupDocument() {
+      const form = doc.createElement('form');
+      form.innerHTML = `
+        <label>
+          <input type="checkbox" /> I accept the <a href="#">terms and conditions</a>
+        </label>
+        <input type="submit" value="Submit" />
+      `;
+      doc.body.appendChild(form);
+    }
   });
   afterEach(() => {
     document.body.innerHTML = '';
