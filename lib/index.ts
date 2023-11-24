@@ -1,4 +1,4 @@
-import { strip } from './strip.js';
+import { strip } from "./strip.js";
 
 /**
  * Removes every HTML-comment from the string that is provided
@@ -26,7 +26,7 @@ export function removeCssComments(str: string): string {
  * @returns {String}
  */
 
-export function removeJSComments(codeStr: string): string  {
+export function removeJSComments(codeStr: string): string {
   // TODO: publish type declarations and re-enable eslint
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -34,7 +34,7 @@ export function removeJSComments(codeStr: string): string  {
   } catch (err) {
     return codeStr;
   }
-};
+}
 
 /**
  * Removes every white-space from the string that is provided
@@ -43,7 +43,7 @@ export function removeJSComments(codeStr: string): string  {
  */
 
 export function removeWhiteSpace(str: string): string {
-  return str.replace(/\s/g, '');
+  return str.replace(/\s/g, "");
 }
 
 /**
@@ -83,9 +83,9 @@ interface ExtendedStyleDeclaration extends CSSStyleDeclaration {
 const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
   const cssStyleRules = Array.from(
     styleRule.parentStyleSheet?.cssRules || []
-  )?.filter(ele => ele.type === CSSRule.STYLE_RULE) as CSSStyleRule[];
+  )?.filter((ele) => ele.type === CSSRule.STYLE_RULE) as CSSStyleRule[];
   const previousStyleRule = cssStyleRules.find(
-    ele => ele?.selectorText === selector
+    (ele) => ele?.selectorText === selector
   );
   if (!previousStyleRule) return false;
   const currPosition = Array.from(
@@ -97,7 +97,32 @@ const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
   return currPosition > prevPosition;
 };
 
+export module python {
+  export function getDef(code: string, functionName: string) {
+    const regex = new RegExp(
+      `\\n(?<function_indentation>\\s*?)def\\s+${functionName}\\s*\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#])`,
+      "s"
+    );
 
+    const matchedCode = regex.exec(code);
+    if (matchedCode) {
+      const { function_parameters, function_body, function_indentation } =
+        matchedCode.groups;
+
+      const functionIndentationSansNewLine = function_indentation.replace(
+        /\n+/,
+        ""
+      );
+      return {
+        def: matchedCode[0],
+        function_parameters,
+        function_body,
+        function_indentation: functionIndentationSansNewLine.length,
+      };
+    }
+    return null;
+  }
+}
 
 export class CSSHelp {
   doc: Document;
@@ -107,23 +132,23 @@ export class CSSHelp {
   private _getStyleRules() {
     const styleSheet = this.getStyleSheet();
     return this.styleSheetToCssRulesArray(styleSheet).filter(
-      ele => ele.type === CSSRule.STYLE_RULE
+      (ele) => ele.type === CSSRule.STYLE_RULE
     ) as CSSStyleRule[];
   }
 
   getStyleDeclarations(selector: string): CSSStyleDeclaration[] {
     return this._getStyleRules()
-      ?.filter(ele => ele?.selectorText === selector)
-      .map(x => x.style);
+      ?.filter((ele) => ele?.selectorText === selector)
+      .map((x) => x.style);
   }
   getStyle(selector: string): ExtendedStyleDeclaration | null {
     const style = this._getStyleRules().find(
-      ele => ele?.selectorText === selector
+      (ele) => ele?.selectorText === selector
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
     style.getPropVal = (prop: string, strip = false) => {
       return strip
-        ? style.getPropertyValue(prop).replace(/\s+/g, '')
+        ? style.getPropertyValue(prop).replace(/\s+/g, "")
         : style.getPropertyValue(prop);
     };
     return style;
@@ -132,7 +157,7 @@ export class CSSHelp {
   getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
     for (const selector of selectors) {
       const style = this.getStyle(selector);
-      
+
       if (style) {
         return style;
       }
@@ -142,13 +167,13 @@ export class CSSHelp {
   }
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(
-      ele => ele?.selectorText === selector
+      (ele) => ele?.selectorText === selector
     );
     if (styleRule) {
       return {
         ...styleRule,
         isDeclaredAfter: (selector: string) =>
-          getIsDeclaredAfter(styleRule)(selector)
+          getIsDeclaredAfter(styleRule)(selector),
       };
     } else {
       return null;
@@ -158,26 +183,26 @@ export class CSSHelp {
     const styleSheet = this.getStyleSheet();
     const cssRules = this.styleSheetToCssRulesArray(styleSheet);
     switch (element) {
-      case 'media':
-        return cssRules.filter(ele => ele.type === CSSRule.MEDIA_RULE);
-      case 'fontface':
-        return cssRules.filter(ele => ele.type === CSSRule.FONT_FACE_RULE);
-      case 'import':
-        return cssRules.filter(ele => ele.type === CSSRule.IMPORT_RULE);
-      case 'keyframes':
-        return cssRules.filter(ele => ele.type === CSSRule.KEYFRAMES_RULE);
+      case "media":
+        return cssRules.filter((ele) => ele.type === CSSRule.MEDIA_RULE);
+      case "fontface":
+        return cssRules.filter((ele) => ele.type === CSSRule.FONT_FACE_RULE);
+      case "import":
+        return cssRules.filter((ele) => ele.type === CSSRule.IMPORT_RULE);
+      case "keyframes":
+        return cssRules.filter((ele) => ele.type === CSSRule.KEYFRAMES_RULE);
       default:
         return cssRules;
     }
   }
   isPropertyUsed(property: string): boolean {
-    return this._getStyleRules().some(ele =>
+    return this._getStyleRules().some((ele) =>
       ele.style?.getPropertyValue(property)
     );
   }
   getRuleListsWithinMedia(mediaText: string): CSSStyleRule[] {
-    const medias = this.getCSSRules('media') as CSSMediaRule[];
-    const cond = medias?.find(x => x?.media?.mediaText === mediaText);
+    const medias = this.getCSSRules("media") as CSSMediaRule[];
+    const cond = medias?.find((x) => x?.media?.mediaText === mediaText);
     const cssRules = cond?.cssRules;
     return Array.from(cssRules || []) as CSSStyleRule[];
   }
@@ -189,12 +214,12 @@ export class CSSHelp {
 
     // When using the styles.css tab, we add a 'fcc-injected-styles' class so we can target that. This allows users to add external scripts without them interfering
     const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
-      'style.fcc-injected-styles'
+      "style.fcc-injected-styles"
     );
 
     // For steps that use <style> tags, where they don't add the above class - most* browser extensions inject styles with class/media attributes, so it filters those
     const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
-      'style:not([class]):not([media])'
+      "style:not([class]):not([media])"
     );
 
     if (link?.sheet?.cssRules?.length) {
@@ -208,7 +233,7 @@ export class CSSHelp {
     }
   }
   styleSheetToCssRulesArray(
-    styleSheet: ReturnType<CSSHelp['getStyleSheet']>
+    styleSheet: ReturnType<CSSHelp["getStyleSheet"]>
   ): CSSRule[] {
     return Array.from(styleSheet?.cssRules || []);
   }
@@ -216,31 +241,35 @@ export class CSSHelp {
   // or an empty array if there are no matches
   selectorsFromSelector(selector: string): string[] {
     const elements = this.doc.querySelectorAll(selector);
-    const allSelectors = Array.from(elements).map((element: Element) => {
-      let directPath = [];
-      let indirectPath = [];
-      let allPaths = [];
+    const allSelectors = Array.from(elements)
+      .map((element: Element) => {
+        let directPath = [];
+        let indirectPath = [];
+        let allPaths = [];
 
-      while (element.parentNode) {
-        let tag = element.tagName.toLowerCase();
-        let siblings = Array.from(element.parentNode.children);
+        while (element.parentNode) {
+          let tag = element.tagName.toLowerCase();
+          let siblings = Array.from(element.parentNode.children);
 
-        if (siblings.filter(e => e.tagName === element.tagName).length > 1) {
-          let allSiblings = Array.from(element.parentNode.childNodes);
-          let index = allSiblings.indexOf(element);
-          tag += `:nth-child(${index + 1})`;
+          if (
+            siblings.filter((e) => e.tagName === element.tagName).length > 1
+          ) {
+            let allSiblings = Array.from(element.parentNode.childNodes);
+            let index = allSiblings.indexOf(element);
+            tag += `:nth-child(${index + 1})`;
+          }
+
+          directPath.unshift(tag);
+          indirectPath.unshift(tag);
+          allPaths.push([directPath.join(" > "), indirectPath.join(" ")]);
+
+          // traverse up the DOM tree
+          element = element.parentNode as Element;
         }
 
-        directPath.unshift(tag);
-        indirectPath.unshift(tag);
-        allPaths.push([directPath.join(' > '), indirectPath.join(' ')]);
-        
-        // traverse up the DOM tree
-        element = element.parentNode as Element;
-      }
-
-      return allPaths.flat();
-    }).flat();
+        return allPaths.flat();
+      })
+      .flat();
 
     // remove duplicates
     return [...new Set(allSelectors)];
