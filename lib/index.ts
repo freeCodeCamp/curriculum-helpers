@@ -100,7 +100,7 @@ const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
 export module python {
   export function getDef(code: string, functionName: string) {
     const regex = new RegExp(
-      `\\n(?<function_indentation>\\s*?)def\\s+${functionName}\\s*\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#])`,
+      `\\n(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
       "s"
     );
 
@@ -114,7 +114,8 @@ export module python {
         ""
       );
       return {
-        def: matchedCode[0],
+        // Entire function definition without additional \n
+        def: matchedCode[0].slice(1),
         function_parameters,
         function_body,
         function_indentation: functionIndentationSansNewLine.length,
