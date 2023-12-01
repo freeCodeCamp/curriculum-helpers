@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
@@ -7,8 +6,8 @@
  * Copyright (c) 2014-present, Jon Schlinkert.
  * Released under the MIT License.
  */
-import { compile } from './compile.js';
-import { parse } from './parse.js'
+import { compile } from "./compile.js";
+import { parse } from "./parse.js";
 
 /**
  * Strip all code comments from the given `input`, including protected
@@ -31,10 +30,10 @@ import { parse } from './parse.js'
  * @api public
  */
 
-export const strip = ((input, options?) => {
+export const strip = (input, options?) => {
   const opts = { ...options, block: true, line: true };
   return compile(parse(input, opts), opts);
-});
+};
 
 /**
  * Strip only block comments.
@@ -52,7 +51,7 @@ export const strip = ((input, options?) => {
  * @api public
  */
 
-strip.block= (input, options?)=> {
+strip.block = (input, options?) => {
   const opts = { ...options, block: true };
   return compile(parse(input, opts), opts);
 };

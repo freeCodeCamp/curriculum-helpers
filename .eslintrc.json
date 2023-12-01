@@ -10,7 +10,20 @@
     "node": true
   },
   "rules": {
-    "prettier/prettier": "error"
+    "prettier/prettier": "error",
+    "complexity": "off",
+    "@typescript-eslint/no-namespace": "off",
+    "no-warning-comments": "off",
+    "camelcase": [
+      "warn",
+      {
+        "allow": [
+          "function_parameters",
+          "function_body",
+          "function_indentation"
+        ]
+      }
+    ]
   },
   "plugins": ["prettier", "@typescript-eslint"],
   "parser": "@typescript-eslint/parser"

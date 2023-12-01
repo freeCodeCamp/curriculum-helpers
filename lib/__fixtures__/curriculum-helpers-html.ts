@@ -24,7 +24,7 @@ not a comment
 
 const testValues = {
   htmlFullExample,
-  htmlCodeWithCommentsRemoved
+  htmlCodeWithCommentsRemoved,
 };
 
 export default testValues;

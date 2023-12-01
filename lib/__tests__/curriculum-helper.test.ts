@@ -1,13 +1,11 @@
 import cssTestValues from "../__fixtures__/curriculum-helper-css";
 import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
 import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
-import whiteSpaceTestValues from '../__fixtures__/curriculum-helpers-remove-white-space';
+import whiteSpaceTestValues from "../__fixtures__/curriculum-helpers-remove-white-space";
 import * as helper from "../index";
 
-const {
-  stringWithWhiteSpaceChars,
-  stringWithWhiteSpaceCharsRemoved
-} = whiteSpaceTestValues;
+const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
+  whiteSpaceTestValues;
 
 const { cssFullExample, cssCodeWithCommentsRemoved } = cssTestValues;
 
@@ -21,7 +19,7 @@ const {
   jsCodeWithNoCall,
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
-  jsCodeWithCommentedCall
+  jsCodeWithCommentedCall,
 } = jsTestValues;
 
 describe("removeWhiteSpace", () => {
@@ -32,33 +30,33 @@ describe("removeWhiteSpace", () => {
     );
   });
 
-  it('returns a string with no white space characters', () => {
+  it("returns a string with no white space characters", () => {
     expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
       stringWithWhiteSpaceCharsRemoved
     );
   });
 });
 
-describe('removeJSComments', () => {
+describe("removeJSComments", () => {
   const { removeJSComments } = helper;
-   it('returns a string', () => {
+  it("returns a string", () => {
     expect(typeof removeJSComments('const should = "return a string"')).toBe(
-      'string'
+      "string"
     );
   });
 
-  it('returns a string with no single or multi-line comments', () => {
+  it("returns a string with no single or multi-line comments", () => {
     expect(removeJSComments(jsCodeWithSingleAndMultLineComments)).toBe(
       jsCodeWithSingleAndMultLineCommentsRemoved
     );
   });
 
-  it('leaves malformed JS unchanged', () => {
-    const actual = '/ unclosed regex';
+  it("leaves malformed JS unchanged", () => {
+    const actual = "/ unclosed regex";
     expect(removeJSComments(actual)).toBe(actual);
   });
 
-  it('does not remove a url found in JS code', () => {
+  it("does not remove a url found in JS code", () => {
     expect(removeJSComments(jsCodeWithUrl)).toBe(jsCodeWithUrlUnchanged);
   });
 });

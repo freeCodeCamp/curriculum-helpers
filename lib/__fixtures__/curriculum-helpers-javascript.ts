@@ -64,7 +64,7 @@ const testValues = {
   jsCodeWithNoCall,
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
-  jsCodeWithCommentedCall
+  jsCodeWithCommentedCall,
 };
 
 export default testValues;
