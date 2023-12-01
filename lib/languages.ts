@@ -1,113 +1,112 @@
 export const languages = {
-  "ada": {
-    LINE_REGEX: /^--.*/
+  ada: {
+    LINE_REGEX: /^--.*/,
   },
-  "apl": {
-    LINE_REGEX: /^⍝.*/ 
+  apl: {
+    LINE_REGEX: /^⍝.*/,
   },
-  "applescript": {
+  applescript: {
     BLOCK_OPEN_REGEX: /^\(\*/,
     BLOCK_CLOSE_REGEX: /^\*\)/,
   },
-  "csharp": {
+  csharp: {
     LINE_REGEX: /^\/\/.*/,
   },
-  "haskell": {
+  haskell: {
     BLOCK_OPEN_REGEX: /^\{-/,
     BLOCK_CLOSE_REGEX: /^-\}/,
     LINE_REGEX: /^--.*/,
   },
-  "javascript": {
+  javascript: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "lua": {
+  lua: {
     BLOCK_OPEN_REGEX: /^--\[\[/,
     BLOCK_CLOSE_REGEX: /^\]\]/,
     LINE_REGEX: /^--.*/,
   },
-  "matlab": {
+  matlab: {
     BLOCK_OPEN_REGEX: /^%{/,
     BLOCK_CLOSE_REGEX: /^%}/,
     LINE_REGEX: /^%.*/,
   },
-  "perl": {
+  perl: {
     LINE_REGEX: /^#.*/,
   },
-  "php": {
+  php: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^(#|\/\/).*?(?=\?>|\n)/,
   },
-  "ruby": {
+  ruby: {
     BLOCK_OPEN_REGEX: /^=begin/,
     BLOCK_CLOSE_REGEX: /^=end/,
     LINE_REGEX: /^#.*/,
   },
-  "shebang": {
+  shebang: {
     LINE_REGEX: /^#!.*/,
   },
-  "python": {
+  python: {
     BLOCK_OPEN_REGEX: /^"""/,
     BLOCK_CLOSE_REGEX: /^"""/,
     LINE_REGEX: /^#.*/,
   },
-  "c": {
+  c: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "css": {
+  css: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "java": {
+  java: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "js": {
+  js: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "less": {
+  less: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "pascal": {
+  pascal: {
     BLOCK_OPEN_REGEX: /^\(\*/,
     BLOCK_CLOSE_REGEX: /^\*\)/,
   },
-  "ocaml": {
+  ocaml: {
     BLOCK_OPEN_REGEX: /^\(\*/,
     BLOCK_CLOSE_REGEX: /^\*\)/,
   },
-  "sass": {
+  sass: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "sql": {
-    LINE_REGEX: /^--.*/
+  sql: {
+    LINE_REGEX: /^--.*/,
   },
-  "swift": {
+  swift: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "ts": {
+  ts: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-  "typscript": {
+  typscript: {
     BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
     BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
     LINE_REGEX: /^\/\/(!?).*/,
   },
-}
-
+};

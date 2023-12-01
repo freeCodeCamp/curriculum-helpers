@@ -29,7 +29,6 @@ export function removeCssComments(str: string): string {
 export function removeJSComments(codeStr: string): string {
   // TODO: publish type declarations and re-enable eslint
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     return strip(codeStr);
   } catch (err) {
     return codeStr;
@@ -121,6 +120,7 @@ export module python {
         function_indentation: functionIndentationSansNewLine.length,
       };
     }
+
     return null;
   }
 }
@@ -130,6 +130,7 @@ export class CSSHelp {
   constructor(doc: Document) {
     this.doc = doc;
   }
+
   private _getStyleRules() {
     const styleSheet = this.getStyleSheet();
     return this.styleSheetToCssRulesArray(styleSheet).filter(
@@ -142,6 +143,7 @@ export class CSSHelp {
       ?.filter((ele) => ele?.selectorText === selector)
       .map((x) => x.style);
   }
+
   getStyle(selector: string): ExtendedStyleDeclaration | null {
     const style = this._getStyleRules().find(
       (ele) => ele?.selectorText === selector
@@ -152,8 +154,10 @@ export class CSSHelp {
         ? style.getPropertyValue(prop).replace(/\s+/g, "")
         : style.getPropertyValue(prop);
     };
+
     return style;
   }
+
   // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
   getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
     for (const selector of selectors) {
@@ -166,6 +170,7 @@ export class CSSHelp {
 
     return null;
   }
+
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(
       (ele) => ele?.selectorText === selector
@@ -176,10 +181,11 @@ export class CSSHelp {
         isDeclaredAfter: (selector: string) =>
           getIsDeclaredAfter(styleRule)(selector),
       };
-    } else {
-      return null;
     }
+
+    return null;
   }
+
   getCSSRules(element?: string): CSSRule[] {
     const styleSheet = this.getStyleSheet();
     const cssRules = this.styleSheetToCssRulesArray(styleSheet);
@@ -196,17 +202,20 @@ export class CSSHelp {
         return cssRules;
     }
   }
+
   isPropertyUsed(property: string): boolean {
     return this._getStyleRules().some((ele) =>
       ele.style?.getPropertyValue(property)
     );
   }
+
   getRuleListsWithinMedia(mediaText: string): CSSStyleRule[] {
     const medias = this.getCSSRules("media") as CSSMediaRule[];
     const cond = medias?.find((x) => x?.media?.mediaText === mediaText);
     const cssRules = cond?.cssRules;
     return Array.from(cssRules || []) as CSSStyleRule[];
   }
+
   getStyleSheet(): CSSStyleSheet | null {
     // TODO: Change selector to match exactly 'styles.css'
     const link: HTMLLinkElement | null = this.doc?.querySelector(
@@ -225,38 +234,44 @@ export class CSSHelp {
 
     if (link?.sheet?.cssRules?.length) {
       return link.sheet;
-    } else if (stylesDotCss) {
-      return stylesDotCss.sheet;
-    } else if (styleTag) {
-      return styleTag.sheet;
-    } else {
-      return null;
     }
+
+    if (stylesDotCss) {
+      return stylesDotCss.sheet;
+    }
+
+    if (styleTag) {
+      return styleTag.sheet;
+    }
+
+    return null;
   }
+
   styleSheetToCssRulesArray(
     styleSheet: ReturnType<CSSHelp["getStyleSheet"]>
   ): CSSRule[] {
     return Array.from(styleSheet?.cssRules || []);
   }
-  // takes a CSS selector, returns all equivelant selectors from the current document
+
+  // Takes a CSS selector, returns all equivelant selectors from the current document
   // or an empty array if there are no matches
   selectorsFromSelector(selector: string): string[] {
     const elements = this.doc.querySelectorAll(selector);
     const allSelectors = Array.from(elements)
       .map((element: Element) => {
-        let directPath = [];
-        let indirectPath = [];
-        let allPaths = [];
+        const directPath = [];
+        const indirectPath = [];
+        const allPaths = [];
 
         while (element.parentNode) {
           let tag = element.tagName.toLowerCase();
-          let siblings = Array.from(element.parentNode.children);
+          const siblings = Array.from(element.parentNode.children);
 
           if (
             siblings.filter((e) => e.tagName === element.tagName).length > 1
           ) {
-            let allSiblings = Array.from(element.parentNode.childNodes);
-            let index = allSiblings.indexOf(element);
+            const allSiblings = Array.from(element.parentNode.childNodes);
+            const index = allSiblings.indexOf(element);
             tag += `:nth-child(${index + 1})`;
           }
 
@@ -264,7 +279,7 @@ export class CSSHelp {
           indirectPath.unshift(tag);
           allPaths.push([directPath.join(" > "), indirectPath.join(" ")]);
 
-          // traverse up the DOM tree
+          // Traverse up the DOM tree
           element = element.parentNode as Element;
         }
 
@@ -272,7 +287,7 @@ export class CSSHelp {
       })
       .flat();
 
-    // remove duplicates
+    // Remove duplicates
     return [...new Set(allSelectors)];
   }
 }

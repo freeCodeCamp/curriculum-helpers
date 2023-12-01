@@ -306,7 +306,7 @@ body {
 
 const testValues = {
   cssFullExample,
-  cssCodeWithCommentsRemoved
+  cssCodeWithCommentsRemoved,
 };
 
 export default testValues;
