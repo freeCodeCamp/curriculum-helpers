@@ -125,7 +125,7 @@ export module python {
   }
 
   export function removeComments(code: string) {
-    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(\#.*$)/gm, "");
+    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(#.*$)/gm, "");
   }
 }
 
