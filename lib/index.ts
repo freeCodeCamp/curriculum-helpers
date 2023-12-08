@@ -123,6 +123,10 @@ export module python {
 
     return null;
   }
+
+  export function removeComments(code: string) {
+    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(\#.*$)/gm, "");
+  }
 }
 
 export class CSSHelp {
