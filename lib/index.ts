@@ -123,6 +123,42 @@ export module python {
 
     return null;
   }
+
+  /**
+   * Gets a Python block of code matching the `blockPattern`
+   * @param code - Code string to search
+   * @param blockPattern - String or regular expression to match on the block condition
+   *
+   * **Note:** A string `blockPattern` will be escaped to prevent special characters from being treated as regular expression syntax.
+   */
+  export function getBlock(code: string, blockPattern: string | RegExp) {
+    const escapedBlockPattern =
+      blockPattern instanceof RegExp
+        ? blockPattern.source
+        : blockPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const regex = new RegExp(
+      `\\n(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\n(?<block_body>.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
+      "s"
+    );
+
+    const matchedCode = regex.exec(code);
+    if (matchedCode) {
+      /* eslint-disable camelcase */
+      const { block_body, block_indentation, block_condition } =
+        matchedCode.groups;
+
+      const blockIndentationSansNewLine = block_indentation.replace(/\n+/g, "");
+      return {
+        block_body,
+        block_condition,
+        block_indentation: blockIndentationSansNewLine.length,
+      };
+      /* eslint-enable camelcase */
+    }
+
+    return null;
+  }
 }
 
 export class CSSHelp {
