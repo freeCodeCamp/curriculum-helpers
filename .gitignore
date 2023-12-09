@@ -133,3 +133,6 @@ dist
 
 # build folder
 /dist
+
+# mdbook (docs)
+book
