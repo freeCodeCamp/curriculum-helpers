@@ -124,6 +124,10 @@ export module python {
     return null;
   }
 
+  export function removeComments(code: string) {
+    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(#.*$)/gm, "");
+  }
+
   /**
    * Gets a Python block of code matching the `blockPattern`
    * @param code - Code string to search

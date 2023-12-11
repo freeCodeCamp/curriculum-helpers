@@ -25,6 +25,26 @@ def c():
     }
   });
 
+  it("removeComments", () => {
+    const code = `
+a = 1
+# comment
+def b(d, e):
+  a = 2
+  # comment
+  return a #comment
+`;
+    const result = python.removeComments(code);
+    expect(result).toEqual(`
+a = 1
+
+def b(d, e):
+  a = 2
+  
+  return a 
+`);
+  });
+
   it("getBlock", () => {
     const code = `
 a = 1
