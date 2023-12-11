@@ -1,0 +1,21 @@
+[book]
+authors = ["Shaun Hamilton"]
+language = "en"
+multilingual = false
+src = "docs"
+
+[output.html.playground]
+editable = true
+
+[preprocessor]
+
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "3.0.1"    # do not edit: managed by `mdbook-admonish install`
+
+[output.html]
+default-theme = "ayu"
+git-repository-url = "https://github.com/freeCodeCamp/curriculum-helpers"
+git-repository-icon = "fa-github"
+site-url = "https://opensource.freecodecamp.org/curriculum-helpers/"
+additional-css = ["./theme/css/mdbook-admonish.css"]
