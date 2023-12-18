@@ -99,8 +99,8 @@ const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
 export module python {
   export function getDef(code: string, functionName: string) {
     const regex = new RegExp(
-      `\\n(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
-      "s"
+      `^(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
+      "ms"
     );
 
     const matchedCode = regex.exec(code);
@@ -113,8 +113,7 @@ export module python {
         ""
       );
       return {
-        // Entire function definition without additional \n
-        def: matchedCode[0].slice(1),
+        def: matchedCode[0],
         function_parameters,
         function_body,
         function_indentation: functionIndentationSansNewLine.length,
@@ -142,8 +141,8 @@ export module python {
         : blockPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const regex = new RegExp(
-      `\\n(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\n(?<block_body>.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
-      "s"
+      `^(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\n(?<block_body>.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
+      "ms"
     );
 
     const matchedCode = regex.exec(code);
