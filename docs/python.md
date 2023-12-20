@@ -60,27 +60,21 @@ def add_or_subtract(a, b, add=True):
 
 ## `removeComments`
 
-```javascript,mdbook-runnable,hidelines=!!!!
-!!!!{{!!!!#rustdoc_include tools/helpers.js}}
-    const code = `
+```javascript,mdbook-runnable,hidelines=#
+# {{#rustdoc_include tools/helpers.js:1}}
+// Note: Comment identifiers are escaped for docs markdown parser
+const code = `
 a = 1
-# comment
+\# comment
 def b(d, e):
-  a = 2
-  # comment
-  return a #comment
+    a = 2
+    \# comment
+    return a #comment
 `;
 {
   const commentlessCode = __helpers.python.removeComments(code);
+  console.assert(commentlessCode === `\na = 1\n\ndef b(d, e):\n    a = 2\n    \n    return a \n`);
   console.log(commentlessCode);
-  console.assert(commentlessCode === `
-a = 1
-
-def b(d, e):
-  a = 2
-
-  return a
-`);
 }
 ```
 
