@@ -10,3 +10,4 @@ theme
 .gitignore
 book.toml
 renovate.json
+webpack.config.js

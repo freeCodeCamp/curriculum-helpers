@@ -1,8 +1,8 @@
 "use strict";
 
-import { CodeNode, Block } from "./class/node.js";
-import { options } from "./option-types.js";
-import { languages } from "./languages.js";
+import { CodeNode, Block } from "./class/node";
+import { options } from "./option-types";
+import { languages } from "./languages";
 
 const constants = {
   ESCAPED_CHAR_REGEX: /^\\./,

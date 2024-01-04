@@ -1,4 +1,4 @@
-import { strip } from "./strip.js";
+import { strip } from "./strip";
 
 /**
  * Removes every HTML-comment from the string that is provided
