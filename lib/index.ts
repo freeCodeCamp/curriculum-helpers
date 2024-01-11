@@ -165,6 +165,7 @@ export module python {
   }
 }
 
+export { astHelpers } from "../python/index.js";
 export class CSSHelp {
   doc: Document;
   constructor(doc: Document) {

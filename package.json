@@ -38,7 +38,8 @@
     "prettier": "2.8.8",
     "ts-loader": "9.5.1",
     "webpack": "5.89.0",
-    "webpack-cli": "5.1.4"
+    "webpack-cli": "5.1.4",
+    "tsx": "4.7.0"
   },
   "publishConfig": {
     "access": "public"
@@ -66,7 +67,8 @@
     "lint": "eslint lib --max-warnings 0 && prettier lib --check",
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "webpack": "webpack"
+    "webpack": "webpack",
+    "prepare": "tsx ./python/prepare.ts"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
