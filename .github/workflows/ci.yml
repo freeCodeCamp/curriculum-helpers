@@ -25,3 +25,19 @@ jobs:
 
       - name: Run Tests
         run: npm test
+
+  python-tests:
+    name: "Python CI"
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the Repo
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+
+      # Install Python 3.9
+      - name: Setup Python
+        uses: actions/setup-python@v4 # v2
+        with:
+          python-version: 3.x
+
+      - name: Run Tests
+        run: python ./python/py_helpers.test.py
