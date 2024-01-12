@@ -16,18 +16,16 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.([cm]?ts|tsx)$/,
+        test: /\.ts$/,
         include: path.resolve(__dirname, "lib"),
         loader: "ts-loader",
       },
     ],
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js"],
+    extensions: [".ts", ".js"],
     extensionAlias: {
       ".ts": [".js", ".ts"],
-      ".cts": [".cjs", ".cts"],
-      ".mts": [".mjs", ".mts"],
     },
   },
 };
