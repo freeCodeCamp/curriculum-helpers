@@ -25,13 +25,23 @@ class Chainable:
     # searched for exists. In this case, it returns True if the variable exists.
 
     def has_variable(self, name):
+        return self.find_variable(name) != None
+
+    def find_variable(self, name):
         for node in self.tree.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         if target.id == name:
-                            return True
-        return False
+                            return Chainable(node)
+        return None
+
+    def get_variable(self, name):
+        var = self.find_variable(name)
+        if var != None:
+            return var.tree.value.value
+        else:
+            return None
 
     def has_function(self, name):
         return self.find_function(name) != None

@@ -51,6 +51,20 @@ def foo():
 
         self.assertFalse(chainable.find_function("foo").variable_is_integer("x"))
 
+    def test_variable_has_constant_value(self):
+        chainable = Chainable().parse('def foo():\n  x = "1"')
+
+        self.assertEqual(chainable.find_function("foo").get_variable("x"), "1")
+
+    def test_find_variable(self):
+        chainable = Chainable().parse('def foo():\n  x = "1"')
+
+        self.assertTrue(
+            chainable.find_function("foo")
+            .find_variable("x")
+            .is_equivalent(ast.parse('x = "1"')),
+        )
+
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
     def test_parse_creates_chainable(self):
