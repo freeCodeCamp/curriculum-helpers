@@ -3,30 +3,7 @@ import ast
 from py_helpers import Chainable
 
 
-class TestStringMethods(unittest.TestCase):
-    def test_parse_creates_chainable(self):
-        chainable = Chainable().parse("def foo():\n  pass")
-
-        self.assertTrue(isinstance(chainable.tree, ast.Module))
-        self.assertEqual(
-            ast.dump(chainable.tree), ast.dump(ast.parse("def foo():\n  pass"))
-        )
-
-    def test_find_function_returns_function_ast(self):
-        chainable = Chainable().parse("def foo():\n  pass")
-
-        func = chainable.find_function("foo")
-
-        self.assertTrue(isinstance(func.tree, ast.FunctionDef))
-        self.assertEqual(func.tree.name, "foo")
-
-    def test_find_function_returns_none(self):
-        chainable = Chainable().parse("def foo():\n  pass")
-
-        func = chainable.find_function("bar")
-
-        self.assertEqual(func, None)
-
+class TestVariableHelpers(unittest.TestCase):
     def test_has_local_variable_in_function(self):
         func_str = """def foo():
   a = 1
@@ -57,6 +34,48 @@ b = 2
 
         self.assertFalse(chainable.has_variable("a"))
 
+    def test_local_variable_is_integer(self):
+        two_locals = """
+def foo():
+  a = 1
+  print(a)
+  x = 2
+"""
+        chainable = Chainable().parse(two_locals)
+
+        self.assertTrue(chainable.find_function("foo").variable_is_integer("x"))
+        self.assertFalse(chainable.find_function("foo").variable_is_integer("y"))
+
+    def test_local_variable_is_integer_with_string(self):
+        chainable = Chainable().parse('def foo():\n  x = "1"')
+
+        self.assertFalse(chainable.find_function("foo").variable_is_integer("x"))
+
+
+class TestFunctionAndClassHelpers(unittest.TestCase):
+    def test_parse_creates_chainable(self):
+        chainable = Chainable().parse("def foo():\n  pass")
+
+        self.assertTrue(isinstance(chainable.tree, ast.Module))
+        self.assertEqual(
+            ast.dump(chainable.tree), ast.dump(ast.parse("def foo():\n  pass"))
+        )
+
+    def test_find_function_returns_function_ast(self):
+        chainable = Chainable().parse("def foo():\n  pass")
+
+        func = chainable.find_function("foo")
+
+        self.assertTrue(isinstance(func.tree, ast.FunctionDef))
+        self.assertEqual(func.tree.name, "foo")
+
+    def test_find_function_returns_none(self):
+        chainable = Chainable().parse("def foo():\n  pass")
+
+        func = chainable.find_function("bar")
+
+        self.assertEqual(func, None)
+
     def test_nested_function(self):
         nested_str = """def foo():
   def bar():
@@ -72,6 +91,20 @@ b = 2
             chainable.find_function("foo").find_function("bar").has_variable("x")
         )
 
+    def test_method_exists(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    self.x = 1
+  def bar(self):
+    pass
+"""
+        chainable = Chainable().parse(class_str)
+
+        self.assertTrue(chainable.find_class("Foo").has_function("bar"))
+
+
+class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
         full_str = """def foo():
   a = 1
@@ -123,36 +156,15 @@ def foo():
 
         self.assertFalse(chainable.find_function("bar").is_equivalent(expected))
 
-    def test_local_variable_is_integer(self):
-        two_locals = """
-def foo():
-  a = 1
-  print(a)
-  x = 2
-"""
-        chainable = Chainable().parse(two_locals)
 
-        self.assertTrue(chainable.find_function("foo").variable_is_integer("x"))
-        self.assertFalse(chainable.find_function("foo").variable_is_integer("y"))
-
-    def test_local_variable_is_integer_with_string(self):
-        chainable = Chainable().parse('def foo():\n  x = "1"')
-
-        self.assertFalse(chainable.find_function("foo").variable_is_integer("x"))
-
-
-    def test_method_exists(self):
-        class_str = """
-class Foo:
-  def __init__(self):
-    self.x = 1
-  def bar(self):
-    pass
-"""
-        chainable = Chainable().parse(class_str)
-
-        self.assertTrue(chainable.find_class("Foo").has_function("bar"))
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TestVariableHelpers))
+    suite.addTest(unittest.makeSuite(TestFunctionAndClassHelpers))
+    suite.addTest(unittest.makeSuite(TestEquivalenceHelpers))
+    return suite
 
 
 if __name__ == "__main__":
-    unittest.main()
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
