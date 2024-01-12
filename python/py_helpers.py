@@ -58,6 +58,14 @@ class Chainable:
 
         return False
 
+    def value_is_call(self, name):
+        if not isinstance(self.tree, ast.Assign):
+            return False
+        call = self.tree.value
+        if isinstance(call, ast.Call):
+            return call.func.id == name
+        return False
+
     # This function takes an AST and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
 
     def is_equivalent(self, target_ast):

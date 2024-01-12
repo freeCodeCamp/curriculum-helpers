@@ -65,6 +65,18 @@ def foo():
             .is_equivalent(ast.parse('x = "1"')),
         )
 
+    def test_function_call_assigned_to_variable(self):
+        chainable = Chainable().parse("def foo():\n  x = bar()")
+
+        self.assertTrue(
+            chainable.find_function("foo").find_variable("x").value_is_call("bar")
+        )
+
+    def test_function_call_not_assigned_to_variable(self):
+        chainable = Chainable().parse("def foo():\n  bar()")
+
+        self.assertFalse(chainable.find_function("foo").value_is_call("bar"))
+
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
     def test_parse_creates_chainable(self):
