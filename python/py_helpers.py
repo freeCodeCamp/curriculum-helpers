@@ -10,6 +10,10 @@ class Chainable:
     def parse(self, string):
         return Chainable(ast.parse(string))
 
+    # "find" functions return a new chainable with the result of the find
+    # function. In this case, it returns a new chainable with the function
+    # definition (if it exists)
+
     def find_function(self, func):
         for node in self.tree.body:
             if isinstance(node, ast.FunctionDef):
@@ -17,7 +21,8 @@ class Chainable:
                     return Chainable(node)
         return None
 
-    # This function checks the variable, name, is in the current scope
+    # "has" functions return a boolean indicating whether whatever is being
+    # searched for exists. In this case, it returns True if the variable exists.
 
     def has_variable(self, name):
         for node in self.tree.body:
@@ -27,6 +32,9 @@ class Chainable:
                         if target.id == name:
                             return True
         return False
+
+    def has_function(self, name):
+        return self.find_function(name) != None
 
     # This function checks the variable, name, is in the current scope and is an integer
 
@@ -52,3 +60,12 @@ class Chainable:
                     target_ast.body[0]
                 )
             return False
+
+    # This function finds the class definition with the given name
+
+    def find_class(self, class_name):
+        for node in self.tree.body:
+            if isinstance(node, ast.ClassDef):
+                if node.name == class_name:
+                    return Chainable(node)
+        return None

@@ -141,5 +141,18 @@ def foo():
         self.assertFalse(chainable.find_function("foo").variable_is_integer("x"))
 
 
+    def test_method_exists(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    self.x = 1
+  def bar(self):
+    pass
+"""
+        chainable = Chainable().parse(class_str)
+
+        self.assertTrue(chainable.find_class("Foo").has_function("bar"))
+
+
 if __name__ == "__main__":
     unittest.main()
