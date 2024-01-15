@@ -174,6 +174,15 @@ def foo():
 
         self.assertFalse(chainable.find_function("bar").is_equivalent(expected))
 
+    def test_is_equivalent_with_conditional(self):
+        cond_str = """
+if True:
+  pass
+"""
+
+        chainable = Chainable().parse(cond_str)
+        self.assertTrue(chainable[0].find_conditions()[0].is_equivalent("True"))
+
 
 class TestConditionalHelpers(unittest.TestCase):
     def test_find_if_statements(self):
@@ -236,6 +245,9 @@ else:
         chainable = Chainable().parse(if_str)
 
         self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 4)
+        self.assertTrue(
+            chainable.find_ifs()[0].find_conditions()[0].is_equivalent("True")
+        )
 
 
 class TestGenericHelpers(unittest.TestCase):

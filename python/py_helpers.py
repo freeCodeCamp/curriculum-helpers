@@ -78,6 +78,18 @@ class Chainable:
             return call.func.id == name
         return False
 
+    def _constants_match(self, target_ast):
+        # if the tree is a Constant expression, e.g. Constant(value=True),
+        # we need to check if it's equivalent to ast.parse("True"), but
+        # ast.parse("True") returns
+        # Module(body=[Expr(value=Constant(value=True))], type_ignores=[]),
+
+        # first we convert the statements to expressions
+        as_expressions = [ast.Expr(node) for node in self.tree.body]
+        # then rebuild the module
+        expected_ast = ast.Module(as_expressions, [])
+        return ast.dump(expected_ast) == ast.dump(target_ast)
+
     # Takes an string and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
 
     def is_equivalent(self, target_str):
@@ -88,7 +100,7 @@ class Chainable:
         elif not isinstance(self.tree, ast.Module):
             return self._wrap_in_module().is_equivalent(target_str)
         else:
-            return False
+            return self._constants_match(target_ast)
 
     # Finds the class definition with the given name
 
