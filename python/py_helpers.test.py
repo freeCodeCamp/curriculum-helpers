@@ -237,7 +237,7 @@ if True:
   x = 1
 elif y == 2:
   x = 2
-elif True:
+elif not x < 3:
   x = 3
 else:
   x = 4
@@ -247,6 +247,12 @@ else:
         self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 4)
         self.assertTrue(
             chainable.find_ifs()[0].find_conditions()[0].is_equivalent("True")
+        )
+        self.assertTrue(
+            chainable.find_ifs()[0].find_conditions()[1].is_equivalent("y == 2")
+        )
+        self.assertTrue(
+            chainable.find_ifs()[0].find_conditions()[2].is_equivalent("not x < 3")
         )
 
 
