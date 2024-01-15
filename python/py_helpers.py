@@ -85,11 +85,9 @@ class Chainable:
         have_same_dump = ast.dump(self.tree) == ast.dump(target_ast)
         if have_same_dump:
             return True
+        elif not isinstance(self.tree, ast.Module):
+            return self._wrap_in_module().is_equivalent(target_str)
         else:
-            if isinstance(target_ast, ast.Module):
-                return len(target_ast.body) == 1 and self.is_equivalent(
-                    target_ast.body[0]
-                )
             return False
 
     # Finds the class definition with the given name
@@ -117,6 +115,9 @@ class Chainable:
                 [node for node in self.tree.body if isinstance(node, ast_type)], []
             )
         )
+
+    def _wrap_in_module(self):
+        return Chainable(ast.Module([self.tree], []))
 
     def find_conditions(self):
         def _find_conditions(tree):
