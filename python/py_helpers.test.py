@@ -208,9 +208,7 @@ if x == 2:
             ast.dump(ast.parse(just_ifs_str)),
         )
         self.assertTrue(
-            chainable.find_ifs()
-            .find_nth(0)
-            .is_equivalent(ast.parse("if x == 1:\n  x = 2"))
+            chainable.find_ifs()[0].is_equivalent(ast.parse("if x == 1:\n  x = 2"))
         )
 
     def test_find_conditions(self):
@@ -222,8 +220,8 @@ else:
 """
         chainable = Chainable().parse(if_str)
 
-        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 2)
-        self.assertIsNone(chainable.find_ifs().find_nth(0).find_conditions().tree[1])
+        self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 2)
+        self.assertIsNone(chainable.find_ifs()[0].find_conditions().tree[1])
 
     def test_find_conditions_only_if(self):
         if_str = """
@@ -232,7 +230,7 @@ if True:
 """
         chainable = Chainable().parse(if_str)
 
-        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 1)
+        self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 1)
 
     def test_find_conditions_elif(self):
         if_str = """
@@ -247,7 +245,7 @@ else:
 """
         chainable = Chainable().parse(if_str)
 
-        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 4)
+        self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 4)
 
 
 class TestGenericHelpers(unittest.TestCase):
@@ -260,10 +258,17 @@ x = 1
 """
         chainable = Chainable().parse(func_str)
 
-        self.assertTrue(
-            chainable.find_nth(0).is_equivalent(ast.parse("if True:\n  pass"))
-        )
-        self.assertTrue(chainable.find_nth(1).is_equivalent(ast.parse("x = 1")))
+        self.assertTrue(chainable[0].is_equivalent(ast.parse("if True:\n  pass")))
+        self.assertTrue(chainable[1].is_equivalent(ast.parse("x = 1")))
+
+    def test_raise_exception_if_out_of_bounds(self):
+        one_stmt_str = """
+if True:
+  pass
+"""
+
+        chainable = Chainable().parse(one_stmt_str)
+        self.assertRaises(IndexError, lambda: chainable[1])
 
     def test_len_of_body(self):
         func_str = """

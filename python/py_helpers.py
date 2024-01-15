@@ -7,6 +7,12 @@ class Chainable:
     def __init__(self, tree=None):
         self.tree = tree
 
+    def __getitem__(self, i):
+        if getattr(self.tree, "__getitem__", False):
+            return Chainable(self.tree[i])
+        else:
+            return Chainable(self.tree.body[i])
+
     def __len__(self):
         if getattr(self.tree, "__len__", False):
             return len(self.tree)
