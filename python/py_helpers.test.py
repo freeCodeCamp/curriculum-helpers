@@ -183,11 +183,119 @@ def foo():
         self.assertFalse(chainable.find_function("bar").is_equivalent(expected))
 
 
+class TestConditionalHelpers(unittest.TestCase):
+    def test_find_if_statements(self):
+        self.maxDiff = None
+        if_str = """
+x = 1
+if x == 1:
+  x = 2
+
+if x == 2:
+  pass
+"""
+        just_ifs_str = """
+if x == 1:
+  x = 2
+
+if x == 2:
+  pass
+"""
+
+        chainable = Chainable().parse(if_str)
+        self.assertEqual(
+            ast.dump(chainable.find_ifs().tree),
+            ast.dump(ast.parse(just_ifs_str)),
+        )
+        self.assertTrue(
+            chainable.find_ifs()
+            .find_nth(0)
+            .is_equivalent(ast.parse("if x == 1:\n  x = 2"))
+        )
+
+    def test_find_conditions(self):
+        if_str = """
+if True:
+  x = 1
+else:
+  x = 4
+"""
+        chainable = Chainable().parse(if_str)
+
+        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 2)
+        self.assertIsNone(chainable.find_ifs().find_nth(0).find_conditions().tree[1])
+
+    def test_find_conditions_only_if(self):
+        if_str = """
+if True:
+  x = 1
+"""
+        chainable = Chainable().parse(if_str)
+
+        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 1)
+
+    def test_find_conditions_elif(self):
+        if_str = """
+if True:
+  x = 1
+elif y == 2:
+  x = 2
+elif True:
+  x = 3
+else:
+  x = 4
+"""
+        chainable = Chainable().parse(if_str)
+
+        self.assertEqual(len(chainable.find_ifs().find_nth(0).find_conditions()), 4)
+
+
+class TestGenericHelpers(unittest.TestCase):
+    def test_find_nth_statement(self):
+        func_str = """
+if True:
+  pass
+
+x = 1
+"""
+        chainable = Chainable().parse(func_str)
+
+        self.assertTrue(
+            chainable.find_nth(0).is_equivalent(ast.parse("if True:\n  pass"))
+        )
+        self.assertTrue(chainable.find_nth(1).is_equivalent(ast.parse("x = 1")))
+
+    def test_len_of_body(self):
+        func_str = """
+if True:
+  pass
+"""
+
+        chainable = Chainable().parse(func_str)
+
+        self.assertEqual(len(chainable), 1)
+
+    def test_len(self):
+        ifs_str = """
+if True:
+  pass
+
+if True:
+  pass
+"""
+
+        chainable = Chainable().parse(ifs_str)
+
+        self.assertEqual(len(chainable.find_ifs()), 2)
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(TestVariableHelpers))
     suite.addTest(unittest.makeSuite(TestFunctionAndClassHelpers))
     suite.addTest(unittest.makeSuite(TestEquivalenceHelpers))
+    suite.addTest(unittest.makeSuite(TestConditionalHelpers))
+    suite.addTest(unittest.makeSuite(TestGenericHelpers))
     return suite
 
 

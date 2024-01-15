@@ -7,6 +7,12 @@ class Chainable:
     def __init__(self, tree=None):
         self.tree = tree
 
+    def __len__(self):
+        if getattr(self.tree, "__len__", False):
+            return len(self.tree)
+        else:
+            return len(self.tree.body)
+
     def parse(self, string):
         return Chainable(ast.parse(string))
 
@@ -46,7 +52,7 @@ class Chainable:
     def has_function(self, name):
         return self.find_function(name) != None
 
-    # This function checks the variable, name, is in the current scope and is an integer
+    # Checks the variable, name, is in the current scope and is an integer
 
     def variable_is_integer(self, name):
         for node in self.tree.body:
@@ -66,7 +72,7 @@ class Chainable:
             return call.func.id == name
         return False
 
-    # This function takes an AST and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
+    # Takes an AST and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
 
     def is_equivalent(self, target_ast):
         have_same_dump = ast.dump(self.tree) == ast.dump(target_ast)
@@ -79,7 +85,7 @@ class Chainable:
                 )
             return False
 
-    # This function finds the class definition with the given name
+    # Finds the class definition with the given name
 
     def find_class(self, class_name):
         for node in self.tree.body:
@@ -87,3 +93,32 @@ class Chainable:
                 if node.name == class_name:
                     return Chainable(node)
         return None
+
+    # Find an array of conditions in an if statement
+
+    def find_ifs(self):
+        return self._find_all(ast.If)
+
+    # Find the nth statement
+
+    def find_nth(self, n):
+        return Chainable(self.tree.body[n])
+
+    def _find_all(self, ast_type):
+        return Chainable(
+            ast.Module(
+                [node for node in self.tree.body if isinstance(node, ast_type)], []
+            )
+        )
+
+    def find_conditions(self):
+        def _find_conditions(tree):
+            test = tree.test
+            if self.tree.orelse == []:
+                return [test]
+            elif isinstance(tree.orelse[0], ast.If):
+                return [test] + _find_conditions(tree.orelse[0])
+            else:
+                return [test, None]
+
+        return Chainable(_find_conditions(self.tree))
