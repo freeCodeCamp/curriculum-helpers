@@ -102,6 +102,18 @@ class Chainable:
     # Takes an string and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
 
     def is_equivalent(self, target_str):
+        # None is a special case used to indicate that there is an else clause.
+        # It is
+        if self.tree == None:
+            raise TypeError(
+                """
+is_equivalent cannot be called on None.
+
+None is used to represent the condition of a final else clause. If you're using
+find_conditions and want to check the nth condition, you can use
+find_conditions()[n].tree == None
+"""
+            )
         target_ast = ast.parse(target_str)
         have_same_dump = ast.dump(self.tree) == ast.dump(target_ast)
         if have_same_dump:

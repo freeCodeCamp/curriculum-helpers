@@ -254,6 +254,11 @@ else:
         self.assertTrue(
             chainable.find_ifs()[0].find_conditions()[2].is_equivalent("not x < 3")
         )
+        self.assertEqual(chainable.find_ifs()[0].find_conditions()[3].tree, None)
+        self.assertRaises(
+            TypeError,
+            lambda: chainable.find_ifs()[0].find_conditions()[3].is_equivalent("None"),
+        )
 
 
 class TestGenericHelpers(unittest.TestCase):
