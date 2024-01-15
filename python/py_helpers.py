@@ -78,9 +78,10 @@ class Chainable:
             return call.func.id == name
         return False
 
-    # Takes an AST and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
+    # Takes an string and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
 
-    def is_equivalent(self, target_ast):
+    def is_equivalent(self, target_str):
+        target_ast = ast.parse(target_str)
         have_same_dump = ast.dump(self.tree) == ast.dump(target_ast)
         if have_same_dump:
             return True

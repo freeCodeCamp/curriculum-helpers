@@ -60,9 +60,7 @@ def foo():
         chainable = Chainable().parse('def foo():\n  x = "1"')
 
         self.assertTrue(
-            chainable.find_function("foo")
-            .find_variable("x")
-            .is_equivalent(ast.parse('x = "1"')),
+            chainable.find_function("foo").find_variable("x").is_equivalent('x = "1"'),
         )
 
     def test_function_call_assigned_to_variable(self):
@@ -142,22 +140,18 @@ def bar():
 
         chainable = Chainable().parse(full_str)
 
-        expected = ast.parse(
-            """def bar():
+        expected = """def bar():
   x = "1"
   print(x)
 """
-        )
 
         self.assertTrue(chainable.find_function("bar").is_equivalent(expected))
         # Obviously, it should be equivalent to itself
         self.assertTrue(
             chainable.find_function("bar").is_equivalent(
-                chainable.find_function("bar").tree
+                ast.unparse(chainable.find_function("bar").tree)
             )
         )
-        # It should also be equivalent to the FunctionDef node itself
-        self.assertTrue(chainable.find_function("bar").is_equivalent(expected.body[0]))
 
     def test_is_not_equivalent(self):
         full_str = """def foo():
@@ -170,15 +164,13 @@ def bar():
         chainable = Chainable().parse(full_str)
         # this should not be equivalent because it contains an extra function
 
-        expected = ast.parse(
-            """def bar():
+        expected = """def bar():
   x = "1"
   print(x)
 
 def foo():
   a = 1
 """
-        )
 
         self.assertFalse(chainable.find_function("bar").is_equivalent(expected))
 
@@ -207,9 +199,7 @@ if x == 2:
             ast.dump(chainable.find_ifs().tree),
             ast.dump(ast.parse(just_ifs_str)),
         )
-        self.assertTrue(
-            chainable.find_ifs()[0].is_equivalent(ast.parse("if x == 1:\n  x = 2"))
-        )
+        self.assertTrue(chainable.find_ifs()[0].is_equivalent("if x == 1:\n  x = 2"))
 
     def test_find_conditions(self):
         if_str = """
@@ -258,8 +248,8 @@ x = 1
 """
         chainable = Chainable().parse(func_str)
 
-        self.assertTrue(chainable[0].is_equivalent(ast.parse("if True:\n  pass")))
-        self.assertTrue(chainable[1].is_equivalent(ast.parse("x = 1")))
+        self.assertTrue(chainable[0].is_equivalent("if True:\n  pass"))
+        self.assertTrue(chainable[1].is_equivalent("x = 1"))
 
     def test_raise_exception_if_out_of_bounds(self):
         one_stmt_str = """
