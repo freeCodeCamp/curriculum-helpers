@@ -99,6 +99,13 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
         self.assertIsInstance(chainable.find_function("foo"), Chainable)
         self.assertIsInstance(chainable.find_function("bar"), Chainable)
 
+    def test_find_function_can_handle_all_asts(self):
+        chainable = Chainable().parse("x = 1")
+
+        # First find_variable, so know that the AST has no body and we can be
+        # sure find_function handles this.
+        self.assertEqual(chainable.find_variable("x").find_function("foo"), Chainable())
+
     def test_parse_creates_chainable(self):
         chainable = Chainable().parse("def foo():\n  pass")
 

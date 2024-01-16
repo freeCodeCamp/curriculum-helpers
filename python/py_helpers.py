@@ -44,6 +44,8 @@ class Chainable:
     # definition (if it exists)
 
     def find_function(self, func):
+        if not getattr(self.tree, "body", False):
+            return Chainable()
         for node in self.tree.body:
             if isinstance(node, ast.FunctionDef):
                 if node.name == func:
