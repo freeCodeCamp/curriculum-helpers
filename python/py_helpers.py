@@ -39,12 +39,15 @@ class Chainable:
     def parse(self, string):
         return Chainable(ast.parse(string))
 
+    def _has_body(self):
+        return bool(getattr(self.tree, "body", False))
+
     # "find" functions return a new chainable with the result of the find
     # function. In this case, it returns a new chainable with the function
     # definition (if it exists)
 
     def find_function(self, func):
-        if not getattr(self.tree, "body", False):
+        if not self._has_body():
             return Chainable()
         for node in self.tree.body:
             if isinstance(node, ast.FunctionDef):
@@ -59,6 +62,8 @@ class Chainable:
         return self.find_variable(name).tree != None
 
     def find_variable(self, name):
+        if not self._has_body():
+            return Chainable()
         for node in self.tree.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
@@ -110,6 +115,8 @@ class Chainable:
     # Finds the class definition with the given name
 
     def find_class(self, class_name):
+        if not self._has_body():
+            return Chainable()
         for node in self.tree.body:
             if isinstance(node, ast.ClassDef):
                 if node.name == class_name:

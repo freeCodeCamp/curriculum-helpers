@@ -4,6 +4,13 @@ from py_helpers import Chainable
 
 
 class TestVariableHelpers(unittest.TestCase):
+    def test_find_variable_can_handle_all_asts(self):
+        chainable = Chainable().parse("x = 1")
+
+        # First find_variable, so know that the AST has no body and we can be
+        # sure find_class handles this.
+        self.assertEqual(chainable.find_variable("x").find_variable("x"), Chainable())
+
     def test_has_local_variable_in_function(self):
         func_str = """def foo():
   a = 1
@@ -159,6 +166,13 @@ class Foo:
 
         self.assertIsInstance(chainable.find_class("Bar"), Chainable)
         self.assertEqual(chainable.find_class("Bar"), Chainable())
+
+    def test_find_class_can_handle_all_asts(self):
+        chainable = Chainable().parse("x = 1")
+
+        # First find_variable, so know that the AST has no body and we can be
+        # sure find_class handles this.
+        self.assertEqual(chainable.find_variable("x").find_class("Foo"), Chainable())
 
     def test_method_exists(self):
         class_str = """
