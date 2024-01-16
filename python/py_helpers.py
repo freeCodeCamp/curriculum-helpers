@@ -4,6 +4,7 @@ import ast
 
 
 class Chainable:
+    # TODO: allow initialization with a string
     def __init__(self, tree=None):
         self.tree = tree
 
@@ -81,25 +82,12 @@ class Chainable:
             return call.func.id == name
         return False
 
-    def _is_equivalent_cond(self, target_ast):
-        # if the tree is a condition, i.e. test attribute of an if statement, we
-        # need to check if it's equivalent to
-        # ast.parse(<just-the-condition-expression>), but, for example,
-        # ast.parse("True") returns
-
-        # Module(body=[Expr(value=Constant(value=True))])
-
-        # and the condition will just be (after wrapping in a module)
-
-        # Module(body=[Constant(value=True)]).
-
-        # so we have to make explicit the implicit expressions before we can
-        # compare the ASTs.
-        as_expressions = [ast.Expr(node) for node in self.tree.body]
-        expected_ast = ast.Module(as_expressions, [])
-        return ast.dump(expected_ast) == ast.dump(target_ast)
-
-    # Takes an string and checks if is equivalent (up to being wrapped in a module) to the chainable's AST
+    # Takes an string and checks if is equivalent to the chainable's AST. This
+    # is a loose comparison that tries to find out if the code is essentially
+    # the same. For example, the string "True" is not represented by the same
+    # AST as the test in "if True:" (the string could be wrapped in Module,
+    # Interactive or Expression, depending on the parse mode and the test is
+    # just a Constant), but they are equivalent.
 
     def is_equivalent(self, target_str):
         # None is a special case used to indicate that there is an else clause.
@@ -114,14 +102,7 @@ find_conditions and want to check the nth condition, you can use
 find_conditions()[n].tree == None
 """
             )
-        target_ast = ast.parse(target_str)
-        have_same_dump = ast.dump(self.tree) == ast.dump(target_ast)
-        if have_same_dump:
-            return True
-        elif not isinstance(self.tree, ast.Module):
-            return self._wrap_in_module().is_equivalent(target_str)
-        else:
-            return self._is_equivalent_cond(target_ast)
+        return ast.unparse(self.tree) == ast.unparse(ast.parse(target_str))
 
     # Finds the class definition with the given name
 
