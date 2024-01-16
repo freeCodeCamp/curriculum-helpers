@@ -33,7 +33,7 @@ class Chainable:
 
     def __repr__(self):
         if self.tree == None:
-            return "Chainable(None)"
+            return "Chainable:\nNone"
         return "Chainable:\n" + ast.dump(self.tree, indent=2)
 
     def parse(self, string):
@@ -59,7 +59,7 @@ class Chainable:
     # searched for exists. In this case, it returns True if the variable exists.
 
     def has_variable(self, name):
-        return self.find_variable(name).tree != None
+        return self.find_variable(name) != Chainable()
 
     def find_variable(self, name):
         if not self._has_body():
