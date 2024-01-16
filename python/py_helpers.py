@@ -21,7 +21,9 @@ class Chainable:
             return len(self.tree.body)
 
     def __repr__(self):
-        return ast.dump(self.tree, indent=2)
+        if self.tree == None:
+            return "Chainable(None)"
+        return "Chainable:\n" + ast.dump(self.tree, indent=2)
 
     def parse(self, string):
         return Chainable(ast.parse(string))
