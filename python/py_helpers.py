@@ -20,6 +20,17 @@ class Chainable:
         else:
             return len(self.tree.body)
 
+    def __eq__(self, other):
+        if not isinstance(other, Chainable):
+            return False
+        if self.tree == None:
+            return other.tree == None
+        if other.tree == None:
+            return False
+        return ast.dump(self.tree, include_attributes=True) == ast.dump(
+            other.tree, include_attributes=True
+        )
+
     def __repr__(self):
         if self.tree == None:
             return "Chainable(None)"
@@ -37,6 +48,7 @@ class Chainable:
             if isinstance(node, ast.FunctionDef):
                 if node.name == func:
                     return Chainable(node)
+        # TODO: should be Chainable(None)?
         return None
 
     # "has" functions return a boolean indicating whether whatever is being
@@ -101,6 +113,7 @@ class Chainable:
             if isinstance(node, ast.ClassDef):
                 if node.name == class_name:
                     return Chainable(node)
+        # TODO: should be Chainable(None)? Update tests to fail otherwise
         return None
 
     # Find an array of conditions in an if statement

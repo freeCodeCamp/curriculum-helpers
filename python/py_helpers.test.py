@@ -328,6 +328,26 @@ else:
 
 
 class TestGenericHelpers(unittest.TestCase):
+    def test_equality(self):
+        self.assertEqual(
+            Chainable().parse("def foo():\n  pass"),
+            Chainable().parse("def foo():\n  pass"),
+        )
+        self.assertNotEqual(
+            Chainable().parse("def foo():\n  pass"),
+            Chainable().parse("def bar():\n  pass"),
+        )
+
+    def test_strict_equality(self):
+        self.assertNotEqual(
+            Chainable().parse("def foo():\n  pass"),
+            Chainable().parse("def foo():\n   pass"),
+        )
+
+    def test_not_equal_to_non_chainable(self):
+        self.assertIsNotNone(Chainable().parse("def foo():\n  pass"))
+        self.assertNotEqual(Chainable(), 1)
+
     def test_find_nth_statement(self):
         func_str = """
 if True:
