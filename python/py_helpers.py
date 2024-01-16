@@ -80,7 +80,7 @@ class Chainable:
             return None
 
     def has_function(self, name):
-        return self.find_function(name) != None
+        return self.find_function(name) != Chainable()
 
     # Checks the variable, name, is in the current scope and is an integer
 

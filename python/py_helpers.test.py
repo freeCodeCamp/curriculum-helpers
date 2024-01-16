@@ -186,6 +186,11 @@ class Foo:
 
         self.assertTrue(chainable.find_class("Foo").has_function("bar"))
 
+    def test_not_has_function(self):
+        chainable = Chainable().parse("def foo():\n  pass")
+
+        self.assertFalse(chainable.has_function("bar"))
+
 
 class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
