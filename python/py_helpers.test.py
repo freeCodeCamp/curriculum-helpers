@@ -63,6 +63,11 @@ def foo():
             chainable.find_function("foo").find_variable("x").is_equivalent('x = "1"'),
         )
 
+    def test_find_variable_not_found(self):
+        chainable = Chainable().parse('def foo():\n  x = "1"')
+
+        self.assertEqual(chainable.find_variable("y").tree, None)
+
     def test_function_call_assigned_to_variable(self):
         chainable = Chainable().parse("def foo():\n  x = bar()")
 
