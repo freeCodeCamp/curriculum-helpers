@@ -45,6 +45,15 @@ y = 3
         self.assertTrue(chainable.find_function("foo").find_variable("x").is_integer())
         self.assertFalse(chainable.find_function("foo").find_variable("y").is_integer())
 
+    def test_none_assignment(self):
+        none_str = """
+x = None
+"""
+        chainable = Chainable().parse(none_str)
+
+        self.assertTrue(chainable.has_variable("x"))
+        self.assertTrue(chainable.find_variable("x").is_equivalent("x = None"))
+
     def test_local_variable_is_integer_with_string(self):
         chainable = Chainable().parse('def foo():\n  x = "1"')
 
@@ -187,6 +196,15 @@ if True:
         chainable = Chainable().parse(cond_str)
         self.assertTrue(chainable[0].find_conditions()[0].is_equivalent("True"))
 
+    def test_none_equivalence(self):
+        none_str = """
+x = None
+"""
+
+        chainable = Chainable().parse(none_str)
+        self.assertIsNone(chainable.get_variable("x"))
+        self.assertFalse(chainable.find_variable("y").is_equivalent("None"))
+
 
 class TestConditionalHelpers(unittest.TestCase):
     def test_find_if_statements(self):
@@ -260,9 +278,10 @@ else:
             chainable.find_ifs()[0].find_conditions()[2].is_equivalent("not x < 3")
         )
         self.assertEqual(chainable.find_ifs()[0].find_conditions()[3].tree, None)
-        self.assertRaises(
-            TypeError,
-            lambda: chainable.find_ifs()[0].find_conditions()[3].is_equivalent("None"),
+        self.assertFalse(
+            chainable.find_ifs()[0]
+            .find_conditions()[3]
+            .is_equivalent("This can be anything")
         )
 
     def test_find_if_bodies(self):

@@ -56,7 +56,7 @@ class Chainable:
 
     def get_variable(self, name):
         var = self.find_variable(name)
-        if var != None:
+        if var != Chainable(None):
             return var.tree.value.value
         else:
             return None
@@ -87,18 +87,11 @@ class Chainable:
     # just a Constant), but they are equivalent.
 
     def is_equivalent(self, target_str):
-        # None is a special case used to indicate that there is an else clause.
-        # It is
+        # Setting the tree to None is used to represent missing elements. Such
+        # as the condition of a final else clause. It is, therefore, not
+        # equivalent to any string.
         if self.tree == None:
-            raise TypeError(
-                """
-is_equivalent cannot be called on None.
-
-None is used to represent the condition of a final else clause. If you're using
-find_conditions and want to check the nth condition, you can use
-find_conditions()[n].tree == None
-"""
-            )
+            return False
         return ast.unparse(self.tree) == ast.unparse(ast.parse(target_str))
 
     # Finds the class definition with the given name
