@@ -261,6 +261,48 @@ else:
             lambda: chainable.find_ifs()[0].find_conditions()[3].is_equivalent("None"),
         )
 
+    def test_find_if_bodies(self):
+        if_str = """
+if True:
+  x = 1
+"""
+        chainable = Chainable().parse(if_str)
+
+        self.assertEqual(len(chainable.find_ifs()[0].find_if_bodies()), 1)
+        self.assertTrue(
+            chainable.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1")
+        )
+
+    def test_find_if_bodies_elif(self):
+        if_str = """
+if True:
+  x = 1
+elif y == 2:
+  x = 2
+elif True:
+  x = 3
+else:
+  x = 4
+"""
+        chainable = Chainable().parse(if_str)
+
+        self.assertEqual(len(chainable.find_ifs()[0].find_if_bodies()), 4)
+        self.assertTrue(
+            chainable.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1")
+        )
+        self.assertTrue(
+            chainable.find_ifs()[0].find_if_bodies()[1].is_equivalent("x = 2")
+        )
+        self.assertTrue(
+            chainable.find_ifs()[0].find_if_bodies()[2].is_equivalent("x = 3")
+        )
+        self.assertTrue(
+            chainable.find_ifs()[0].find_if_bodies()[3].is_equivalent("x = 4")
+        )
+        self.assertRaises(
+            IndexError, lambda: chainable.find_ifs()[0].find_if_bodies()[4]
+        )
+
 
 class TestGenericHelpers(unittest.TestCase):
     def test_find_nth_statement(self):

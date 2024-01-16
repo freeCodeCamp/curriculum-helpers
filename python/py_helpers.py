@@ -142,3 +142,16 @@ find_conditions()[n].tree == None
                 return [test, None]
 
         return [Chainable(test) for test in _find_conditions(self.tree)]
+
+    # Find an array of bodies in an elif statement
+
+    def find_if_bodies(self):
+        def _find_if_bodies(tree):
+            if self.tree.orelse == []:
+                return [tree.body]
+            elif isinstance(tree.orelse[0], ast.If):
+                return [tree.body] + _find_if_bodies(tree.orelse[0])
+            else:
+                return [tree.body] + [tree.orelse]
+
+        return [Chainable(body) for body in _find_if_bodies(self.tree)]
