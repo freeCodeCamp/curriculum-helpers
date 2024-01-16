@@ -48,8 +48,7 @@ class Chainable:
             if isinstance(node, ast.FunctionDef):
                 if node.name == func:
                     return Chainable(node)
-        # TODO: should be Chainable(None)?
-        return None
+        return Chainable()
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
@@ -64,11 +63,11 @@ class Chainable:
                     if isinstance(target, ast.Name):
                         if target.id == name:
                             return Chainable(node)
-        return Chainable(None)
+        return Chainable()
 
     def get_variable(self, name):
         var = self.find_variable(name)
-        if var != Chainable(None):
+        if var != Chainable():
             return var.tree.value.value
         else:
             return None
@@ -113,8 +112,7 @@ class Chainable:
             if isinstance(node, ast.ClassDef):
                 if node.name == class_name:
                     return Chainable(node)
-        # TODO: should be Chainable(None)? Update tests to fail otherwise
-        return None
+        return Chainable()
 
     # Find an array of conditions in an if statement
 

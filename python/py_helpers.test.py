@@ -90,10 +90,19 @@ x = None
 
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
+    def test_find_function_returns_chainable(self):
+        func_str = """def foo():
+  pass
+"""
+        chainable = Chainable().parse(func_str)
+
+        self.assertIsInstance(chainable.find_function("foo"), Chainable)
+        self.assertIsInstance(chainable.find_function("bar"), Chainable)
+
     def test_parse_creates_chainable(self):
         chainable = Chainable().parse("def foo():\n  pass")
 
-        self.assertTrue(isinstance(chainable.tree, ast.Module))
+        self.assertIsInstance(chainable.tree, ast.Module)
         self.assertEqual(
             ast.dump(chainable.tree), ast.dump(ast.parse("def foo():\n  pass"))
         )
@@ -103,15 +112,16 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
 
         func = chainable.find_function("foo")
 
-        self.assertTrue(isinstance(func.tree, ast.FunctionDef))
+        self.assertIsInstance(func.tree, ast.FunctionDef)
         self.assertEqual(func.tree.name, "foo")
 
-    def test_find_function_returns_none(self):
+    def test_find_function_returns_chainable_none(self):
         chainable = Chainable().parse("def foo():\n  pass")
 
         func = chainable.find_function("bar")
 
-        self.assertEqual(func, None)
+        self.assertIsInstance(func, Chainable)
+        self.assertEqual(func.tree, None)
 
     def test_nested_function(self):
         nested_str = """def foo():
@@ -127,6 +137,21 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
         self.assertTrue(
             chainable.find_function("foo").find_function("bar").has_variable("x")
         )
+
+    def test_find_class(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    pass
+"""
+
+        chainable = Chainable().parse(class_str)
+
+        self.assertIsNotNone(chainable.find_class("Foo"))
+        self.assertIsInstance(chainable.find_class("Foo"), Chainable)
+
+        self.assertIsInstance(chainable.find_class("Bar"), Chainable)
+        self.assertEqual(chainable.find_class("Bar"), Chainable())
 
     def test_method_exists(self):
         class_str = """
