@@ -31,25 +31,24 @@ b = 2
 """
 
         chainable = Chainable().parse(scopes_str)
-
         self.assertFalse(chainable.has_variable("a"))
 
-    def test_local_variable_is_integer(self):
+    def test_is_integer(self):
         two_locals = """
 def foo():
   a = 1
   print(a)
   x = 2
+y = 3
 """
         chainable = Chainable().parse(two_locals)
-
-        self.assertTrue(chainable.find_function("foo").variable_is_integer("x"))
-        self.assertFalse(chainable.find_function("foo").variable_is_integer("y"))
+        self.assertTrue(chainable.find_function("foo").find_variable("x").is_integer())
+        self.assertFalse(chainable.find_function("foo").find_variable("y").is_integer())
 
     def test_local_variable_is_integer_with_string(self):
         chainable = Chainable().parse('def foo():\n  x = "1"')
 
-        self.assertFalse(chainable.find_function("foo").variable_is_integer("x"))
+        self.assertFalse(chainable.find_function("foo").find_variable("x").is_integer())
 
     def test_variable_has_constant_value(self):
         chainable = Chainable().parse('def foo():\n  x = "1"')

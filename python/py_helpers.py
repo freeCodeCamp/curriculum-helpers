@@ -66,15 +66,10 @@ class Chainable:
 
     # Checks the variable, name, is in the current scope and is an integer
 
-    def variable_is_integer(self, name):
-        for node in self.tree.body:
-            if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Name):
-                        if target.id == name:
-                            return type(node.value.value) == type(1)
-
-        return False
+    def is_integer(self):
+        if not isinstance(self.tree, ast.Assign):
+            return False
+        return type(self.tree.value.value) == type(1)
 
     def value_is_call(self, name):
         if not isinstance(self.tree, ast.Assign):
