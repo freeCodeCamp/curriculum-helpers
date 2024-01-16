@@ -120,18 +120,10 @@ find_conditions()[n].tree == None
     def find_ifs(self):
         return self._find_all(ast.If)
 
-    # Find the nth statement
-
-    def find_nth(self, n):
-        return Chainable(self.tree.body[n])
-
     def _find_all(self, ast_type):
         return [
             Chainable(node) for node in self.tree.body if isinstance(node, ast_type)
         ]
-
-    def _wrap_in_module(self):
-        return Chainable(ast.Module([self.tree], []))
 
     def find_conditions(self):
         def _find_conditions(tree):
