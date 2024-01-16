@@ -192,23 +192,19 @@ x = 1
 if x == 1:
   x = 2
 
-if x == 2:
-  pass
-"""
-        just_ifs_str = """
-if x == 1:
-  x = 2
-
-if x == 2:
+if True:
   pass
 """
 
         chainable = Chainable().parse(if_str)
-        self.assertEqual(
-            ast.dump(chainable.find_ifs().tree),
-            ast.dump(ast.parse(just_ifs_str)),
-        )
+        # it should return an array of Chainables, not a Chainable of an array
+        for if_chainable in chainable.find_ifs():
+            self.assertIsInstance(if_chainable, Chainable)
+        self.assertNotIsInstance(chainable.find_ifs(), Chainable)
+        self.assertEqual(len(chainable.find_ifs()), 2)
+
         self.assertTrue(chainable.find_ifs()[0].is_equivalent("if x == 1:\n  x = 2"))
+        self.assertTrue(chainable.find_ifs()[1].is_equivalent("if True:\n  pass"))
 
     def test_find_conditions(self):
         if_str = """
@@ -219,8 +215,13 @@ else:
 """
         chainable = Chainable().parse(if_str)
 
+        # it should return an array of Chainables, not a Chainable of an array
+        for if_cond in chainable.find_ifs()[0].find_conditions():
+            self.assertIsInstance(if_cond, Chainable)
+        self.assertNotIsInstance(chainable.find_ifs()[0].find_conditions(), Chainable)
         self.assertEqual(len(chainable.find_ifs()[0].find_conditions()), 2)
-        self.assertIsNone(chainable.find_ifs()[0].find_conditions().tree[1])
+
+        self.assertIsNone(chainable.find_ifs()[0].find_conditions()[1].tree)
 
     def test_find_conditions_only_if(self):
         if_str = """

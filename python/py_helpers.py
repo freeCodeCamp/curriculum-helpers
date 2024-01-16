@@ -124,11 +124,9 @@ find_conditions()[n].tree == None
         return Chainable(self.tree.body[n])
 
     def _find_all(self, ast_type):
-        return Chainable(
-            ast.Module(
-                [node for node in self.tree.body if isinstance(node, ast_type)], []
-            )
-        )
+        return [
+            Chainable(node) for node in self.tree.body if isinstance(node, ast_type)
+        ]
 
     def _wrap_in_module(self):
         return Chainable(ast.Module([self.tree], []))
@@ -143,4 +141,4 @@ find_conditions()[n].tree == None
             else:
                 return [test, None]
 
-        return Chainable(_find_conditions(self.tree))
+        return [Chainable(test) for test in _find_conditions(self.tree)]
