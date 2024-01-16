@@ -291,6 +291,11 @@ else:
 
         self.assertIsNone(chainable.find_ifs()[0].find_conditions()[1].tree)
 
+    def test_find_conditions_without_if(self):
+        chainable = Chainable().parse("x = 1")
+
+        self.assertEqual(len(chainable.find_conditions()), 0)
+
     def test_find_conditions_only_if(self):
         if_str = """
 if True:

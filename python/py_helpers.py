@@ -135,6 +135,8 @@ class Chainable:
 
     def find_conditions(self):
         def _find_conditions(tree):
+            if not isinstance(tree, ast.If):
+                return []
             test = tree.test
             if self.tree.orelse == []:
                 return [test]
