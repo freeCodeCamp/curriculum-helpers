@@ -12,7 +12,7 @@
     "/dist"
   ],
   "main": "dist/",
-  "module": "lib/index.ts",
+  "module": "dist/index.js",
   "keywords": [
     ""
   ],
