@@ -1,19 +1,13 @@
 const path = require("path");
 
 console.info("Building in " + process.env.NODE_ENV + " mode.");
-module.exports = {
-  mode: process.env.NODE_ENV ? "production" : "development",
+const baseConfig = {
+  mode: process.env.NODE_ENV,
   entry: {
     index: "./lib/index.ts",
   },
-  devtool: process.env.NODE_ENV ? "source-map" : "inline-source-map",
-  output: {
-    globalObject: 'this',
-    library: {
-      name: "helpers",
-      type: "umd",
-    },
-  },
+  devtool:
+    process.env.NODE_ENV === "production" ? "source-map" : "inline-source-map",
   module: {
     rules: [
       {
@@ -30,3 +24,33 @@ module.exports = {
     },
   },
 };
+
+const nodeConfig = {
+  ...baseConfig,
+  target: "node",
+  output: {
+    library: {
+      type: "umd",
+    },
+    filename: "index.node.js",
+    path: path.resolve(__dirname, "dist"),
+  },
+};
+
+const browserConfig = {
+  ...baseConfig,
+  target: "web",
+  experiments: {
+    outputModule: true,
+  },
+  output: {
+    library: {
+      type: "module",
+      // type: "commonjs-static",
+    },
+    filename: "index.browser.js",
+    path: path.resolve(__dirname, "dist"),
+  },
+};
+
+module.exports = [nodeConfig, browserConfig];
