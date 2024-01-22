@@ -1,4 +1,7 @@
-export const languages = {
+export const languages: Record<
+  string,
+  { LINE_REGEX?: RegExp; BLOCK_OPEN_REGEX?: RegExp; BLOCK_CLOSE_REGEX?: RegExp }
+> = {
   ada: {
     LINE_REGEX: /^--.*/,
   },
