@@ -15,6 +15,10 @@ const baseConfig = {
         include: path.resolve(__dirname, "lib"),
         loader: "ts-loader",
       },
+      {
+        test: /\.py/,
+        type: "asset/source",
+      },
     ],
   },
   resolve: {

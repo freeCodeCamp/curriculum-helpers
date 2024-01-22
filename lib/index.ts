@@ -1,4 +1,7 @@
 import { strip } from "./strip";
+import astHelpers from "../python/py_helpers.py";
+
+export { astHelpers };
 
 /**
  * Removes every HTML-comment from the string that is provided
@@ -165,7 +168,6 @@ export module python {
   }
 }
 
-export { astHelpers } from "../python/index.js";
 export class CSSHelp {
   doc: Document;
   constructor(doc: Document) {
