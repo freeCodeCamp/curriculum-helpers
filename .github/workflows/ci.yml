@@ -33,7 +33,7 @@ jobs:
       # Checkout the Repo
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
 
-      # Install Python 3.9
+      # Install Python
       - name: Setup Python
         uses: actions/setup-python@v4 # v2
         with:
