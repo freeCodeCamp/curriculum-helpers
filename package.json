@@ -67,8 +67,7 @@
     "lint": "eslint lib --max-warnings 0 && prettier lib --check",
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "webpack": "webpack",
-    "prepare": "tsx ./python/prepare.ts"
+    "webpack": "webpack"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "jest": {
