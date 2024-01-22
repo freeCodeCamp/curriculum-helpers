@@ -38,8 +38,7 @@
     "prettier": "2.8.8",
     "ts-loader": "9.5.1",
     "webpack": "5.89.0",
-    "webpack-cli": "5.1.4",
-    "tsx": "4.7.0"
+    "webpack-cli": "5.1.4"
   },
   "publishConfig": {
     "access": "public"
