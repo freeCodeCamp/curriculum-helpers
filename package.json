@@ -11,8 +11,12 @@
   "files": [
     "/dist"
   ],
-  "main": "dist/",
-  "module": "dist/index.browser.js",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
   "keywords": [
     ""
   ],

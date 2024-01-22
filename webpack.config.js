@@ -30,9 +30,9 @@ const nodeConfig = {
   target: "node",
   output: {
     library: {
-      type: "umd",
+      type: "commonjs",
     },
-    filename: "index.node.js",
+    filename: "index.cjs",
     path: path.resolve(__dirname, "dist"),
   },
 };
@@ -48,7 +48,7 @@ const browserConfig = {
       type: "module",
       // type: "commonjs-static",
     },
-    filename: "index.browser.js",
+    filename: "index.mjs",
     path: path.resolve(__dirname, "dist"),
   },
 };
