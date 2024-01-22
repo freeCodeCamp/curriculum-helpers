@@ -108,7 +108,11 @@ export const python = {
     const matchedCode = regex.exec(code);
     if (matchedCode) {
       const { function_parameters, function_body, function_indentation } =
-        matchedCode.groups;
+        matchedCode.groups as {
+          function_parameters: string;
+          function_body: string;
+          function_indentation: string;
+        };
 
       const functionIndentationSansNewLine = function_indentation.replace(
         /\n+/,
@@ -152,7 +156,11 @@ export const python = {
     if (matchedCode) {
       /* eslint-disable camelcase */
       const { block_body, block_indentation, block_condition } =
-        matchedCode.groups;
+        matchedCode.groups as {
+          block_body: string;
+          block_indentation: string;
+          block_condition: string;
+        };
 
       const blockIndentationSansNewLine = block_indentation.replace(/\n+/g, "");
       return {
