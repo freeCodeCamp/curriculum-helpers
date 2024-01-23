@@ -3,7 +3,7 @@ import ast
 # A chainable class that allows us to call functions on the result of parsing a string
 
 
-class ASTExplorer:
+class Node:
     # TODO: allow initialization with a string
     def __init__(self, tree=None):
         if isinstance(tree, str):
@@ -11,13 +11,13 @@ class ASTExplorer:
         elif isinstance(tree, ast.AST) or tree == None:
             self.tree = tree
         else:
-            raise TypeError("ASTExplorer must be initialized with a string or AST")
+            raise TypeError("Node must be initialized with a string or AST")
 
     def __getitem__(self, i):
         if getattr(self.tree, "__getitem__", False):
-            return ASTExplorer(self.tree[i])
+            return Node(self.tree[i])
         else:
-            return ASTExplorer(self.tree.body[i])
+            return Node(self.tree.body[i])
 
     def __len__(self):
         if getattr(self.tree, "__len__", False):
@@ -26,7 +26,7 @@ class ASTExplorer:
             return len(self.tree.body)
 
     def __eq__(self, other):
-        if not isinstance(other, ASTExplorer):
+        if not isinstance(other, Node):
             return False
         if self.tree == None:
             return other.tree == None
@@ -38,51 +38,51 @@ class ASTExplorer:
 
     def __repr__(self):
         if self.tree == None:
-            return "ASTExplorer:\nNone"
-        return "ASTExplorer:\n" + ast.dump(self.tree, indent=2)
+            return "Node:\nNone"
+        return "Node:\n" + ast.dump(self.tree, indent=2)
 
     def _has_body(self):
         return bool(getattr(self.tree, "body", False))
 
-    # "find" functions return a new explorer with the result of the find
-    # function. In this case, it returns a new explorer with the function
+    # "find" functions return a new node with the result of the find
+    # function. In this case, it returns a new node with the function
     # definition (if it exists)
 
     def find_function(self, func):
         if not self._has_body():
-            return ASTExplorer()
+            return Node()
         for node in self.tree.body:
             if isinstance(node, ast.FunctionDef):
                 if node.name == func:
-                    return ASTExplorer(node)
-        return ASTExplorer()
+                    return Node(node)
+        return Node()
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
     def has_variable(self, name):
-        return self.find_variable(name) != ASTExplorer()
+        return self.find_variable(name) != Node()
 
     def find_variable(self, name):
         if not self._has_body():
-            return ASTExplorer()
+            return Node()
         for node in self.tree.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         if target.id == name:
-                            return ASTExplorer(node)
-        return ASTExplorer()
+                            return Node(node)
+        return Node()
 
     def get_variable(self, name):
         var = self.find_variable(name)
-        if var != ASTExplorer():
+        if var != Node():
             return var.tree.value.value
         else:
             return None
 
     def has_function(self, name):
-        return self.find_function(name) != ASTExplorer()
+        return self.find_function(name) != Node()
 
     # Checks the variable, name, is in the current scope and is an integer
 
@@ -99,7 +99,7 @@ class ASTExplorer:
             return call.func.id == name
         return False
 
-    # Takes an string and checks if is equivalent to the explorer's AST. This
+    # Takes an string and checks if is equivalent to the node's AST. This
     # is a loose comparison that tries to find out if the code is essentially
     # the same. For example, the string "True" is not represented by the same
     # AST as the test in "if True:" (the string could be wrapped in Module,
@@ -118,12 +118,12 @@ class ASTExplorer:
 
     def find_class(self, class_name):
         if not self._has_body():
-            return ASTExplorer()
+            return Node()
         for node in self.tree.body:
             if isinstance(node, ast.ClassDef):
                 if node.name == class_name:
-                    return ASTExplorer(node)
-        return ASTExplorer()
+                    return Node(node)
+        return Node()
 
     # Find an array of conditions in an if statement
 
@@ -132,7 +132,7 @@ class ASTExplorer:
 
     def _find_all(self, ast_type):
         return [
-            ASTExplorer(node) for node in self.tree.body if isinstance(node, ast_type)
+            Node(node) for node in self.tree.body if isinstance(node, ast_type)
         ]
 
     def find_conditions(self):
@@ -147,7 +147,7 @@ class ASTExplorer:
 
             return [test, None]
 
-        return [ASTExplorer(test) for test in _find_conditions(self.tree)]
+        return [Node(test) for test in _find_conditions(self.tree)]
 
     # Find an array of bodies in an elif statement
 
@@ -163,5 +163,5 @@ class ASTExplorer:
             return [tree.body] + [tree.orelse]
 
         return [
-            ASTExplorer(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
+            Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
         ]
