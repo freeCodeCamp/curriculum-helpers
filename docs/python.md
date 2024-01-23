@@ -1,6 +1,8 @@
 # Python
 
-## `getDef`
+## Regex-based helpers
+
+### `getDef`
 
 ```javascript,mdbook-runnable,hidelines=#
 # {{#rustdoc_include tools/helpers.js:1}}
@@ -26,7 +28,7 @@ def add(x, y):
 }
 ```
 
-## `getBlock`
+### `getBlock`
 
 ```javascript,mdbook-runnable,hidelines=#
 # {{#rustdoc_include tools/helpers.js:1}}
@@ -58,7 +60,7 @@ def add_or_subtract(a, b, add=True):
 }
 ```
 
-## `removeComments`
+### `removeComments`
 
 ```javascript,mdbook-runnable,hidelines=#
 # {{#rustdoc_include tools/helpers.js:1}}
@@ -78,7 +80,7 @@ def b(d, e):
 }
 ```
 
-## `__pyodide.runPython`
+### `__pyodide.runPython`
 
 Running the code of a singluar function to get the output:
 
@@ -113,6 +115,157 @@ assert add(a, b) == 300
   const out = __pyodide.runPython(c); // If this does not throw, code is correct
   console.log(add);
 }
+```
+
+## AST-based helpers
+
+In contrast to the regex-based helpers, these helpers need to be run in Python, not
+JavaScript
+
+### Finding nodes
+
+`find_` functions search the current scope and return one of the following:
+
+- A single Node object if there can be only one match. E.g. `find_function`
+- A list of Node objects if there can be multiple matches. E.g.: `find_ifs`
+
+#### `find_function`
+
+```python
+Node('def foo():\n  x = "1"').find_function("foo").has_variable("x") # True
+```
+
+#### `find_variable`
+
+```python
+Node("y = 2\nx = 1").find_variable("x").is_equivalent("x = 1")
+```
+
+When the variable is out of scope, `find_variable` returns an `None` node (i.e. `Node()` or `Node(None)`):
+
+```python
+Node('def foo():\n  x = "1"').find_variable("x") == Node() # True
+```
+
+#### `find_class`
+
+```python
+class_str = """
+class Foo:
+  def __init__(self):
+    pass
+"""
+Node(class_str).find_class("Foo").has_function("__init__") # True
+```
+
+#### `find_ifs`
+
+```python
+if_str = """
+x = 1
+if x == 1:
+  x = 2
+
+if True:
+  pass
+"""
+
+Node(if_str).find_ifs()[0].is_equivalent("if x == 1:\n  x = 2")
+Node(if_str).find_ifs()[1].is_equivalent("if True:\n  pass")
+```
+
+#### `find_conditions`
+
+```python
+if_str = """
+if True:
+  x = 1
+else:
+  x = 4
+"""
+explorer = Node(if_str)
+len(explorer.find_ifs()[0].find_conditions()) # 2
+explorer.find_ifs()[0].find_conditions()[0].is_equivalent("True")
+
+Node("x = 1").find_conditions() # []
+```
+
+#### `find_if_bodies`
+
+```python
+if_str = """
+if True:
+  x = 1
+"""
+explorer.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1") # True
+```
+
+### Getting values
+
+`get_` functions return the value of the node, not the node itself.
+
+#### `get_variable`
+
+```python
+Node("x = 1").get_variable("x") # 1
+```
+
+### Checking for existence
+
+`has_` functions return a boolean indicating whether the node exists.
+
+#### `has_variable`
+
+```python
+Node("x = 1").has_variable("x") # True
+```
+
+#### `has_function`
+
+```python
+Node("def foo():\n  pass").has_function("foo") # True
+```
+
+### Misc
+
+#### `is_equivalent`
+
+This is a somewhat loose check. The AST of the target string and the AST of the node do not have to be identical, but the code must be equivalent.
+
+```python
+Node("x = 1").is_equivalent("x = 1") # True
+Node("\nx = 1").is_equivalent("x =    1") # True
+Node("x = 1").is_equivalent("x = 2") # False
+```
+
+#### get the nth statement
+
+```python
+stmts = """
+if True:
+  pass
+
+x = 1
+"""
+
+Node(stmts).get_nth_statement(1).is_equivalent("x = 1") # True
+```
+
+#### `value_is_call`
+
+This allows you to check if the return value of function call is assigned to a variable.
+
+```python
+explorer = Node("def foo():\n  x = bar()")
+
+explorer.find_function("foo").find_variable("x").value_is_call("bar") # True
+```
+
+#### `is_integer`
+
+```python
+Node("x = 1").find_variable("x").is_integer() # True
+Node("x = '1'").find_variable("x").is_integer() # False
 ```
 
 ## Notes on Python
