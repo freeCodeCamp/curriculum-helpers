@@ -41,14 +41,11 @@ class ASTExplorer:
             return "ASTExplorer:\nNone"
         return "ASTExplorer:\n" + ast.dump(self.tree, indent=2)
 
-    def parse(self, string):
-        return ASTExplorer(ast.parse(string))
-
     def _has_body(self):
         return bool(getattr(self.tree, "body", False))
 
-    # "find" functions return a new chainable with the result of the find
-    # function. In this case, it returns a new chainable with the function
+    # "find" functions return a new explorer with the result of the find
+    # function. In this case, it returns a new explorer with the function
     # definition (if it exists)
 
     def find_function(self, func):
@@ -102,7 +99,7 @@ class ASTExplorer:
             return call.func.id == name
         return False
 
-    # Takes an string and checks if is equivalent to the chainable's AST. This
+    # Takes an string and checks if is equivalent to the explorer's AST. This
     # is a loose comparison that tries to find out if the code is essentially
     # the same. For example, the string "True" is not represented by the same
     # AST as the test in "if True:" (the string could be wrapped in Module,
