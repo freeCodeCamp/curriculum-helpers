@@ -103,7 +103,7 @@ x = None
     def test_find_variable_not_found(self):
         explorer = ASTExplorer('def foo():\n  x = "1"')
 
-        self.assertEqual(explorer.find_variable("y").tree, None)
+        self.assertEqual(explorer.find_variable("y"), ASTExplorer())
 
     def test_function_call_assigned_to_variable(self):
         explorer = ASTExplorer("def foo():\n  x = bar()")
@@ -133,7 +133,9 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
 
         # First find_variable, so know that the AST has no body and we can be
         # sure find_function handles this.
-        self.assertEqual(explorer.find_variable("x").find_function("foo"), ASTExplorer())
+        self.assertEqual(
+            explorer.find_variable("x").find_function("foo"), ASTExplorer()
+        )
 
     def test_parse_creates_explorer(self):
         explorer = ASTExplorer("def foo():\n  pass")
@@ -207,6 +209,18 @@ class Foo:
         explorer = ASTExplorer(class_str)
 
         self.assertTrue(explorer.find_class("Foo").has_function("bar"))
+
+    def test_dunder_method_exists(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    self.x = 1
+  def bar(self):
+    pass
+"""
+        explorer = ASTExplorer(class_str)
+
+        self.assertTrue(explorer.find_class("Foo").has_function("__init__"))
 
     def test_not_has_function(self):
         explorer = ASTExplorer("def foo():\n  pass")
@@ -403,6 +417,11 @@ else:
         self.assertRaises(
             IndexError, lambda: explorer.find_ifs()[0].find_if_bodies()[4]
         )
+
+    def test_find_if_bodies_without_if(self):
+        explorer = ASTExplorer("x = 1")
+
+        self.assertEqual(len(explorer.find_if_bodies()), 0)
 
 
 class TestGenericHelpers(unittest.TestCase):
