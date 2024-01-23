@@ -163,4 +163,4 @@ class Chainable:
             else:
                 return [tree.body] + [tree.orelse]
 
-        return [Chainable(body) for body in _find_if_bodies(self.tree)]
+        return [Chainable(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
