@@ -142,10 +142,10 @@ class ASTExplorer:
             test = tree.test
             if self.tree.orelse == []:
                 return [test]
-            elif isinstance(tree.orelse[0], ast.If):
+            if isinstance(tree.orelse[0], ast.If):
                 return [test] + _find_conditions(tree.orelse[0])
-            else:
-                return [test, None]
+
+            return [test, None]
 
         return [ASTExplorer(test) for test in _find_conditions(self.tree)]
 
@@ -153,12 +153,14 @@ class ASTExplorer:
 
     def find_if_bodies(self):
         def _find_if_bodies(tree):
+            if not isinstance(tree, ast.If):
+                return []
             if self.tree.orelse == []:
                 return [tree.body]
-            elif isinstance(tree.orelse[0], ast.If):
+            if isinstance(tree.orelse[0], ast.If):
                 return [tree.body] + _find_if_bodies(tree.orelse[0])
-            else:
-                return [tree.body] + [tree.orelse]
+
+            return [tree.body] + [tree.orelse]
 
         return [
             ASTExplorer(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
