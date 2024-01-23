@@ -3,6 +3,28 @@ import ast
 from py_helpers import Chainable
 
 
+class TestConstructor(unittest.TestCase):
+    def test_constructor(self):
+        chainable = Chainable()
+
+        self.assertIsNone(chainable.tree)
+
+    def test_constructor_with_tree(self):
+        tree = ast.parse("def foo():\n  pass")
+        chainable = Chainable(tree)
+
+        self.assertEqual(chainable.tree, tree)
+
+    def test_constructor_with_string(self):
+        with_string = Chainable("def foo():\n  pass")
+        with_tree = Chainable(ast.parse("def foo():\n  pass"))
+
+        self.assertEqual(with_string, with_tree)
+
+    def test_constructor_with_anything_else(self):
+        self.assertRaises(TypeError, lambda: Chainable(1))
+
+
 class TestVariableHelpers(unittest.TestCase):
     def test_find_variable_can_handle_all_asts(self):
         chainable = Chainable().parse("x = 1")
@@ -451,6 +473,7 @@ if True:
 
 def suite():
     suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TestConstructor))
     suite.addTest(unittest.makeSuite(TestVariableHelpers))
     suite.addTest(unittest.makeSuite(TestFunctionAndClassHelpers))
     suite.addTest(unittest.makeSuite(TestEquivalenceHelpers))

@@ -6,7 +6,12 @@ import ast
 class Chainable:
     # TODO: allow initialization with a string
     def __init__(self, tree=None):
-        self.tree = tree
+        if isinstance(tree, str):
+            self.tree = ast.parse(tree)
+        elif isinstance(tree, ast.AST) or tree == None:
+            self.tree = tree
+        else:
+            raise TypeError("Chainable must be initialized with a string or AST")
 
     def __getitem__(self, i):
         if getattr(self.tree, "__getitem__", False):
