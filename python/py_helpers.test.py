@@ -292,6 +292,18 @@ x = None
         self.assertIsNone(explorer.get_variable("x"))
         self.assertFalse(explorer.find_variable("y").is_equivalent("None"))
 
+    def test_whitespace_equivalence(self):
+        str_with_whitespace = """
+
+x = 1
+"""
+        str_with_different_whitespace = """x   =   1"""
+        self.assertTrue(
+            ASTExplorer(str_with_whitespace).is_equivalent(
+                str_with_different_whitespace
+            )
+        )
+
 
 class TestConditionalHelpers(unittest.TestCase):
     def test_find_if_statements(self):
