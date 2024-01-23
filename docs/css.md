@@ -272,7 +272,7 @@ body {
 ```
 ````
 
-```javascript,mdbook-runnable,hidelines=#
+```javascript
 const tester = new CSSHelp(document);
 describe("getStyle", () => {
   it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {
@@ -287,6 +287,7 @@ describe("getStyle", () => {
     );
   });
 });
+
 describe("getStyleAny", () => {
   it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {
     expect(tester.getStyleAny([".earth", ".sky"])?.length).toEqual(1);
@@ -295,6 +296,7 @@ describe("getStyleAny", () => {
     expect(tester.getStyleAny([".sun", ".earth", ".moon"])).toBeNull();
   });
 });
+
 describe("isPropertyUsed", () => {
   it("should return true on existing properties", () => {
     expect(tester.isPropertyUsed("height")).toBeTruthy();
@@ -303,11 +305,13 @@ describe("isPropertyUsed", () => {
     expect(tester.isPropertyUsed("--building-color1")).toBeTruthy();
   });
 });
+
 describe("isDeclaredAfter", () => {
   it("should return true if existing style is declared after another", () => {
     expect(tester.getStyleRule(".bb1a")?.isDeclaredAfter(".bb1")).toBeTruthy();
   });
 });
+
 describe("getPropertyValue", () => {
   it("should return custom property value needing trim", () => {
     expect(
@@ -320,16 +324,18 @@ describe("getPropertyValue", () => {
     ).toBeTruthy();
   });
   it("should return property value without evaluating result", () => {
-    expect(tester.getStyle(".bb4a")?.getPropertyValue("background-color")).toEqual(
-      "var(--building-color4)"
-    );
+    expect(
+      tester.getStyle(".bb4a")?.getPropertyValue("background-color")
+    ).toEqual("var(--building-color4)");
   });
 });
+
 describe("getCSSRules", () => {
   it("should return a CSSRules array of length 1", () => {
     expect(tester.getCSSRules("media")?.length).toEqual(1);
   });
 });
+
 describe("getRuleListsWithinMedia", () => {
   it("should return a CSSMediaRule array with a selectable CSSStyleRule", () => {
     expect(
@@ -355,6 +361,7 @@ describe("getRuleListsWithinMedia", () => {
     );
   });
 });
+
 describe("selectorsFromSelector", () => {
   it("should return an empty array", () => {
     setupDocument();
