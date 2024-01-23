@@ -3,7 +3,7 @@ import ast
 # A chainable class that allows us to call functions on the result of parsing a string
 
 
-class Chainable:
+class ASTExplorer:
     # TODO: allow initialization with a string
     def __init__(self, tree=None):
         if isinstance(tree, str):
@@ -11,13 +11,13 @@ class Chainable:
         elif isinstance(tree, ast.AST) or tree == None:
             self.tree = tree
         else:
-            raise TypeError("Chainable must be initialized with a string or AST")
+            raise TypeError("ASTExplorer must be initialized with a string or AST")
 
     def __getitem__(self, i):
         if getattr(self.tree, "__getitem__", False):
-            return Chainable(self.tree[i])
+            return ASTExplorer(self.tree[i])
         else:
-            return Chainable(self.tree.body[i])
+            return ASTExplorer(self.tree.body[i])
 
     def __len__(self):
         if getattr(self.tree, "__len__", False):
@@ -26,7 +26,7 @@ class Chainable:
             return len(self.tree.body)
 
     def __eq__(self, other):
-        if not isinstance(other, Chainable):
+        if not isinstance(other, ASTExplorer):
             return False
         if self.tree == None:
             return other.tree == None
@@ -38,11 +38,11 @@ class Chainable:
 
     def __repr__(self):
         if self.tree == None:
-            return "Chainable:\nNone"
-        return "Chainable:\n" + ast.dump(self.tree, indent=2)
+            return "ASTExplorer:\nNone"
+        return "ASTExplorer:\n" + ast.dump(self.tree, indent=2)
 
     def parse(self, string):
-        return Chainable(ast.parse(string))
+        return ASTExplorer(ast.parse(string))
 
     def _has_body(self):
         return bool(getattr(self.tree, "body", False))
@@ -53,39 +53,39 @@ class Chainable:
 
     def find_function(self, func):
         if not self._has_body():
-            return Chainable()
+            return ASTExplorer()
         for node in self.tree.body:
             if isinstance(node, ast.FunctionDef):
                 if node.name == func:
-                    return Chainable(node)
-        return Chainable()
+                    return ASTExplorer(node)
+        return ASTExplorer()
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
     def has_variable(self, name):
-        return self.find_variable(name) != Chainable()
+        return self.find_variable(name) != ASTExplorer()
 
     def find_variable(self, name):
         if not self._has_body():
-            return Chainable()
+            return ASTExplorer()
         for node in self.tree.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         if target.id == name:
-                            return Chainable(node)
-        return Chainable()
+                            return ASTExplorer(node)
+        return ASTExplorer()
 
     def get_variable(self, name):
         var = self.find_variable(name)
-        if var != Chainable():
+        if var != ASTExplorer():
             return var.tree.value.value
         else:
             return None
 
     def has_function(self, name):
-        return self.find_function(name) != Chainable()
+        return self.find_function(name) != ASTExplorer()
 
     # Checks the variable, name, is in the current scope and is an integer
 
@@ -121,12 +121,12 @@ class Chainable:
 
     def find_class(self, class_name):
         if not self._has_body():
-            return Chainable()
+            return ASTExplorer()
         for node in self.tree.body:
             if isinstance(node, ast.ClassDef):
                 if node.name == class_name:
-                    return Chainable(node)
-        return Chainable()
+                    return ASTExplorer(node)
+        return ASTExplorer()
 
     # Find an array of conditions in an if statement
 
@@ -135,7 +135,7 @@ class Chainable:
 
     def _find_all(self, ast_type):
         return [
-            Chainable(node) for node in self.tree.body if isinstance(node, ast_type)
+            ASTExplorer(node) for node in self.tree.body if isinstance(node, ast_type)
         ]
 
     def find_conditions(self):
@@ -150,7 +150,7 @@ class Chainable:
             else:
                 return [test, None]
 
-        return [Chainable(test) for test in _find_conditions(self.tree)]
+        return [ASTExplorer(test) for test in _find_conditions(self.tree)]
 
     # Find an array of bodies in an elif statement
 
@@ -163,4 +163,6 @@ class Chainable:
             else:
                 return [tree.body] + [tree.orelse]
 
-        return [Chainable(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
+        return [
+            ASTExplorer(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
+        ]
