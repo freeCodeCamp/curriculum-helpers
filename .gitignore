@@ -136,3 +136,7 @@ dist
 
 # mdbook (docs)
 book
+
+# python
+python/__pycache__
+

@@ -1,4 +1,5 @@
 import { strip } from "./strip";
+import astHelpers from "../python/py_helpers.py";
 
 /**
  * Removes every HTML-comment from the string that is provided
@@ -96,8 +97,9 @@ const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
   return currPosition > prevPosition;
 };
 
-export module python {
-  export function getDef(code: string, functionName: string) {
+export const python = {
+  astHelpers,
+  getDef(code: string, functionName: string) {
     const regex = new RegExp(
       `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*: *?\\n(?<function_body> +.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
       "s"
@@ -122,11 +124,11 @@ export module python {
     }
 
     return null;
-  }
+  },
 
-  export function removeComments(code: string) {
+  removeComments(code: string) {
     return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(#.*$)/gm, "");
-  }
+  },
 
   /**
    * Gets a Python block of code matching the `blockPattern`
@@ -135,7 +137,7 @@ export module python {
    *
    * **Note:** A string `blockPattern` will be escaped to prevent special characters from being treated as regular expression syntax.
    */
-  export function getBlock(code: string, blockPattern: string | RegExp) {
+  getBlock(code: string, blockPattern: string | RegExp) {
     const escapedBlockPattern =
       blockPattern instanceof RegExp
         ? blockPattern.source
@@ -162,8 +164,8 @@ export module python {
     }
 
     return null;
-  }
-}
+  },
+};
 
 export class CSSHelp {
   doc: Document;
