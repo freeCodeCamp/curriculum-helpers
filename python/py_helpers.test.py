@@ -370,10 +370,9 @@ else:
             explorer.find_ifs()[0].find_conditions()[2].is_equivalent("not x < 3")
         )
         self.assertEqual(explorer.find_ifs()[0].find_conditions()[3].tree, None)
-        self.assertFalse(
-            explorer.find_ifs()[0]
-            .find_conditions()[3]
-            .is_equivalent("This can be anything")
+        self.assertRaises(
+            IndexError,
+            lambda: explorer.find_ifs()[0].find_conditions()[4],
         )
 
     def test_find_if_bodies(self):
