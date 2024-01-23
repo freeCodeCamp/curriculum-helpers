@@ -272,7 +272,7 @@ body {
 ```
 ````
 
-```javascript,mdbook-runnable,hidelines=#
+```javascript
 const tester = new CSSHelp(document);
 describe("getStyle", () => {
   it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {
