@@ -335,7 +335,7 @@ else:
     def test_find_conditions_without_if(self):
         explorer = ASTExplorer("x = 1")
 
-        self.assertEqual(len(explorer.find_conditions()), 0)
+        self.assertEqual(explorer.find_conditions(), [])
 
     def test_find_conditions_only_if(self):
         if_str = """
