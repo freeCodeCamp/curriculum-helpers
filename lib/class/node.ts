@@ -1,4 +1,4 @@
-export type CodeNodeType = {
+type CodeNodeArgs = {
   type: string;
   value?: string;
   match?: RegExpExecArray;
@@ -12,7 +12,7 @@ export class CodeNode {
   match: RegExpExecArray | undefined;
   newline: string;
 
-  constructor(node: CodeNodeType) {
+  constructor(node: CodeNodeArgs) {
     this.type = node.type;
     this.value = node.value;
     this.match = node.match;
@@ -27,7 +27,7 @@ export class CodeNode {
 export class Block extends CodeNode {
   nodes: CodeNode[];
 
-  constructor(node: CodeNodeType) {
+  constructor(node: CodeNodeArgs) {
     super(node);
     this.nodes = node?.nodes || [];
   }
