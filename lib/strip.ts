@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 /*!
  * strip-comments <https://github.com/jonschlinkert/strip-comments>
  * Copyright (c) 2014-present, Jon Schlinkert.
@@ -8,6 +5,7 @@
  */
 import { compile } from "./compile";
 import { parse } from "./parse";
+import type { options } from "./option-types";
 
 /**
  * Strip all code comments from the given `input`, including protected
@@ -30,7 +28,7 @@ import { parse } from "./parse";
  * @api public
  */
 
-export const strip = (input, options?) => {
+export const strip = (input: string, options?: options) => {
   const opts = { ...options, block: true, line: true };
   return compile(parse(input, opts), opts);
 };
@@ -51,7 +49,7 @@ export const strip = (input, options?) => {
  * @api public
  */
 
-strip.block = (input, options?) => {
+strip.block = (input: string, options?: options) => {
   const opts = { ...options, block: true };
   return compile(parse(input, opts), opts);
 };
@@ -71,7 +69,7 @@ strip.block = (input, options?) => {
  * @api public
  */
 
-strip.line = (input, options?) => {
+strip.line = (input: string, options?: options) => {
   const opts = { ...options, line: true };
   return compile(parse(input, opts), opts);
 };
@@ -92,7 +90,7 @@ strip.line = (input, options?) => {
  * @api public
  */
 
-strip.first = (input, options?) => {
+strip.first = (input: string, options?: options) => {
   const opts = { ...options, block: true, line: true, first: true };
   return compile(parse(input, opts), opts);
 };
