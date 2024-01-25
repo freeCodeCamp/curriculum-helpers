@@ -500,18 +500,5 @@ if True:
 
         self.assertEqual(len(node.find_ifs()), 2)
 
-
-def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestConstructor))
-    suite.addTest(unittest.makeSuite(TestVariableHelpers))
-    suite.addTest(unittest.makeSuite(TestFunctionAndClassHelpers))
-    suite.addTest(unittest.makeSuite(TestEquivalenceHelpers))
-    suite.addTest(unittest.makeSuite(TestConditionalHelpers))
-    suite.addTest(unittest.makeSuite(TestGenericHelpers))
-    return suite
-
-
-if __name__ == "__main__":
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
+if __name__ == '__main__':
+    unittest.main()
