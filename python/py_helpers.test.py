@@ -133,17 +133,13 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
 
         # First find_variable, so know that the AST has no body and we can be
         # sure find_function handles this.
-        self.assertEqual(
-            node.find_variable("x").find_function("foo"), Node()
-        )
+        self.assertEqual(node.find_variable("x").find_function("foo"), Node())
 
     def test_parse_creates_node(self):
         node = Node("def foo():\n  pass")
 
         self.assertIsInstance(node.tree, ast.Module)
-        self.assertEqual(
-            ast.dump(node.tree), ast.dump(ast.parse("def foo():\n  pass"))
-        )
+        self.assertEqual(ast.dump(node.tree), ast.dump(ast.parse("def foo():\n  pass")))
 
     def test_find_function_returns_function_ast(self):
         node = Node("def foo():\n  pass")
@@ -299,9 +295,7 @@ x = 1
 """
         str_with_different_whitespace = """x   =   1"""
         self.assertTrue(
-            Node(str_with_whitespace).is_equivalent(
-                str_with_different_whitespace
-            )
+            Node(str_with_whitespace).is_equivalent(str_with_different_whitespace)
         )
 
 
@@ -372,12 +366,8 @@ else:
         node = Node(if_str)
 
         self.assertEqual(len(node.find_ifs()[0].find_conditions()), 4)
-        self.assertTrue(
-            node.find_ifs()[0].find_conditions()[0].is_equivalent("True")
-        )
-        self.assertTrue(
-            node.find_ifs()[0].find_conditions()[1].is_equivalent("y == 2")
-        )
+        self.assertTrue(node.find_ifs()[0].find_conditions()[0].is_equivalent("True"))
+        self.assertTrue(node.find_ifs()[0].find_conditions()[1].is_equivalent("y == 2"))
         self.assertTrue(
             node.find_ifs()[0].find_conditions()[2].is_equivalent("not x < 3")
         )
@@ -395,9 +385,7 @@ if True:
         node = Node(if_str)
 
         self.assertEqual(len(node.find_ifs()[0].find_if_bodies()), 1)
-        self.assertTrue(
-            node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1")
-        )
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1"))
 
     def test_find_if_bodies_elif(self):
         if_str = """
@@ -413,21 +401,11 @@ else:
         node = Node(if_str)
 
         self.assertEqual(len(node.find_ifs()[0].find_if_bodies()), 4)
-        self.assertTrue(
-            node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1")
-        )
-        self.assertTrue(
-            node.find_ifs()[0].find_if_bodies()[1].is_equivalent("x = 2")
-        )
-        self.assertTrue(
-            node.find_ifs()[0].find_if_bodies()[2].is_equivalent("x = 3")
-        )
-        self.assertTrue(
-            node.find_ifs()[0].find_if_bodies()[3].is_equivalent("x = 4")
-        )
-        self.assertRaises(
-            IndexError, lambda: node.find_ifs()[0].find_if_bodies()[4]
-        )
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1"))
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[1].is_equivalent("x = 2"))
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[2].is_equivalent("x = 3"))
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[3].is_equivalent("x = 4"))
+        self.assertRaises(IndexError, lambda: node.find_ifs()[0].find_if_bodies()[4])
 
     def test_find_if_bodies_without_if(self):
         node = Node("x = 1")
@@ -500,5 +478,6 @@ if True:
 
         self.assertEqual(len(node.find_ifs()), 2)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
