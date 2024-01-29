@@ -1,5 +1,5 @@
 {
-  "exclude": ["lib/__tests__", "lib/__fixtures__"],
+  "exclude": ["lib/__tests__", "lib/__fixtures__", "**/__mocks__"],
   "include": ["lib/", "declarations.d.ts", "dist/declarations.d.ts", "python/"],
   "compilerOptions": {
     "module": "ES6",
