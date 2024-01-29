@@ -63,9 +63,10 @@
   },
   "scripts": {
     "build": "NODE_ENV=production webpack",
+    "clean": "rm -rf dist",
     "lint": "eslint lib --max-warnings 0 && prettier lib --check",
     "test": "jest",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build",
     "webpack": "webpack"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
