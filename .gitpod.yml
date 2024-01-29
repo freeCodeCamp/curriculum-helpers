@@ -1,0 +1,9 @@
+tasks:
+  - name: Install Dependencies
+    env:
+      MDBOOK_VERSION: 0.4.36
+      ADMONISH_VERSION: 1.15.0
+    init: |
+      curl -sSL https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=${CARGO_HOME}/bin
+      curl -sSL https://github.com/tommilligan/mdbook-admonish/releases/download/v${ADMONISH_VERSION}/mdbook-admonish-v${ADMONISH_VERSION}-x86_64-unknown-linux-gnu.tar.gz | tar -xz --directory=${CARGO_HOME}/bin
+      npm install
