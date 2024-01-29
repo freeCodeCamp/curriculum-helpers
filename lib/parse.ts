@@ -15,7 +15,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     throw new TypeError("Expected input to be a string");
   }
 
-  const cst = new Block({ type: "root", nodes: [] });
+  const cst = new Block({ type: "root", nodes: [], value: "" });
   const stack = [cst];
   const name = (options.language || "javascript").toLowerCase();
   const lang = languages[name];
@@ -28,9 +28,11 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   let block = cst;
   let remaining = input;
   let token;
-  let prev;
+  let prev: Block | CodeNode | undefined;
 
-  const source = [BLOCK_OPEN_REGEX, BLOCK_CLOSE_REGEX].filter(Boolean);
+  const source = [BLOCK_OPEN_REGEX, BLOCK_CLOSE_REGEX].filter<RegExp>(
+    (x): x is RegExp => typeof x !== "undefined"
+  );
   let tripleQuotes = false;
 
   if (source.every((regex) => regex.source === '^"""')) {
@@ -46,7 +48,12 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     return value;
   };
 
-  const scan = (regex, type = "text") => {
+  const scan = (
+    regex: RegExp,
+    type = "text"
+  ):
+    | { type: string; match: RegExpExecArray; value: string; newline?: string }
+    | undefined => {
     const match = regex.exec(remaining);
     if (match) {
       consume(match[0]);
@@ -54,14 +61,14 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     }
   };
 
-  const push = (node) => {
+  const push = (node: Block | CodeNode) => {
     if (prev && prev.type === "text" && node.type === "text") {
-      prev.value += node.value;
+      prev.value = prev.value ? prev.value + node.value : node.value;
       return;
     }
 
     block.push(node);
-    if (node.nodes) {
+    if ("nodes" in node && node.nodes) {
       stack.push(node);
       block = node;
     }
@@ -87,14 +94,14 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   while (remaining !== "") {
     // Escaped characters
     if ((token = scan(constants.ESCAPED_CHAR_REGEX, "text"))) {
-      push(new CodeNode(token));
+      push(new Block(token));
       continue;
     }
 
     // Quoted strings
     if (
       block.type !== "block" &&
-      (!prev || !/\w$/.test(prev.value)) &&
+      (!prev || !/\w$/.test(prev.value ?? "")) &&
       !(tripleQuotes && remaining.startsWith('"""'))
     ) {
       if ((token = scan(constants.QUOTED_STRING_REGEX, "text"))) {

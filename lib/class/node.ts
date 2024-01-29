@@ -1,37 +1,35 @@
-interface CodeNodeProps {
+type CodeNodeArgs = {
   type: string;
-  value: string;
-  match: string;
-  newline: string;
-  nodes: CodeNode[];
-}
-
-export type CodeNodeType = Partial<CodeNodeProps> | null;
+  value?: string;
+  match?: RegExpExecArray;
+  newline?: string;
+  nodes?: CodeNode[];
+};
 
 export class CodeNode {
   type: string;
-  value: unknown;
-  match: string;
+  value?: string;
+  match: RegExpExecArray | undefined;
   newline: string;
 
-  constructor(node: CodeNodeType) {
+  constructor(node: CodeNodeArgs) {
     this.type = node.type;
-    if (node.value) this.value = node.value;
-    if (node.match) this.match = node.match;
+    this.value = node.value;
+    this.match = node.match;
     this.newline = node.newline || "";
   }
 
   get protected() {
-    return Boolean(this.match) && this.match[1] === "!";
+    return Boolean(this.match && this.match[1] === "!");
   }
 }
 
 export class Block extends CodeNode {
   nodes: CodeNode[];
 
-  constructor(node: CodeNodeType) {
+  constructor(node: CodeNodeArgs) {
     super(node);
-    this.nodes = node.nodes || [];
+    this.nodes = node?.nodes || [];
   }
 
   push(node: CodeNode) {

@@ -1,61 +1,58 @@
-import { CodeNodeType } from "./class/node";
+import { Block, CodeNode } from "./class/node";
 import { options } from "./option-types";
 
-export const compile = (cst, options: Partial<options> = {}) => {
+export const compile = (cst: CodeNode, options: Partial<options> = {}) => {
   const keepProtected = options.safe === true || options.keepProtected === true;
   let firstSeen = false;
 
-  // TODO: Variable shadowing needs to be fixed.
-  /* eslint-disable */
-  const walk = (node: CodeNodeType, child?: CodeNodeType) => {
+  const walk = (node: CodeNode | Block) => {
     let output = "";
     let inner;
     let lines;
 
-    for (const child of node.nodes) {
-      switch (child.type) {
-        case "block":
-          if (options.first && firstSeen === true) {
-            // @ts-expect-error Type issue, maybe related to variable shadowing?
-            output += walk(child, node);
+    if ("nodes" in node) {
+      for (const child of node.nodes) {
+        switch (child.type) {
+          case "block":
+            if (options.first && firstSeen === true) {
+              output += walk(child);
+              break;
+            }
+
+            if (options.preserveNewlines === true) {
+              inner = walk(child);
+              lines = inner.split("\n");
+              output += "\n".repeat(lines.length - 1);
+              break;
+            }
+
+            if (keepProtected === true && child.protected === true) {
+              output += walk(child);
+              break;
+            }
+
+            firstSeen = true;
+            break;
+          case "line":
+            if (options.first && firstSeen === true) {
+              output += child.value;
+              break;
+            }
+
+            if (keepProtected === true && child.protected === true) {
+              output += child.value;
+            }
+
+            firstSeen = true;
+            break;
+          case "open":
+          case "close":
+          case "text":
+          case "newline":
+          default: {
+            output += child.value || "";
             break;
           }
-
-          if (options.preserveNewlines === true) {
-            // @ts-expect-error Type issue, maybe related to variable shadowing?
-            inner = walk(child, node);
-            lines = inner.split("\n");
-            output += "\n".repeat(lines.length - 1);
-            break;
-          }
-
-          if (keepProtected === true && child.protected === true) {
-            // @ts-expect-error Type issue, maybe related to variable shadowing?
-            output += walk(child, node);
-            break;
-          }
-
-          firstSeen = true;
-          break;
-        case "line":
-          if (options.first && firstSeen === true) {
-            output += child.value;
-            break;
-          }
-
-          if (keepProtected === true && child.protected === true) {
-            output += child.value;
-          }
-
-          firstSeen = true;
-          break;
-        case "open":
-        case "close":
-        case "text":
-        case "newline":
-        default: {
-          output += child.value || "";
-          break;
         }
       }
     }
