@@ -9,8 +9,7 @@
     "url": "https://freecodecamp.org"
   },
   "files": [
-    "/dist",
-    "!__mocks__"
+    "/dist"
   ],
   "exports": {
     ".": {
