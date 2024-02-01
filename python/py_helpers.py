@@ -62,6 +62,13 @@ class Node:
                     return Node(node)
         return Node()
 
+    def find_body(self):
+        if not isinstance(self.tree, ast.AST):
+            return Node()
+        if not hasattr(self.tree, "body"):
+            return Node()
+        return Node(ast.Module(self.tree.body, []))
+
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
