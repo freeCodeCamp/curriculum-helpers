@@ -478,6 +478,27 @@ if True:
 
         self.assertEqual(len(node.find_ifs()), 2)
 
+    def test_str(self):
+        func_str = """def foo():
+  pass
+"""
+        # Note: the indentation and whitespace is not preserved.
+        expected = """def foo():
+    pass"""
+
+        self.assertEqual(expected, str(Node(func_str)))
+
+    def test_none_str(self):
+        self.assertEqual("# no ast", str(Node()))
+
+    def test_repr(self):
+        func_str = """def foo():
+  pass
+"""
+        node = Node(func_str)
+
+        self.assertEqual(repr(node), "Node:\n" + ast.dump(node.tree, indent=2))
+
 
 if __name__ == "__main__":
     unittest.main()

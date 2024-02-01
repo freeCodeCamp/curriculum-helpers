@@ -41,6 +41,11 @@ class Node:
             return "Node:\nNone"
         return "Node:\n" + ast.dump(self.tree, indent=2)
 
+    def __str__(self):
+        if self.tree == None:
+            return "# no ast"
+        return ast.unparse(self.tree)
+
     def _has_body(self):
         return bool(getattr(self.tree, "body", False))
 
