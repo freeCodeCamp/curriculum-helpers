@@ -1,5 +1,18 @@
 import * as helper from "../index";
 
+type FunctionMatch = {
+  def: string;
+  function_indentation: number;
+  function_body: string;
+  function_parameters: string;
+};
+
+type BlockMatch = {
+  block_indentation: number;
+  block_body: string;
+  block_condition: string;
+};
+
 describe("python", () => {
   const { python } = helper;
   describe("getDef", () => {
@@ -14,20 +27,16 @@ def c():
   a = 1
 `;
       const match = python.getDef(code, "b");
-      if (match) {
-        const {
-          def,
-          function_indentation,
-          function_body,
-          function_parameters,
-        } = match;
-        expect(def).toEqual(`def b(d, e):
+      expect(match).not.toBeNull();
+
+      const { def, function_indentation, function_body, function_parameters } =
+        match as FunctionMatch;
+      expect(def).toEqual(`def b(d, e):
   a = 2
 `);
-        expect(function_indentation).toEqual(0);
-        expect(function_body).toEqual("  a = 2\n");
-        expect(function_parameters).toEqual("d, e");
-      }
+      expect(function_indentation).toEqual(0);
+      expect(function_body).toEqual("  a = 2\n");
+      expect(function_parameters).toEqual("d, e");
     });
   });
 
@@ -75,19 +84,18 @@ for i in range(10):
       ];
       for (const match of matches) {
         expect(match).not.toBeNull();
-        if (match) {
-          // eslint-disable-next-line camelcase
-          const { block_indentation, block_body, block_condition } = match;
-          expect(block_condition).toEqual("if a == 1");
-          expect(block_indentation).toEqual(0);
-          expect(block_body).toEqual(
-            `  a = 2
+        // eslint-disable-next-line camelcase
+        const { block_indentation, block_body, block_condition } =
+          match as BlockMatch;
+        expect(block_condition).toEqual("if a == 1");
+        expect(block_indentation).toEqual(0);
+        expect(block_body).toEqual(
+          `  a = 2
   b = 3
   if b == 3:
     a = 4
 `
-          );
-        }
+        );
       }
 
       const matches2 = [
@@ -98,14 +106,14 @@ for i in range(10):
       ];
       for (const match of matches2) {
         expect(match).not.toBeNull();
-        if (match) {
-          // eslint-disable-next-line camelcase
-          const { block_indentation, block_body, block_condition } = match;
-          expect(block_condition).toEqual("for i in range(10)");
-          expect(block_indentation).toEqual(0);
-          expect(block_body).toEqual(`  a = 1
+
+        // eslint-disable-next-line camelcase
+        const { block_indentation, block_body, block_condition } =
+          match as BlockMatch;
+        expect(block_condition).toEqual("for i in range(10)");
+        expect(block_indentation).toEqual(0);
+        expect(block_body).toEqual(`  a = 1
 `);
-        }
       }
     });
   });
