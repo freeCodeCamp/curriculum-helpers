@@ -38,6 +38,26 @@ def c():
       expect(function_body).toEqual("  a = 2\n");
       expect(function_parameters).toEqual("d, e");
     });
+
+    it("handles indentation", () => {
+      const code = `
+    a = 1
+      
+    def b(d, e):
+      a = 2
+    `;
+      const match = python.getDef(code, "b");
+      expect(match).not.toBeNull();
+
+      const { def, function_indentation, function_body, function_parameters } =
+        match as FunctionMatch;
+      expect(def).toEqual(`    def b(d, e):
+      a = 2
+    `);
+      expect(function_indentation).toEqual(4);
+      expect(function_body).toEqual(`      a = 2\n    `);
+      expect(function_parameters).toEqual("d, e");
+    });
   });
 
   describe("removeComments", () => {
