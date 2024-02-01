@@ -122,6 +122,25 @@ assert add(a, b) == 300
 In contrast to the regex-based helpers, these helpers need to be run in Python, not
 JavaScript
 
+### Formatting output
+
+`str` returns a string that would parse to the same AST as the node. For example:
+
+```python
+function_str = """
+def foo():
+  # will not be in the output
+  x = 1
+
+"""
+output_str = """
+def foo():
+    x = 1"""
+str(Node(function_str)) == output_str # True
+```
+
+The output and source string compile to the same AST, but the output is indented with 4 spaces. Comments and trailing whitespace are removed.
+
 ### Finding nodes
 
 `find_` functions search the current scope and return one of the following:
@@ -145,6 +164,15 @@ When the variable is out of scope, `find_variable` returns an `None` node (i.e. 
 
 ```python
 Node('def foo():\n  x = "1"').find_variable("x") == Node() # True
+```
+
+#### `find_body`
+
+```python
+func_str = """
+def foo():
+    x = 1"""
+Node(func_str).find_function("foo").find_body().is_equivalent("x = 1") # True
 ```
 
 #### `find_class`
