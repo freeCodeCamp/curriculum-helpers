@@ -101,7 +101,7 @@ export const python = {
   astHelpers,
   getDef(code: string, functionName: string) {
     const regex = new RegExp(
-      `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*: *?\\n(?<function_body> +.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
+      `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\s*?\\n(?<function_body> +.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
       "s"
     );
 
