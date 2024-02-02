@@ -223,6 +223,37 @@ class Foo:
 
         self.assertFalse(node.has_function("bar"))
 
+    def test_find_body(self):
+        func_str = """def foo():
+  x = 1
+  print(x)
+"""
+        node = Node(func_str)
+
+        self.assertTrue(
+            node.find_function("foo").find_body().is_equivalent("x = 1\nprint(x)")
+        )
+        self.assertEqual("x = 1\nprint(x)", str(node.find_function("foo").find_body()))
+
+    def test_find_body_with_class(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    self.x = 1
+"""
+        node = Node(class_str)
+
+        self.assertTrue(
+            node.find_class("Foo")
+            .find_body()
+            .is_equivalent("def __init__(self):\n    self.x = 1")
+        )
+
+    def test_find_body_without_body(self):
+        node = Node("x = 1")
+
+        self.assertEqual(node.find_variable("x").find_body(), Node())
+
 
 class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
@@ -477,6 +508,41 @@ if True:
         node = Node(ifs_str)
 
         self.assertEqual(len(node.find_ifs()), 2)
+
+    def test_str(self):
+        func_str = """def foo():
+  pass
+"""
+        # Note: the indentation and whitespace is not preserved.
+        expected = """def foo():
+    pass"""
+
+        self.assertEqual(expected, str(Node(func_str)))
+
+    def test_none_str(self):
+        self.assertEqual("# no ast", str(Node()))
+
+    def test_str_with_comments(self):
+        func_str = """def foo():
+  # comment
+  pass
+
+
+"""
+        # Note: comments are discarded
+        expected = """def foo():
+    pass"""
+
+        self.assertEqual(expected, str(Node(func_str)))
+
+
+    def test_repr(self):
+        func_str = """def foo():
+  pass
+"""
+        node = Node(func_str)
+
+        self.assertEqual(repr(node), "Node:\n" + ast.dump(node.tree, indent=2))
 
 
 if __name__ == "__main__":
