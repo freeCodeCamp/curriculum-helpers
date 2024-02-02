@@ -115,11 +115,11 @@ class Node:
         code_str = ast.unparse(self.tree)
 
         # Why parse and unparse again? Because of an edge case when comparing
-        # the `target_str`` "'True'" with the test in "if 'True':". These should
+        # the `target_str` "'True'" with the test in "if 'True':". These should
         # be equivalent, but the condition unparses to "'True'", while the
-        # `target_str`` becomes '"""True"""' when parsed and unparsed again.
+        # `target_str` becomes '"""True"""' when parsed and unparsed again.
 
-        # By parsing and unparsing `code_str`` we get '"""True"""' and the
+        # By parsing and unparsing `code_str` we get '"""True"""' and the
         # comparison returns True as expected.
         return ast.unparse(ast.parse(code_str)) == ast.unparse(ast.parse(target_str))
 
@@ -140,9 +140,7 @@ class Node:
         return self._find_all(ast.If)
 
     def _find_all(self, ast_type):
-        return [
-            Node(node) for node in self.tree.body if isinstance(node, ast_type)
-        ]
+        return [Node(node) for node in self.tree.body if isinstance(node, ast_type)]
 
     def find_conditions(self):
         def _find_conditions(tree):
@@ -171,6 +169,4 @@ class Node:
 
             return [tree.body] + [tree.orelse]
 
-        return [
-            Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
-        ]
+        return [Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
