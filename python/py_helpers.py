@@ -111,12 +111,18 @@ class Node:
             return call.func.id == name
         return False
 
-    # Takes an string and checks if is equivalent to the node's AST. This
-    # is a loose comparison that tries to find out if the code is essentially
-    # the same. For example, the string "True" is not represented by the same
-    # AST as the test in "if True:" (the string could be wrapped in Module,
-    # Interactive or Expression, depending on the parse mode and the test is
-    # just a Constant), but they are equivalent.
+    # Loosely compares the code in target_str with the code represented by the
+    # Node's AST. If the two codes are semantically equivalent (i.e. the same if
+    # you ignore formatting and context) then this returns True, otherwise
+    # False.
+    #
+    # Ignoring context means that the following comparison is True despite the
+    # fact that the AST of `cond_node` is `Constant(value=True)` and `True`
+    # compiles to `Module(body=[Expr(value=Constant(value=True))],
+    # type_ignores=[])`:
+    #
+    # node = Node("if True:\n  pass") cond_node =
+    # node.find_ifs()[0].find_conditions()[0] cond_node.is_equivalent("True")
 
     def is_equivalent(self, target_str):
         # Setting the tree to None is used to represent missing elements. Such
@@ -143,9 +149,7 @@ class Node:
         return self._find_all(ast.If)
 
     def _find_all(self, ast_type):
-        return [
-            Node(node) for node in self.tree.body if isinstance(node, ast_type)
-        ]
+        return [Node(node) for node in self.tree.body if isinstance(node, ast_type)]
 
     def find_conditions(self):
         def _find_conditions(tree):
@@ -174,6 +178,4 @@ class Node:
 
             return [tree.body] + [tree.orelse]
 
-        return [
-            Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)
-        ]
+        return [Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
