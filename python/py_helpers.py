@@ -41,6 +41,11 @@ class Node:
             return "Node:\nNone"
         return "Node:\n" + ast.dump(self.tree, indent=2)
 
+    def __str__(self):
+        if self.tree == None:
+            return "# no ast"
+        return ast.unparse(self.tree)
+
     def _has_body(self):
         return bool(getattr(self.tree, "body", False))
 
@@ -56,6 +61,13 @@ class Node:
                 if node.name == func:
                     return Node(node)
         return Node()
+
+    def find_body(self):
+        if not isinstance(self.tree, ast.AST):
+            return Node()
+        if not hasattr(self.tree, "body"):
+            return Node()
+        return Node(ast.Module(self.tree.body, []))
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
@@ -99,12 +111,18 @@ class Node:
             return call.func.id == name
         return False
 
-    # Takes an string and checks if is equivalent to the node's AST. This
-    # is a loose comparison that tries to find out if the code is essentially
-    # the same. For example, the string "True" is not represented by the same
-    # AST as the test in "if True:" (the string could be wrapped in Module,
-    # Interactive or Expression, depending on the parse mode and the test is
-    # just a Constant), but they are equivalent.
+    # Loosely compares the code in target_str with the code represented by the
+    # Node's AST. If the two codes are semantically equivalent (i.e. the same if
+    # you ignore formatting and context) then this returns True, otherwise
+    # False.
+    #
+    # Ignoring context means that the following comparison is True despite the
+    # fact that the AST of `cond_node` is `Constant(value=True)` and `True`
+    # compiles to `Module(body=[Expr(value=Constant(value=True))],
+    # type_ignores=[])`:
+    #
+    # node = Node("if True:\n  pass") cond_node =
+    # node.find_ifs()[0].find_conditions()[0] cond_node.is_equivalent("True")
 
     def is_equivalent(self, target_str):
         # Setting the tree to None is used to represent missing elements. Such
