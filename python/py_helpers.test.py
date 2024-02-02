@@ -329,6 +329,17 @@ x = 1
             Node(str_with_whitespace).is_equivalent(str_with_different_whitespace)
         )
 
+    def test_string_equivalence(self):
+        self.assertTrue(Node("'True'").is_equivalent('"""True"""'))
+
+    def test_string_cond_equivalence(self):
+        self.assertTrue(
+            Node("if 'True':\n  pass")
+            .find_ifs()[0]
+            .find_conditions()[0]
+            .is_equivalent("'True'")
+        )
+
 
 class TestConditionalHelpers(unittest.TestCase):
     def test_find_if_statements(self):

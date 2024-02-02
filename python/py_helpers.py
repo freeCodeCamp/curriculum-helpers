@@ -130,7 +130,16 @@ class Node:
         # equivalent to any string.
         if self.tree == None:
             return False
-        return ast.unparse(self.tree) == ast.unparse(ast.parse(target_str))
+        code_str = ast.unparse(self.tree)
+
+        # Why parse and unparse again? Because of an edge case when comparing
+        # the `target_str` "'True'" with the test in "if 'True':". These should
+        # be equivalent, but the condition unparses to "'True'", while the
+        # `target_str` becomes '"""True"""' when parsed and unparsed again.
+
+        # By parsing and unparsing `code_str` we get '"""True"""' and the
+        # comparison returns True as expected.
+        return ast.unparse(ast.parse(code_str)) == ast.unparse(ast.parse(target_str))
 
     # Finds the class definition with the given name
 
