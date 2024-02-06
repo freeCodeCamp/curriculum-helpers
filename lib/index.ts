@@ -101,7 +101,7 @@ export const python = {
   astHelpers,
   getDef(code: string, functionName: string) {
     const regex = new RegExp(
-      `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\s*?\\n(?<function_body> +.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
+      `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\s*?\\n?(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
       "s"
     );
 
@@ -119,8 +119,8 @@ export const python = {
         ""
       );
       return {
-        // Entire function definition without additional \n
-        def: matchedCode[0].slice(1),
+        // Entire function definition without leading \n
+        def: matchedCode[0].replace(/^\n/, ""),
         function_parameters,
         function_body,
         function_indentation: functionIndentationSansNewLine.length,
