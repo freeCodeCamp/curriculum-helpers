@@ -75,10 +75,50 @@ def b(d, e):
   a = 2
   `);
       expect(function_indentation).toEqual(0);
-      expect(function_body).toEqual(`  a = 2
+      expect(function_body).toEqual(`
+  a = 2
   `);
       expect(function_parameters).toEqual("d, e");
     });
+
+    it("handles empty functions", () => {
+      const code = `
+def b():
+`;
+      const match = python.getDef(code, "b");
+      expect(match).not.toBeNull();
+
+      const { def, function_indentation, function_body, function_parameters } =
+        match as FunctionMatch;
+      expect(def).toEqual(`def b():
+`);
+      expect(function_indentation).toEqual(0);
+      expect(function_body).toEqual("");
+      expect(function_parameters).toEqual("");
+    });
+
+    const codeSamples = [
+      ["def b():", "def b():"],
+      ["\ndef b():", "def b():"],
+      ["def b():\n", "def b():\n"],
+      ["\ndef b():\n", "def b():\n"],
+    ];
+    for (const [code, expectedDef] of codeSamples) {
+      it(`handles newlines: ${JSON.stringify(code)}`, () => {
+        const match = python.getDef(code, "b");
+        expect(match).not.toBeNull();
+        const {
+          def,
+          function_indentation,
+          function_body,
+          function_parameters,
+        } = match as FunctionMatch;
+        expect(def).toEqual(expectedDef);
+        expect(function_indentation).toEqual(0);
+        expect(function_body).toEqual("");
+        expect(function_parameters).toEqual("");
+      });
+    }
   });
 
   describe("removeComments", () => {
