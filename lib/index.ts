@@ -84,6 +84,29 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
   return new RegExp(source);
 }
 
+/**
+ * Generates a regex string to match a function expressions and declarations
+ * @param funcName - The name of the function to be matched
+ * @param paramList - Optional list of parameters to be matched
+ * @param options - Optional object determining whether to capture the match (defaults to non-capturing)
+ */
+
+export function functionRegExString(
+  funcName: string | null,
+  paramList: string[] = [],
+  { capture }: { capture: boolean } = { capture: false }
+): string {
+  const params = paramList.join("\\s*,\\s*");
+  const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
+  const arrowFunctionName = funcName
+    ? `${escapeRegExp(funcName)}\\s*=\\s*`
+    : "";
+  const body = "[^}]*";
+  const funcRegEx = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{${body}\\}`;
+  const arrowFuncRegEx = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?${body}\\}?`;
+  return `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`;
+}
+
 export interface ExtendedStyleRule extends CSSStyleRule {
   isDeclaredAfter: (selector: string) => boolean;
 }
