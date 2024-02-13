@@ -129,28 +129,49 @@ describe("concatRegex", () => {
   });
 });
 
-describe("functionRegExString", () => {
-  const { functionRegExString } = helper;
+describe("concatRegex", () => {
+  it("returns a Regex", () => {
+    const { concatRegex } = helper;
+    expect(concatRegex(/a/, /b/)).toBeInstanceOf(RegExp);
+    expect(concatRegex(/a/, "b")).toBeInstanceOf(RegExp);
+  });
+
+  it("returns a compiled regex, when given a string or regex", () => {
+    const { concatRegex } = helper;
+
+    expect(concatRegex("ab").source).toBe("ab");
+    expect(concatRegex(/\s/).source).toBe("\\s");
+  });
+
+  it("concatenates two regexes", () => {
+    const { concatRegex } = helper;
+    const regEx = concatRegex(/.*/, /b\s/);
+    expect(regEx.source).toBe(".*b\\s");
+  });
+});
+
+describe("functionRegexString", () => {
+  const { functionRegexString } = helper;
   it("returns a string", () => {
-    expect(typeof functionRegExString("myFunc")).toBe("string");
+    expect(typeof functionRegexString("myFunc")).toBe("string");
   });
 
   describe("when compiled into a regular expression", () => {
     it("matches the named function", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName));
+      const regEx = new RegExp(functionRegexString(funcName));
       expect(regEx.test("function myFunc(){}")).toBe(true);
     });
 
     it("does not match a different named function", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName));
+      const regEx = new RegExp(functionRegexString(funcName));
       expect(regEx.test("function notMyFunc(){}")).toBe(false);
     });
 
     it("matches the named function with arguments and a body", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(funcName, ["arg1", "arg2"]));
       expect(
         regEx.test("function myFunc(arg1, arg2){\n console.log()\n}")
       ).toBe(true);
@@ -158,41 +179,41 @@ describe("functionRegExString", () => {
 
     it("does not match the named function with different arguments", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(funcName, ["arg1", "arg2"]));
       expect(regEx.test("function myFunc(arg1, arg3){}")).toBe(false);
     });
 
     it("matches arrow functions", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(funcName, ["arg1", "arg2"]));
       expect(regEx.test("myFunc = (arg1, arg2) => {}")).toBe(true);
     });
 
     it("matches arrow functions without brackets", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName, ["arg1"]));
+      const regEx = new RegExp(functionRegexString(funcName, ["arg1"]));
       expect(regEx.test("myFunc = arg1 => arg1 + 1")).toBe(true);
     });
 
     it("matches a function with a special character in the name", () => {
       const funcName = "myFunc$";
-      const regEx = new RegExp(functionRegExString(funcName));
+      const regEx = new RegExp(functionRegexString(funcName));
       expect(regEx.test("function myFunc$(){}")).toBe(true);
     });
 
     it("matches anonymous functions", () => {
-      const regEx = new RegExp(functionRegExString(null, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(null, ["arg1", "arg2"]));
       expect(regEx.test("function(arg1, arg2) {}")).toBe(true);
     });
 
     it("matches anonymous arrow functions", () => {
-      const regEx = new RegExp(functionRegExString(null, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(null, ["arg1", "arg2"]));
       expect(regEx.test("(arg1, arg2) => {}")).toBe(true);
     });
 
     it("ignores irrelevant whitespace", () => {
       const funcName = "myFunc";
-      const regEx = new RegExp(functionRegExString(funcName, ["arg1", "arg2"]));
+      const regEx = new RegExp(functionRegexString(funcName, ["arg1", "arg2"]));
       expect(regEx.test("function \n\n myFunc \n ( arg1 , arg2 ) \n{ }")).toBe(
         true
       );
@@ -201,7 +222,7 @@ describe("functionRegExString", () => {
     it("can be easily combined with other regex", () => {
       const funcName = "myFunc";
       const regEx = new RegExp(
-        `let x = ${functionRegExString(funcName)}; console\\.log\\(x\\);`
+        `let x = ${functionRegexString(funcName)}; console\\.log\\(x\\);`
       );
 
       expect(regEx.test("function myFunc(){}")).toBe(false);
@@ -218,14 +239,14 @@ describe("functionRegExString", () => {
     it("can optionally capture the function", () => {
       const funcName = "myFunc";
       const regEx = new RegExp(
-        functionRegExString(funcName, ["arg1", "arg2"], { capture: true })
+        functionRegexString(funcName, ["arg1", "arg2"], { capture: true })
       );
       const match = "var x = 'y'; function myFunc(arg1, arg2){}".match(regEx);
       expect(match).not.toBeNull();
       expect(match![1]).toBe("function myFunc(arg1, arg2){}");
 
       const nonCapturingRegEx = new RegExp(
-        functionRegExString(funcName, ["arg1", "arg2"])
+        functionRegexString(funcName, ["arg1", "arg2"])
       );
       const nonCapturingMatch = "function myFunc(arg1, arg2){}".match(
         nonCapturingRegEx
@@ -237,7 +258,7 @@ describe("functionRegExString", () => {
     it("can capture arrow functions", () => {
       const funcName = "myFunc";
       const regEx = new RegExp(
-        functionRegExString(funcName, ["arg1", "arg2"], { capture: true })
+        functionRegexString(funcName, ["arg1", "arg2"], { capture: true })
       );
       const match = "myFunc = (arg1, arg2) => {return arg1 + arg2}".match(
         regEx
@@ -249,7 +270,7 @@ describe("functionRegExString", () => {
     it("can capture functions without brackets", () => {
       const funcName = "myFunc";
       const regEx = new RegExp(
-        functionRegExString(funcName, ["arg1"], { capture: true })
+        functionRegexString(funcName, ["arg1"], { capture: true })
       );
       const match = "myFunc = arg1 => arg1; console.log".match(regEx);
       expect(match).not.toBeNull();
