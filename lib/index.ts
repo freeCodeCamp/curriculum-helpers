@@ -95,7 +95,7 @@ export function functionRegex(
   funcName: string | null,
   paramList: string[] = [],
   { capture }: { capture: boolean } = { capture: false }
-): string {
+): RegExp {
   const params = paramList.join("\\s*,\\s*");
   const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
   const arrowFunctionName = funcName
@@ -104,7 +104,7 @@ export function functionRegex(
   const body = "[^}]*";
   const funcRegEx = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{${body}\\}`;
   const arrowFuncRegEx = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?${body}\\}?`;
-  return `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`;
+  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
 }
 
 export interface ExtendedStyleRule extends CSSStyleRule {
