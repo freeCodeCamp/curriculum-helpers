@@ -28,6 +28,8 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "7.26.0",
     "@types/jest": "29.5.14",
+    "@babel/types": "7.23.9",
+    "@types/babel__generator": "7.6.8",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
     "babel-jest": "^29.7.0",
@@ -81,6 +83,8 @@
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "@babel/generator": "7.x",
+    "@babel/parser": "7.x",
     "browserify": "^17.0.0"
   }
 }
