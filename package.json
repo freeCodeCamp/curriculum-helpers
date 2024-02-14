@@ -25,6 +25,8 @@
     "@babel/core": "7.23.9",
     "@babel/preset-env": "7.23.9",
     "@babel/preset-typescript": "7.23.3",
+    "@babel/types": "7.23.9",
+    "@types/babel__generator": "7.6.8",
     "@types/jest": "27.5.2",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
@@ -76,6 +78,8 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
+    "@babel/generator": "7.x",
+    "@babel/parser": "7.x",
     "browserify": "^17.0.0"
   }
 }

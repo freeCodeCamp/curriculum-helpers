@@ -1,5 +1,6 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
+export { Babeliser } from "./class/babeliser";
 
 /**
  * Removes every HTML-comment from the string that is provided
