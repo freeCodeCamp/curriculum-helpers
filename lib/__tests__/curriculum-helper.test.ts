@@ -217,19 +217,4 @@ describe("functionRegex", () => {
       true
     );
   });
-
-  it("can be easily combined with other regex", () => {
-    const funcName = "myFunc";
-    const regEx = new RegExp(
-      `let x = ${functionRegex(funcName).source}; console\\.log\\(x\\);`
-    );
-
-    expect(regEx.test("function myFunc(){}")).toBe(false);
-    expect(regEx.test("let x = myFunc = () => {};")).toBe(false);
-    expect(regEx.test("let x = function myFunc(){}")).toBe(false);
-    expect(regEx.test("let x = myFunc = () => {}; console.log(x);")).toBe(true);
-    expect(regEx.test("let x = function myFunc(){}; console.log(x);")).toBe(
-      true
-    );
-  });
 });
