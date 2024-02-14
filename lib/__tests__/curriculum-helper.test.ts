@@ -196,4 +196,50 @@ describe("functionRegex", () => {
       true
     );
   });
+
+  it("can optionally capture the function", () => {
+    const funcName = "myFunc";
+    const regEx = functionRegex(funcName, ["arg1", "arg2"], { capture: true });
+    const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
+
+    const match = "var x = 'y'; function myFunc(arg1, arg2){}".match(
+      combinedRegEx
+    );
+    expect(match).not.toBeNull();
+    expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){}");
+    expect(match![1]).toBe("function myFunc(arg1, arg2){}");
+
+    const nonCapturingRegEx = functionRegex(funcName, ["arg1", "arg2"]);
+
+    const nonCapturingMatch = "function myFunc(arg1, arg2){}".match(
+      nonCapturingRegEx
+    );
+    expect(nonCapturingMatch).not.toBeNull();
+    expect(nonCapturingMatch![1]).toBeUndefined();
+  });
+
+  it("can capture arrow functions", () => {
+    const funcName = "myFunc";
+    const regEx = functionRegex(funcName, ["arg1", "arg2"], { capture: true });
+
+    const match = "myFunc = (arg1, arg2) => {return arg1 + arg2}".match(regEx);
+    expect(match).not.toBeNull();
+    expect(match![1]).toBe("myFunc = (arg1, arg2) => {return arg1 + arg2}");
+  });
+
+  it("can capture functions without brackets", () => {
+    const funcName = "myFunc";
+    const regEx = functionRegex(funcName, ["arg1"], { capture: true });
+
+    const match =
+      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately".match(
+        regEx
+      );
+    expect(match).not.toBeNull();
+    // It's a greedy match, since it doesn't know where the function ends.
+    // This should be fine for most use cases.
+    expect(match![1]).toBe(
+      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately"
+    );
+  });
 });
