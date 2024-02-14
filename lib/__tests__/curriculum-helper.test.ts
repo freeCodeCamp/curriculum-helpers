@@ -158,19 +158,19 @@ describe("functionRegex", () => {
 
   it("matches the named function", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName));
+    const regEx = functionRegex(funcName);
     expect(regEx.test("function myFunc(){}")).toBe(true);
   });
 
   it("does not match a different named function", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName));
+    const regEx = functionRegex(funcName);
     expect(regEx.test("function notMyFunc(){}")).toBe(false);
   });
 
   it("matches the named function with arguments and a body", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName, ["arg1", "arg2"]));
+    const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function myFunc(arg1, arg2){\n console.log()\n}")).toBe(
       true
     );
@@ -178,41 +178,41 @@ describe("functionRegex", () => {
 
   it("does not match the named function with different arguments", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName, ["arg1", "arg2"]));
+    const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function myFunc(arg1, arg3){}")).toBe(false);
   });
 
   it("matches arrow functions", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName, ["arg1", "arg2"]));
+    const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("myFunc = (arg1, arg2) => {}")).toBe(true);
   });
 
   it("matches arrow functions without brackets", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName, ["arg1"]));
+    const regEx = functionRegex(funcName, ["arg1"]);
     expect(regEx.test("myFunc = arg1 => arg1 + 1")).toBe(true);
   });
 
   it("matches a function with a special character in the name", () => {
     const funcName = "myFunc$";
-    const regEx = new RegExp(functionRegex(funcName));
+    const regEx = functionRegex(funcName);
     expect(regEx.test("function myFunc$(){}")).toBe(true);
   });
 
   it("matches anonymous functions", () => {
-    const regEx = new RegExp(functionRegex(null, ["arg1", "arg2"]));
+    const regEx = functionRegex(null, ["arg1", "arg2"]);
     expect(regEx.test("function(arg1, arg2) {}")).toBe(true);
   });
 
   it("matches anonymous arrow functions", () => {
-    const regEx = new RegExp(functionRegex(null, ["arg1", "arg2"]));
+    const regEx = functionRegex(null, ["arg1", "arg2"]);
     expect(regEx.test("(arg1, arg2) => {}")).toBe(true);
   });
 
   it("ignores irrelevant whitespace", () => {
     const funcName = "myFunc";
-    const regEx = new RegExp(functionRegex(funcName, ["arg1", "arg2"]));
+    const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function \n\n myFunc \n ( arg1 , arg2 ) \n{ }")).toBe(
       true
     );
