@@ -73,6 +73,17 @@ export function isCalledWithNoArgs(
   return Boolean(matches.length);
 }
 
+/**
+ * Concatenates multiple regexes or source strings into a single regex.
+ * @param regexes
+ * @returns
+ */
+
+export function concatRegex(...regexes: (string | RegExp)[]) {
+  const source = regexes.map((r) => new RegExp(r).source).join("");
+  return new RegExp(source);
+}
+
 export interface ExtendedStyleRule extends CSSStyleRule {
   isDeclaredAfter: (selector: string) => boolean;
 }
