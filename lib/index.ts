@@ -91,7 +91,7 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
  * @param options - Optional object determining whether to capture the match (defaults to non-capturing)
  */
 
-export function functionRegexString(
+export function functionRegex(
   funcName: string | null,
   paramList: string[] = [],
   { capture }: { capture: boolean } = { capture: false }
