@@ -129,27 +129,6 @@ describe("concatRegex", () => {
   });
 });
 
-describe("concatRegex", () => {
-  it("returns a Regex", () => {
-    const { concatRegex } = helper;
-    expect(concatRegex(/a/, /b/)).toBeInstanceOf(RegExp);
-    expect(concatRegex(/a/, "b")).toBeInstanceOf(RegExp);
-  });
-
-  it("returns a compiled regex, when given a string or regex", () => {
-    const { concatRegex } = helper;
-
-    expect(concatRegex("ab").source).toBe("ab");
-    expect(concatRegex(/\s/).source).toBe("\\s");
-  });
-
-  it("concatenates two regexes", () => {
-    const { concatRegex } = helper;
-    const regEx = concatRegex(/.*/, /b\s/);
-    expect(regEx.source).toBe(".*b\\s");
-  });
-});
-
 describe("functionRegex", () => {
   const { functionRegex } = helper;
   it("returns a regex", () => {
