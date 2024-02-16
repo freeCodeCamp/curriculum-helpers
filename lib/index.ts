@@ -159,7 +159,7 @@ export const python = {
         : blockPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const regex = new RegExp(
-      `\\n?(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*: *?\\n(?<block_body> +.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
+      `\\n?(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\s*?\\n(?<block_body> +.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
       "s"
     );
 

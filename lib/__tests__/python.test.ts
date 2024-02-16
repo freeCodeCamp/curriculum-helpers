@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import * as helper from "../index";
 
 type FunctionMatch = {
@@ -188,7 +189,6 @@ for i in range(10):
       for (const match of matches2) {
         expect(match).not.toBeNull();
 
-        // eslint-disable-next-line camelcase
         const { block_indentation, block_body, block_condition } =
           match as BlockMatch;
         expect(block_condition).toEqual("for i in range(10)");
@@ -196,6 +196,26 @@ for i in range(10):
         expect(block_body).toEqual(`  a = 1
 `);
       }
+    });
+
+    it("handles extra new lines after condition", () => {
+      const el = `
+def vigenere(message, key):
+    for char in message.lower():
+        # Append space to the message
+        if char == ' ':
+            encrypted_text += char
+        else:
+
+            key_char = key[key_index % len(key)]
+    print('plain text:', message)
+`;
+
+      const commentless_code = python.removeComments(el);
+      const { block_body } = python.getBlock(commentless_code, "else")!;
+      expect(block_body).toMatch(
+        /key_char\s*=\s*key\s*\[\s*key_index\s*%\s*len\s*\(\s*key\s*\)\s*\]\s*key_index\s*\+=\s*1/
+      );
     });
   });
 });
