@@ -455,6 +455,88 @@ else:
         self.assertEqual(len(node.find_if_bodies()), 0)
 
 
+class TestWhileLoopsHelpers(unittest.TestCase):
+    def test_find_while_statements(self):
+        self.maxDiff = None
+        while_str = """
+x = 10
+while x > 0:
+  x -= 1
+
+while x <= 0:
+  x += 1
+"""
+
+        node = Node(while_str)
+        for while_node in node.find_whiles():
+            self.assertIsInstance(while_node, Node)
+        self.assertNotIsInstance(node.find_whiles(), Node)
+        self.assertEqual(len(node.find_whiles()), 2)
+
+        self.assertTrue(node.find_whiles()[0].is_equivalent("while x > 0:\n  x -= 1"))
+        self.assertTrue(node.find_whiles()[1].is_equivalent("while x <= 0:\n  x += 1"))
+
+    def test_while_conditions(self):
+        while_str = """
+x = 10
+while x > 0:
+  x -= 1
+else:
+  pass
+"""
+        node = Node(while_str)
+
+        for while_cond in node.find_whiles()[0].find_conditions():
+            self.assertIsInstance(while_cond, Node)
+        self.assertNotIsInstance(node.find_whiles()[0].find_conditions(), Node)
+        self.assertEqual(len(node.find_whiles()[0].find_conditions()), 2)
+
+        self.assertIsNone(node.find_whiles()[0].find_conditions()[1].tree)
+
+
+class TestForLoopsHelpers(unittest.TestCase):
+    def test_find_for_statements(self):
+        self.maxDiff = None
+        for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+        node = Node(for_str)
+        for for_loop in node.find_for_loops():
+            self.assertIsInstance(for_loop, Node)
+        self.assertNotIsInstance(node.find_for_loops(), Node)
+        self.assertEqual(len(node.find_for_loops()), 2)
+
+        self.assertTrue(node.find_for_loops()[0].is_equivalent('for x, y in enumerate(dict):\n  print(x, y)\nelse:\n  pass'))
+        self.assertTrue(node.find_for_loops()[1].is_equivalent('for i in range(4):\n  pass'))
+
+    def test_find_for_statements(self):
+        self.maxDiff = None
+        for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+
+        node = Node(for_str)        
+        self.assertIsInstance(node.find_for_loops()[0].find_for_vars(), Node)        
+        self.assertIsInstance(node.find_for_loops()[1].find_for_vars(), Node)
+
+        self.assertTrue(node.find_for_loops()[0].find_for_vars().is_equivalent('(x, y)'))
+        self.assertTrue(node.find_for_loops()[1].find_for_vars().is_equivalent('i'))
+
+
 class TestGenericHelpers(unittest.TestCase):
     def test_equality(self):
         self.assertEqual(

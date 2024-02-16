@@ -162,12 +162,12 @@ class Node:
 
     def find_conditions(self):
         def _find_conditions(tree):
-            if not isinstance(tree, ast.If):
+            if not isinstance(tree, (ast.If, ast.While)): # is this ok?
                 return []
             test = tree.test
             if self.tree.orelse == []:
                 return [test]
-            if isinstance(tree.orelse[0], ast.If):
+            if isinstance(tree.orelse[0], (ast.If, ast.While)):
                 return [test] + _find_conditions(tree.orelse[0])
 
             return [test, None]
@@ -188,3 +188,50 @@ class Node:
             return [tree.body] + [tree.orelse]
 
         return [Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
+    
+    def find_whiles(self):
+        return self._find_all(ast.While)
+    
+    def find_while_conditions(self):
+        def _find_while_conditions(tree):
+            if not isinstance(tree, ast.While):
+                return []
+            test = tree.test
+            if self.tree.orelse == []:
+                return [test]
+            if isinstance(tree.orelse[0], ast.While):
+                return [test] + _find_while_conditions(tree.orelse[0])
+            
+            return[test, None]
+        
+        return [Node(test) for test in _find_while_conditions(self.tree)]
+    
+    def find_while_bodies(self):
+        def _find_while_bodies(tree):
+            if not isinstance(tree, ast.While):
+                return []
+            if self.tree.orelse == []:
+                return [tree.body]
+            if isinstance(tree.orelse[0], ast.While):
+                return [tree.body] + _find_while_bodies(tree.orelse[0])
+
+            return [tree.body] + [tree.orelse]
+
+        return [Node(ast.Module(body, [])) for body in _find_while_bodies(self.tree)]
+    
+    def find_for_loops(self):
+        return self._find_all(ast.For)
+        
+    def find_for_vars(self):    
+        def _find_for_vars(tree):
+            if not isinstance(tree, ast.For):
+                return Node()            
+            return tree.target
+        return Node(ast.Module(_find_for_vars(self.tree), []))
+    
+    def find_for_iter(self):    
+        def _find_for_iter(tree):
+            if not isinstance(tree, ast.For):
+                return Node()
+            return tree.iter
+        return Node(ast.Module(_find_for_iter(self.tree), []))
