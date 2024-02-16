@@ -166,7 +166,6 @@ for i in range(10):
       ];
       for (const match of matches) {
         expect(match).not.toBeNull();
-        // eslint-disable-next-line camelcase
         const { block_indentation, block_body, block_condition } =
           match as BlockMatch;
         expect(block_condition).toEqual("if a == 1");
