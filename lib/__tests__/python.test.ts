@@ -213,8 +213,8 @@ def vigenere(message, key):
 
       const commentless_code = python.removeComments(el);
       const { block_body } = python.getBlock(commentless_code, "else")!;
-      expect(block_body).toMatch(
-        /key_char\s*=\s*key\s*\[\s*key_index\s*%\s*len\s*\(\s*key\s*\)\s*\]\s*key_index\s*\+=\s*1/
+      expect(block_body).toEqual(
+        "\n            key_char = key[key_index % len(key)]"
       );
     });
   });
