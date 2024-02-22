@@ -162,7 +162,7 @@ class Node:
 
     def find_conditions(self):
         def _find_conditions(tree):
-            if not isinstance(tree, (ast.If, ast.While)):  # is this ok?
+            if not isinstance(tree, ast.If):
                 return []
             test = tree.test
             if self.tree.orelse == []:
@@ -227,10 +227,20 @@ class Node:
             return Node()
         return Node(self.tree.target)
 
-    def find_for_iter(self):
-        def _find_for_iter(tree):
-            if not isinstance(tree, ast.For):
-                return Node()
-            return tree.iter
+    def find_for_iter(self):        
+        if not isinstance(self.tree, ast.For):
+            return Node()
+        return Node(self.tree.iter)
 
-        return Node(ast.Module(_find_for_iter(self.tree), []))
+    def find_for_bodies(self):
+        def _find_for_bodies(tree):
+            if not isinstance(tree, ast.For):
+                return []
+            if self.tree.orelse == []:
+                return [tree.body]
+            if isinstance(tree.orelse[0], ast.For):
+                return [tree.body] + _find_while_bodies(tree.orelse[0])
+
+            return [tree.body] + [tree.orelse]
+
+        return [Node(ast.Module(body, [])) for body in _find_for_bodies(self.tree)]
