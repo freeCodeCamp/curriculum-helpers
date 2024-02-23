@@ -455,7 +455,7 @@ else:
         self.assertEqual(len(node.find_if_bodies()), 0)
 
     
-    def find_specific_if(self):
+    def test_find_specific_if(self):
         if_str = """
 if True:
   x = 1
@@ -467,8 +467,13 @@ else:
   x = 4
 """
         node = Node(if_str)
-        print(node)
-        print(node.find_if())
+        
+        self.assertTrue(node.find_if("True"))
+        self.assertFalse(node.find_if("False"))
+        self.assertTrue(node.find_if("True").find_if_bodies()[0].is_equivalent("x = 1"))
+        self.assertTrue(node.find_if("True").find_if_bodies()[1].is_equivalent("x = 2"))
+        self.assertTrue(node.find_if("True").find_if_bodies()[2].is_equivalent("x = 3"))
+        self.assertTrue(node.find_if("True").find_if_bodies()[3].is_equivalent("x = 4"))
         
 
 class TestWhileLoopsHelpers(unittest.TestCase):
@@ -528,6 +533,24 @@ else:
         self.assertTrue(node.find_whiles()[0].find_while_bodies()[0].is_equivalent('x -= 1'))
         self.assertTrue(node.find_whiles()[1].find_while_bodies()[0].is_equivalent('x += 1'))
         self.assertTrue(node.find_whiles()[1].find_while_bodies()[1].is_equivalent('x = 6'))
+
+    def test_find_specific_while(self):
+        while_str = """
+x = 10
+while x > 0:
+  x -= 1
+
+while x <= 0:
+  x += 1
+else:
+  x = 6
+"""
+        node = Node(while_str)
+
+        self.assertTrue(node.find_while("x > 0"))
+        self.assertTrue(node.find_while("x <= 0"))
+        self.assertTrue(node.find_while("x > 0").find_while_bodies()[0].is_equivalent("x -= 1"))
+        self.assertTrue(node.find_while("x <= 0").find_while_bodies()[0].is_equivalent("x += 1"))  
 
 
 
@@ -611,6 +634,26 @@ for i in range(4):
         self.assertTrue(node.find_for_loops()[0].find_for_bodies()[0].is_equivalent('print(x, y)'))
         self.assertTrue(node.find_for_loops()[0].find_for_bodies()[1].is_equivalent('print("Hi")'))
         self.assertTrue(node.find_for_loops()[1].find_for_bodies()[0].is_equivalent('pass'))
+
+    def test_find_specific_for(self):
+        for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x)
+else:
+    print("Hi")
+    
+for i in range(4):
+    print(i)
+"""
+        node = Node(for_str)
+
+        self.assertTrue(node.find_for("(x,y)", "enumerate(dict)"))
+        self.assertTrue(node.find_for("i", "range(4)"))
+        self.assertFalse(node.find_for("x", "dict"))
+        self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_for_bodies()[0].is_equivalent("print(x)"))
+        self.assertTrue(node.find_for("i", "range(4)").find_for_bodies()[0].is_equivalent("print(i)"))
+
 
 
 class TestGenericHelpers(unittest.TestCase):
