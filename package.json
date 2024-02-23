@@ -1,6 +1,6 @@
 {
   "name": "@freecodecamp/curriculum-helpers",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
   "author": {
@@ -38,7 +38,7 @@
     "lint-staged": "9.5.0",
     "prettier": "2.8.8",
     "ts-loader": "9.5.1",
-    "webpack": "5.90.2",
+    "webpack": "5.90.3",
     "webpack-cli": "5.1.4"
   },
   "publishConfig": {
