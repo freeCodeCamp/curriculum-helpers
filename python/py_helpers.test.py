@@ -454,6 +454,22 @@ else:
 
         self.assertEqual(len(node.find_if_bodies()), 0)
 
+    
+    def find_specific_if(self):
+        if_str = """
+if True:
+  x = 1
+elif y == 2:
+  x = 2
+elif False:
+  x = 3
+else:
+  x = 4
+"""
+        node = Node(if_str)
+        print(node)
+        print(node.find_if())
+        
 
 class TestWhileLoopsHelpers(unittest.TestCase):
     def test_find_while_statements(self):
