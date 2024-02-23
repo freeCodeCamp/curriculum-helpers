@@ -520,6 +520,12 @@ if True:
 
         self.assertEqual(len(node.find_ifs()), 2)
 
+    def test_len_none_node(self):
+        self.assertEqual(len(Node()), 0)
+
+    def test_len_node_without_body(self):
+        self.assertEqual(len(Node("x = 1").find_variable("x")), 1)
+
     def test_str(self):
         func_str = """def foo():
   pass
@@ -545,7 +551,6 @@ if True:
     pass"""
 
         self.assertEqual(expected, str(Node(func_str)))
-
 
     def test_repr(self):
         func_str = """def foo():

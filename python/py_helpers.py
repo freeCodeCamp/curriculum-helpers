@@ -22,8 +22,11 @@ class Node:
     def __len__(self):
         if getattr(self.tree, "__len__", False):
             return len(self.tree)
-        else:
-            return len(self.tree.body)
+        if self.tree is None:
+            return 0
+        if not hasattr(self.tree, "body"):
+            return 1
+        return len(self.tree.body)
 
     def __eq__(self, other):
         if not isinstance(other, Node):
