@@ -167,7 +167,7 @@ class Node:
             test = tree.test
             if self.tree.orelse == []:
                 return [test]
-            if isinstance(tree.orelse[0], (ast.If, ast.While)):
+            if isinstance(tree.orelse[0], ast.If):
                 return [test] + _find_conditions(tree.orelse[0])
 
             return [test, None]
