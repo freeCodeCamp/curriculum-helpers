@@ -1,21 +1,14 @@
-/* eslint-disable */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { parse, ParserOptions } from "@babel/parser";
-import generate, { GeneratorOptions } from "@babel/generator";
+import generate from "@babel/generator";
 import {
-  ArrowFunctionExpression,
   ExpressionStatement,
   FunctionDeclaration,
-  Identifier,
-  ImportDeclaration,
   is,
   Node,
   VariableDeclaration,
-  Statement,
-  Program,
-  File,
-  Declaration,
 } from "@babel/types";
+
+export { generate };
 
 export class Tower<T extends Node> {
   public ast: Node;
@@ -39,23 +32,28 @@ export class Tower<T extends Node> {
         if (is("FunctionDeclaration", node)) {
           return node.id?.name === name;
         }
+
         if (is("VariableDeclaration", node)) {
           const variableDeclarator = node.declarations[0];
           if (!is("VariableDeclarator", variableDeclarator)) {
             return false;
           }
+
           const identifier = variableDeclarator.id;
           if (!is("Identifier", identifier)) {
             return false;
           }
+
           return identifier.name === name;
         }
       }
+
       return false;
     });
     if (!ast) {
       throw new Error(`No AST found with name ${name}`);
     }
+
     assertIsType<T>(ast);
     return new Tower<T>(ast);
   }
@@ -68,6 +66,31 @@ export class Tower<T extends Node> {
     return this.getType("VariableDeclaration", name);
   }
 
+  public getCalls(callSite: string): Array<Tower<ExpressionStatement>> {
+    const body = this.extractBody(this.ast);
+    const calls = body.filter((node) => {
+      if (is("ExpressionStatement", node)) {
+        const expression = node.expression;
+        if (is("CallExpression", expression)) {
+          const callee = expression.callee;
+
+          switch (callee.type) {
+            case "Identifier":
+              return callee.name === callSite;
+            case "MemberExpression":
+              return generate(callee).code === callSite;
+            default:
+              return true;
+          }
+        }
+      }
+
+      return false;
+    });
+    assertIsType<ExpressionStatement[]>(calls);
+    return calls.map((call) => new Tower<ExpressionStatement>(call));
+  }
+
   private extractBody(ast: Node): Node[] {
     switch (ast.type) {
       case "Program":
@@ -76,6 +99,14 @@ export class Tower<T extends Node> {
         return ast.body.body;
       case "VariableDeclaration":
         return ast.declarations;
+      case "ArrowFunctionExpression":
+        // eslint-disable-next-line no-case-declarations
+        const blockStatement = ast.body;
+        if (is("BlockStatement", blockStatement)) {
+          return blockStatement.body;
+        }
+
+        throw new Error(`Unimplemented for ${ast.type}`);
       default:
         throw new Error(`Unimplemented for ${ast.type}`);
     }
@@ -84,8 +115,12 @@ export class Tower<T extends Node> {
   public get generate(): string {
     return generate(this.ast).code;
   }
+
+  public get compact(): string {
+    return generate(this.ast, { compact: true }).code;
+  }
 }
 
-function assertIsType<T extends Node>(ast: Node): asserts ast is T {
-  return;
-}
+function assertIsType<T extends Node | Node[]>(
+  ast: Node | Node[]
+): asserts ast is T {}

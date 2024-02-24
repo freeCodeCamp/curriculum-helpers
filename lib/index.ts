@@ -1,6 +1,6 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
-export { Tower } from "./class/tower";
+export { Tower, generate } from "./class/tower";
 
 declare global {
   // eslint-disable-next-line no-var

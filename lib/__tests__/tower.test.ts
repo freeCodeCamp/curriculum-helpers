@@ -1,5 +1,4 @@
-/* eslint-disable */
-import { Tower } from "../index";
+import { Tower, generate } from "../index";
 
 const code = `
 import { readFile } from "fs/promises";
@@ -50,17 +49,46 @@ describe("tower", () => {
   describe("getFunction", () => {
     it("works", () => {
       const main = t.getFunction("main").generate;
-      console.log(main);
+      expect(main).toEqual(
+        `async function main() {
+  doSyncStuff();
+  const a = await doAsyncStuff(1);
+  console.log(a);
+}
+
+// Test`
+      );
     });
   });
   describe("getVariable", () => {
     it("works", () => {
       const a = t.getFunction("main").getVariable("a").generate;
+      expect(a).toEqual("const a = await doAsyncStuff(1);");
       const b = t.getVariable("b").generate;
+      expect(b).toEqual(`const b = {
+  c: () => {
+    const c = 1;
+  },
+  "example-a": {
+    a: 1
+  }
+};`);
       const file = t.getFunction("doAsyncStuff").getVariable("file").generate;
-      console.log(a);
-      console.log(b);
-      console.log(file);
+      expect(file).toEqual(
+        '// Another test\nconst file = await readFile("file_loc" + num, "utf-8");'
+      );
+    });
+  });
+  describe("getCalls", () => {
+    it("works", () => {
+      const aMap = t.getCalls("a.map");
+      expect(aMap).toHaveLength(1);
+      const map = aMap.at(0);
+      // @ts-expect-error - expression does exist.
+      const argumes = map?.ast.expression?.arguments;
+      expect(generate(argumes.at(0), { compact: true }).code).toEqual(
+        "function(e){}"
+      );
     });
   });
 });
