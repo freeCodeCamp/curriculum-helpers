@@ -469,7 +469,7 @@ else:
         node = Node(if_str)
         
         self.assertTrue(node.find_if("True"))
-        self.assertFalse(node.find_if("False"))
+        self.assertIsNone(node.find_if("False").tree)
         self.assertTrue(node.find_if("True").find_if_bodies()[0].is_equivalent("x = 1"))
         self.assertTrue(node.find_if("True").find_if_bodies()[1].is_equivalent("x = 2"))
         self.assertTrue(node.find_if("True").find_if_bodies()[2].is_equivalent("x = 3"))
@@ -651,7 +651,7 @@ for i in range(4):
 
         self.assertTrue(node.find_for("(x,y)", "enumerate(dict)"))
         self.assertTrue(node.find_for("i", "range(4)"))
-        self.assertFalse(node.find_for("x", "dict"))
+        self.assertIsNone(node.find_for("x", "dict").tree)
         self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_for_bodies()[0].is_equivalent("print(x)"))
         self.assertTrue(node.find_for("i", "range(4)").find_for_bodies()[0].is_equivalent("print(i)"))
 
