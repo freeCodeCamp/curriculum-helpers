@@ -250,12 +250,14 @@ class Node:
         for if_statement in if_list:
             if if_statement.find_conditions()[0].is_equivalent(if_str):                
                 return if_statement
+        return Node()
             
     def find_while(self, while_str):
         while_list = self._find_all(ast.While)
         for while_loop in while_list:
             if while_loop.find_while_conditions()[0].is_equivalent(while_str):                
                 return while_loop
+        return Node()
             
     def find_for(self, target_str, iter_str):
         for_list = self._find_all(ast.For)
@@ -263,3 +265,4 @@ class Node:
             if for_loop.find_for_vars().is_equivalent(target_str) \
                 and for_loop.find_for_iter().is_equivalent(iter_str):                
                 return for_loop
+        return Node()

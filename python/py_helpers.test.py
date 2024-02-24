@@ -513,6 +513,7 @@ else:
         self.assertNotIsInstance(node.find_whiles()[0].find_while_conditions(), Node)
         self.assertEqual(len(node.find_whiles()[0].find_while_conditions()), 2)
 
+        self.assertTrue(node.find_whiles()[0].find_while_conditions()[0].is_equivalent("x > 0"))
         self.assertIsNone(node.find_whiles()[0].find_while_conditions()[1].tree)
 
     def test_while_bodies(self):
