@@ -476,3 +476,74 @@ describe("prepTestComponent", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+describe("permutateRegex", () => {
+  it("returns a Regex", () => {
+    const { permutateRegex } = helper;
+
+    expect(permutateRegex([/a/, /b/])).toBeInstanceOf(RegExp);
+    expect(permutateRegex([/a/, "b"])).toBeInstanceOf(RegExp);
+    expect(permutateRegex(["a", "b"])).toBeInstanceOf(RegExp);
+  });
+
+  it("returns regex matching all permutations", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", /c/]);
+
+    expect(regex.test("a||b||c")).toBe(true);
+    expect(regex.test("a||c||b")).toBe(true);
+    expect(regex.test("b||a||c")).toBe(true);
+    expect(regex.test("b||c||a")).toBe(true);
+    expect(regex.test("c||a||b")).toBe(true);
+    expect(regex.test("c||b||a")).toBe(true);
+    expect(regex.source).not.toEqual("(?:)");
+  });
+
+  it("returns regex not matching invalid permutation", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"]);
+
+    expect(regex.test("")).toBe(false);
+    expect(regex.test("a")).toBe(false);
+    expect(regex.test("a||a")).toBe(false);
+    expect(regex.test("a||a||a")).toBe(false);
+    expect(regex.test("b")).toBe(false);
+    expect(regex.test("b||b")).toBe(false);
+    expect(regex.test("b||b||b")).toBe(false);
+    expect(regex.test("c")).toBe(false);
+    expect(regex.test("c||c")).toBe(false);
+    expect(regex.test("c||c||c")).toBe(false);
+    expect(regex.test("a||b")).toBe(false);
+    expect(regex.test("a||b||a")).toBe(false);
+    expect(regex.test("a||b||b")).toBe(false);
+  });
+
+  it("returns regex using custom elementsSeparator", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { elementsSeparator: "," });
+
+    expect(regex.test("a,b,c")).toBe(true);
+    expect(regex.test("a,c,b")).toBe(true);
+    expect(regex.test("b,a,c")).toBe(true);
+    expect(regex.test("b,c,a")).toBe(true);
+    expect(regex.test("c,a,b")).toBe(true);
+    expect(regex.test("c,b,a")).toBe(true);
+  });
+
+  it("returns capturing regex when capture option is true", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { capture: true });
+
+    console.log(regex);
+
+    expect("b||c||a".match(regex)?.length).toEqual(2);
+    expect("b||c||a".match(regex)?.[1]).toEqual("b||c||a");
+  });
+
+  it("returns not capturing regex when capture option is false", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { capture: false });
+
+    expect("b||c||a".match(regex)?.length).toEqual(1);
+  });
+});

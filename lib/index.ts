@@ -158,6 +158,58 @@ export function functionRegex(
   return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
 }
 
+function _permutations(permutation: (string | RegExp)[]) {
+  const permutations: (string | RegExp)[][] = [];
+
+  function permute(array: (string | RegExp)[], length: number) {
+    if (length === 1) {
+      permutations.push(array.slice());
+      return;
+    }
+
+    for (let i = 0; i < length; i++) {
+      permute(array, length - 1);
+      if (length % 2 === 1) {
+        [array[0], array[length - 1]] = [array[length - 1], array[0]];
+      } else {
+        [array[i], array[length - 1]] = [array[length - 1], array[i]];
+      }
+    }
+  }
+
+  permute(permutation, permutation.length);
+  return permutations;
+}
+
+/**
+ * Creates regex matching regular expressions or source strings in any order.
+ * @param {(string | RegExp)[]} regexes
+ * @param {Object} [options]
+ * @param {boolean} [options.capture=false] If `true`, returned regex will be capturing. Defaults to `false`.
+ * @param {string} [options.elementsSeparator=String.raw`\s*\|\|\s*`] Separator added between individual regexes within single permutation. Defaults to `\s*\|\|\s*`.
+ * @param {string} [options.permutationsSeparator='|'] Separator added between different permutations. Defaults to `|`.
+ * @returns {RegExp}
+ */
+
+export function permutateRegex(
+  regexes: (string | RegExp)[],
+  {
+    capture = false,
+    elementsSeparator = String.raw`\s*\|\|\s*`,
+    permutationsSeparator = "|",
+  }: {
+    capture?: boolean;
+    elementsSeparator?: string;
+    permutationsSeparator?: string;
+  } = {}
+): RegExp {
+  const permutations = _permutations(regexes.map((r) => new RegExp(r).source));
+  const source = permutations
+    .map((p) => p.join(elementsSeparator))
+    .join(permutationsSeparator);
+  return new RegExp(`(${capture ? "" : "?:"}${source})`);
+}
+
 export interface ExtendedStyleRule extends CSSStyleRule {
   isDeclaredAfter: (selector: string) => boolean;
 }
