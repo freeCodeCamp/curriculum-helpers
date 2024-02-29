@@ -202,6 +202,22 @@ Node(if_str).find_ifs()[0].is_equivalent("if x == 1:\n  x = 2")
 Node(if_str).find_ifs()[1].is_equivalent("if True:\n  pass")
 ```
 
+#### `find_if`
+
+```python
+if_str = """
+x = 1
+if x == 1:
+  x = 2
+
+if True:
+  pass
+"""
+
+Node(if_str).find_if("x == 1").is_equivalent("if x == 1:\n  x = 2")
+Node(if_str).find_if("True").is_equivalent("if True:\n  pass")
+```
+
 #### `find_conditions`
 
 ```python
@@ -226,6 +242,157 @@ if True:
   x = 1
 """
 explorer.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1") # True
+```
+
+#### `find_whiles`
+
+```python
+while_str = """
+while True:
+  x += 1
+
+while False:
+  pass
+"""
+explorer = Node(while_str)
+explorer.find_whiles()[0].is_equivalent("while True:\n  x += 1")
+explorer.find_whiles()[1].is_equivalent("while False:\n  pass")
+```
+
+#### `find_while`
+
+```python
+while_str = """
+while True:
+  x += 1
+
+while False:
+  pass
+"""
+explorer = Node(while_str)
+explorer.find_while("True").is_equivalent("while True:\n  x += 1")
+explorer.find_while("False").is_equivalent("while False:\n  pass")
+```
+
+#### `find_while_conditions`
+
+```python
+while_str = """
+while True:
+  x += 1
+
+while False:
+  pass
+"""
+explorer = Node(while_str)
+explorer.find_while()[0].find_while_conditions()[0].is_equivalent("True")
+explorer.find_while()[1].find_while_conditions()[0].is_equivalent("False")
+```
+
+#### `find_while_bodies`
+
+```python
+while_str = """
+while True:
+  x += 1
+
+while False:
+  pass
+"""
+explorer = Node(while_str)
+explorer.find_while()[0].find_while_bodies()[0].is_equivalent("x += 1")
+explorer.find_while()[1].find_while_bodies()[0].is_equivalent("pass")
+```
+
+#### `find_for_loops`
+
+```python
+for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+explorer = Node(for_str)
+explorer.find_for_loops()[0].is_equivalent("for x, y in enumerate(dict):\n  print(x, y)\nelse:\n  pass")
+explorer.find_for_loops()[1].is_equivalent("for i in range(4):\n  pass")
+```
+
+#### `find_for`
+
+```python
+for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+explorer = Node(for_str)
+explorer.find_for("(x, y)", "enumerate(dict)").is_equivalent("for x, y in enumerate(dict):\n  print(x, y)\nelse:\n  pass")
+explorer.find_for("i", "range(4)").is_equivalent("for i in range(4):\n  pass")
+```
+
+#### `find_for_vars`
+
+```python
+for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+explorer = Node(for_str)
+explorer.find_for_loops()[0].find_for_vars().is_equivalent("(x, y)")
+explorer.find_for_loops()[1].find_for_vars().is_equivalent("i")
+```
+
+#### `find_for_iter`
+
+```python
+for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    pass
+    
+for i in range(4):
+    pass
+"""
+explorer = Node(for_str)
+explorer.find_for_loops()[0].find_for_iter().is_equivalent("enumerate(dict)")
+explorer.find_for_loops()[1].find_for_iter().is_equivalent("range(4)")
+```
+
+#### `find_for_bodies`
+
+```python
+for_str = """
+dict = {'a': 1, 'b': 2, 'c': 3}
+for x, y in enumerate(dict):
+    print(x, y)
+else:
+    print(x)
+    
+for i in range(4):
+    pass
+"""
+explorer = Node(for_str)
+explorer.find_for_loops()[0].find_for_bodies()[0].is_equivalent("print(x, y)")
+explorer.find_for_loops()[0].find_for_bodies()[1].is_equivalent("print(x)")
+explorer.find_for_loops()[1].find_for_bodies()[0].is_equivalent("pass")
 ```
 
 ### Getting values
