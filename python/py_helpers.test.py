@@ -655,7 +655,21 @@ for i in range(4):
         self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_for_bodies()[0].is_equivalent("print(x)"))
         self.assertTrue(node.find_for("i", "range(4)").find_for_bodies()[0].is_equivalent("print(i)"))
 
-
+class TestPassHelpers(unittest.TestCase):
+    def test_has_pass(self):
+        code_str = """
+if x == 1:
+    pass
+elif x == 2:
+    x += 1
+else:
+    pass
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].has_pass())
+        self.assertFalse(node.find_ifs()[0].find_if_bodies()[1].has_pass())
+        self.assertTrue(node.find_ifs()[0].find_if_bodies()[2].has_pass())
 
 class TestGenericHelpers(unittest.TestCase):
     def test_equality(self):
