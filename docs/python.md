@@ -215,7 +215,7 @@ if True:
 """
 
 Node(if_str).find_if("x == 1").is_equivalent("if x == 1:\n  x = 2")
-Node(if_str).find_ifs("True").is_equivalent("if True:\n  pass")
+Node(if_str).find_if("True").is_equivalent("if True:\n  pass")
 ```
 
 #### `find_conditions`
