@@ -102,7 +102,9 @@ class Node:
     # Checks if the current scope contains a "pass" statement
     
     def has_pass(self):
-        return any(isinstance(node, ast.Pass) for node in self.tree.body)
+        if getattr(self.tree, 'body', False):
+            return any(isinstance(node, ast.Pass) for node in self.tree.body)
+        return False
 
     # Checks the variable, name, is in the current scope and is an integer
 
