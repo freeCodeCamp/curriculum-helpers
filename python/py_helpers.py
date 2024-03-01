@@ -4,7 +4,6 @@ import ast
 
 
 class Node:
-    # TODO: allow initialization with a string
     def __init__(self, tree=None):
         if isinstance(tree, str):
             self.tree = ast.parse(tree)
