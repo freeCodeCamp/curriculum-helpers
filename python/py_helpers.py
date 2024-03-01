@@ -99,6 +99,13 @@ class Node:
     def has_function(self, name):
         return self.find_function(name) != Node()
 
+    # Checks if the current scope contains a "pass" statement
+    
+    def has_pass(self):
+        if getattr(self.tree, 'body', False):
+            return any(isinstance(node, ast.Pass) for node in self.tree.body)
+        return False
+
     # Checks the variable, name, is in the current scope and is an integer
 
     def is_integer(self):
