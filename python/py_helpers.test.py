@@ -454,7 +454,7 @@ else:
 
         self.assertEqual(len(node.find_bodies()), 0)
 
-    
+
     def test_find_specific_if(self):
         if_str = """
 if True:
@@ -467,14 +467,14 @@ else:
   x = 4
 """
         node = Node(if_str)
-        
+
         self.assertTrue(node.find_if("True"))
         self.assertIsNone(node.find_if("False").tree)
         self.assertTrue(node.find_if("True").find_bodies()[0].is_equivalent("x = 1"))
         self.assertTrue(node.find_if("True").find_bodies()[1].is_equivalent("x = 2"))
         self.assertTrue(node.find_if("True").find_bodies()[2].is_equivalent("x = 3"))
         self.assertTrue(node.find_if("True").find_bodies()[3].is_equivalent("x = 4"))
-        
+
 
 class TestWhileLoopsHelpers(unittest.TestCase):
     def test_find_while_statements(self):
@@ -563,7 +563,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
@@ -585,27 +585,27 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
 
         node = Node(for_str)
 
-        self.assertIsInstance(node.find_for_loops()[0].find_for_vars(), Node)        
+        self.assertIsInstance(node.find_for_loops()[0].find_for_vars(), Node)
         self.assertIsInstance(node.find_for_loops()[1].find_for_vars(), Node)
 
         self.assertTrue(node.find_for_loops()[0].find_for_vars().is_equivalent('(x, y)'))
         self.assertTrue(node.find_for_loops()[1].find_for_vars().is_equivalent('i'))
 
-    
+
     def test_find_for_iter(self):
         self.maxDiff = None
         for_str = """
 dict = {'a': 1, 'b': 2, 'c': 3}
 for x, y in enumerate(dict):
     print(x, y)
-    
+
 for i in range(4):
     pass
 """
@@ -623,7 +623,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     print("Hi")
-    
+
 for i in range(4):
     pass
 """
@@ -642,7 +642,7 @@ for x, y in enumerate(dict):
     print(x)
 else:
     print("Hi")
-    
+
 for i in range(4):
     print(i)
 """
@@ -658,7 +658,7 @@ for i in range(4):
 class TestNestedLoopsAndConditionalHelpers(unittest.TestCase):
     def test_find_bodies_nested(self):
         code_str = """
-while True:        
+while True:
     for i in range(5):
         if i == 0:
             continue
@@ -680,10 +680,10 @@ while True:
             .find_ifs()[0].find_bodies()[1].is_equivalent("pass"))
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
             .find_ifs()[0].find_bodies()[2].is_equivalent("x+=i"))
-        
+
     def test_find_conditions_nested(self):
         code_str = """
-while True:    
+while True:
     if i == 0:
         continue
     elif i == 1:
@@ -693,10 +693,10 @@ while True:
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("True"))        
+        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("True"))
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[0].is_equivalent("i==0"))
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[1].is_equivalent("i==1"))
-        self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)        
+        self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)
 
 
 class TestPassHelpers(unittest.TestCase):
@@ -710,7 +710,7 @@ else:
     pass
 """
         node = Node(code_str)
-        
+
         self.assertTrue(node.find_ifs()[0].find_bodies()[0].has_pass())
         self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
@@ -747,6 +747,11 @@ x = 1
 
         self.assertTrue(node[0].is_equivalent("if True:\n  pass"))
         self.assertTrue(node[1].is_equivalent("x = 1"))
+
+    def test_indexing_empty_node(self):
+        node = Node()
+        self.assertRaises(IndexError, lambda: node[0])
+        self.assertRaises(IndexError, lambda: node[1])
 
     def test_raise_exception_if_out_of_bounds(self):
         one_stmt_str = """

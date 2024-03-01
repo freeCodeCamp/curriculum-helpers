@@ -15,8 +15,10 @@ class Node:
     def __getitem__(self, i):
         if getattr(self.tree, "__getitem__", False):
             return Node(self.tree[i])
-        else:
+        elif getattr(self.tree, "body", False):
             return Node(self.tree.body[i])
+        else:
+            raise IndexError("Empty Nodes cannot be indexed.")
 
     def __len__(self):
         if getattr(self.tree, "__len__", False):
@@ -99,7 +101,7 @@ class Node:
         return self.find_function(name) != Node()
 
     # Checks if the current scope contains a "pass" statement
-    
+
     def has_pass(self):
         if getattr(self.tree, 'body', False):
             return any(isinstance(node, ast.Pass) for node in self.tree.body)
@@ -180,7 +182,7 @@ class Node:
             return Node()
         return Node(self.tree.target)
 
-    def find_for_iter(self):        
+    def find_for_iter(self):
         if not isinstance(self.tree, ast.For):
             return Node()
         return Node(self.tree.iter)
@@ -188,25 +190,25 @@ class Node:
     def find_if(self, if_str):
         if_list = self._find_all(ast.If)
         for if_statement in if_list:
-            if if_statement.find_conditions()[0].is_equivalent(if_str):                
+            if if_statement.find_conditions()[0].is_equivalent(if_str):
                 return if_statement
         return Node()
-            
+
     def find_while(self, while_str):
         while_list = self._find_all(ast.While)
         for while_loop in while_list:
-            if while_loop.find_conditions()[0].is_equivalent(while_str):                
+            if while_loop.find_conditions()[0].is_equivalent(while_str):
                 return while_loop
         return Node()
-            
+
     def find_for(self, target_str, iter_str):
         for_list = self._find_all(ast.For)
         for for_loop in for_list:
             if for_loop.find_for_vars().is_equivalent(target_str) \
-                and for_loop.find_for_iter().is_equivalent(iter_str):                
+                and for_loop.find_for_iter().is_equivalent(iter_str):
                 return for_loop
         return Node()
-    
+
     # Find an array of bodies in if/elif statement and while or for loops
 
     def find_bodies(self):
@@ -221,9 +223,9 @@ class Node:
             return [tree.body] + [tree.orelse]
 
         return [Node(ast.Module(body, [])) for body in _find_bodies(self.tree)]
-    
+
     # Find an array of conditions in if/elif statement or while loop
-    
+
     def find_conditions(self):
         def _find_conditions(tree):
             if not isinstance(tree, (ast.If, ast.While)):
