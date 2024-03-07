@@ -710,7 +710,8 @@ else:
     pass
 """
         node = Node(code_str)
-
+        
+        self.assertFalse(node.find_ifs()[0].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[0].has_pass())
         self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
