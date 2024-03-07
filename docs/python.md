@@ -359,12 +359,15 @@ explorer1.find_ifs()[0].find_bodies()[0].is_equivalent("x = 1") # True
 while_str = """
 while True:
   x += 1
+else:
+  x = 0
 
 while False:
   pass
 """
 explorer2 = Node(while_str)
 explorer2.find_while()[0].find_bodies()[0].is_equivalent("x += 1") # True
+explorer2.find_while()[0].find_bodies()[1].is_equivalent("x = 0") # True
 explorer2.find_while()[1].find_bodies()[0].is_equivalent("pass") # True
 
 for_str = """
