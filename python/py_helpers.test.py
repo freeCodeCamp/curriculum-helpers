@@ -426,8 +426,8 @@ if True:
 """
         node = Node(if_str)
 
-        self.assertEqual(len(node.find_ifs()[0].find_if_bodies()), 1)
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1"))
+        self.assertEqual(len(node.find_ifs()[0].find_bodies()), 1)
+        self.assertTrue(node.find_ifs()[0].find_bodies()[0].is_equivalent("x = 1"))
 
     def test_find_if_bodies_elif(self):
         if_str = """
@@ -442,17 +442,17 @@ else:
 """
         node = Node(if_str)
 
-        self.assertEqual(len(node.find_ifs()[0].find_if_bodies()), 4)
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].is_equivalent("x = 1"))
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[1].is_equivalent("x = 2"))
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[2].is_equivalent("x = 3"))
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[3].is_equivalent("x = 4"))
-        self.assertRaises(IndexError, lambda: node.find_ifs()[0].find_if_bodies()[4])
+        self.assertEqual(len(node.find_ifs()[0].find_bodies()), 4)
+        self.assertTrue(node.find_ifs()[0].find_bodies()[0].is_equivalent("x = 1"))
+        self.assertTrue(node.find_ifs()[0].find_bodies()[1].is_equivalent("x = 2"))
+        self.assertTrue(node.find_ifs()[0].find_bodies()[2].is_equivalent("x = 3"))
+        self.assertTrue(node.find_ifs()[0].find_bodies()[3].is_equivalent("x = 4"))
+        self.assertRaises(IndexError, lambda: node.find_ifs()[0].find_bodies()[4])
 
     def test_find_if_bodies_without_if(self):
         node = Node("x = 1")
 
-        self.assertEqual(len(node.find_if_bodies()), 0)
+        self.assertEqual(len(node.find_bodies()), 0)
 
     
     def test_find_specific_if(self):
@@ -470,10 +470,10 @@ else:
         
         self.assertTrue(node.find_if("True"))
         self.assertIsNone(node.find_if("False").tree)
-        self.assertTrue(node.find_if("True").find_if_bodies()[0].is_equivalent("x = 1"))
-        self.assertTrue(node.find_if("True").find_if_bodies()[1].is_equivalent("x = 2"))
-        self.assertTrue(node.find_if("True").find_if_bodies()[2].is_equivalent("x = 3"))
-        self.assertTrue(node.find_if("True").find_if_bodies()[3].is_equivalent("x = 4"))
+        self.assertTrue(node.find_if("True").find_bodies()[0].is_equivalent("x = 1"))
+        self.assertTrue(node.find_if("True").find_bodies()[1].is_equivalent("x = 2"))
+        self.assertTrue(node.find_if("True").find_bodies()[2].is_equivalent("x = 3"))
+        self.assertTrue(node.find_if("True").find_bodies()[3].is_equivalent("x = 4"))
         
 
 class TestWhileLoopsHelpers(unittest.TestCase):
@@ -508,13 +508,13 @@ else:
 """
         node = Node(while_str)
 
-        for while_cond in node.find_whiles()[0].find_while_conditions():
+        for while_cond in node.find_whiles()[0].find_conditions():
             self.assertIsInstance(while_cond, Node)
-        self.assertNotIsInstance(node.find_whiles()[0].find_while_conditions(), Node)
-        self.assertEqual(len(node.find_whiles()[0].find_while_conditions()), 2)
+        self.assertNotIsInstance(node.find_whiles()[0].find_conditions(), Node)
+        self.assertEqual(len(node.find_whiles()[0].find_conditions()), 2)
 
-        self.assertTrue(node.find_whiles()[0].find_while_conditions()[0].is_equivalent("x > 0"))
-        self.assertIsNone(node.find_whiles()[0].find_while_conditions()[1].tree)
+        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("x > 0"))
+        self.assertIsNone(node.find_whiles()[0].find_conditions()[1].tree)
 
     def test_while_bodies(self):
         while_str = """
@@ -529,11 +529,11 @@ else:
 """
         node = Node(while_str)
 
-        self.assertEqual(len(node.find_whiles()[0].find_while_bodies()), 1)
-        self.assertEqual(len(node.find_whiles()[1].find_while_bodies()), 2)
-        self.assertTrue(node.find_whiles()[0].find_while_bodies()[0].is_equivalent('x -= 1'))
-        self.assertTrue(node.find_whiles()[1].find_while_bodies()[0].is_equivalent('x += 1'))
-        self.assertTrue(node.find_whiles()[1].find_while_bodies()[1].is_equivalent('x = 6'))
+        self.assertEqual(len(node.find_whiles()[0].find_bodies()), 1)
+        self.assertEqual(len(node.find_whiles()[1].find_bodies()), 2)
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].is_equivalent('x -= 1'))
+        self.assertTrue(node.find_whiles()[1].find_bodies()[0].is_equivalent('x += 1'))
+        self.assertTrue(node.find_whiles()[1].find_bodies()[1].is_equivalent('x = 6'))
 
     def test_find_specific_while(self):
         while_str = """
@@ -550,9 +550,8 @@ else:
 
         self.assertTrue(node.find_while("x > 0"))
         self.assertTrue(node.find_while("x <= 0"))
-        self.assertTrue(node.find_while("x > 0").find_while_bodies()[0].is_equivalent("x -= 1"))
-        self.assertTrue(node.find_while("x <= 0").find_while_bodies()[0].is_equivalent("x += 1"))  
-
+        self.assertTrue(node.find_while("x > 0").find_bodies()[0].is_equivalent("x -= 1"))
+        self.assertTrue(node.find_while("x <= 0").find_bodies()[0].is_equivalent("x += 1"))
 
 
 class TestForLoopsHelpers(unittest.TestCase):
@@ -631,10 +630,10 @@ for i in range(4):
 
         node = Node(for_str)
 
-        self.assertEqual(len(node.find_for_loops()[0].find_for_bodies()), 2)
-        self.assertTrue(node.find_for_loops()[0].find_for_bodies()[0].is_equivalent('print(x, y)'))
-        self.assertTrue(node.find_for_loops()[0].find_for_bodies()[1].is_equivalent('print("Hi")'))
-        self.assertTrue(node.find_for_loops()[1].find_for_bodies()[0].is_equivalent('pass'))
+        self.assertEqual(len(node.find_for_loops()[0].find_bodies()), 2)
+        self.assertTrue(node.find_for_loops()[0].find_bodies()[0].is_equivalent('print(x, y)'))
+        self.assertTrue(node.find_for_loops()[0].find_bodies()[1].is_equivalent('print("Hi")'))
+        self.assertTrue(node.find_for_loops()[1].find_bodies()[0].is_equivalent('pass'))
 
     def test_find_specific_for(self):
         for_str = """
@@ -652,8 +651,53 @@ for i in range(4):
         self.assertTrue(node.find_for("(x,y)", "enumerate(dict)"))
         self.assertTrue(node.find_for("i", "range(4)"))
         self.assertIsNone(node.find_for("x", "dict").tree)
-        self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_for_bodies()[0].is_equivalent("print(x)"))
-        self.assertTrue(node.find_for("i", "range(4)").find_for_bodies()[0].is_equivalent("print(i)"))
+        self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_bodies()[0].is_equivalent("print(x)"))
+        self.assertTrue(node.find_for("i", "range(4)").find_bodies()[0].is_equivalent("print(i)"))
+
+
+class TestNestedLoopsAndConditionalHelpers(unittest.TestCase):
+    def test_find_bodies_nested(self):
+        code_str = """
+while True:        
+    for i in range(5):
+        if i == 0:
+            continue
+        elif i == 1:
+            pass
+        else:
+            x += i
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0]
+            .is_equivalent(
+                "for i in range(5):\n  if i==0:\n    continue\n  elif i==1:\n    pass\n  else:\n    x+=i"))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
+            .is_equivalent("if i==0:\n  continue\nelif i==1:\n  pass\nelse:\n  x+=i"))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
+            .find_ifs()[0].find_bodies()[0].is_equivalent("continue"))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
+            .find_ifs()[0].find_bodies()[1].is_equivalent("pass"))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
+            .find_ifs()[0].find_bodies()[2].is_equivalent("x+=i"))
+        
+    def test_find_conditions_nested(self):
+        code_str = """
+while True:    
+    if i == 0:
+        continue
+    elif i == 1:
+        pass
+    else:
+        x += i
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("True"))        
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[0].is_equivalent("i==0"))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[1].is_equivalent("i==1"))
+        self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)        
+
 
 class TestPassHelpers(unittest.TestCase):
     def test_has_pass(self):
@@ -667,9 +711,9 @@ else:
 """
         node = Node(code_str)
         
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[0].has_pass())
-        self.assertFalse(node.find_ifs()[0].find_if_bodies()[1].has_pass())
-        self.assertTrue(node.find_ifs()[0].find_if_bodies()[2].has_pass())
+        self.assertTrue(node.find_ifs()[0].find_bodies()[0].has_pass())
+        self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
+        self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
 
 class TestGenericHelpers(unittest.TestCase):
     def test_equality(self):
