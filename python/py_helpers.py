@@ -169,64 +169,8 @@ class Node:
     def _find_all(self, ast_type):
         return [Node(node) for node in self.tree.body if isinstance(node, ast_type)]
 
-    def find_conditions(self):
-        def _find_conditions(tree):
-            if not isinstance(tree, ast.If):
-                return []
-            test = tree.test
-            if self.tree.orelse == []:
-                return [test]
-            if isinstance(tree.orelse[0], ast.If):
-                return [test] + _find_conditions(tree.orelse[0])
-
-            return [test, None]
-
-        return [Node(test) for test in _find_conditions(self.tree)]
-
-    # Find an array of bodies in an elif statement
-
-    def find_if_bodies(self):
-        def _find_if_bodies(tree):
-            if not isinstance(tree, ast.If):
-                return []
-            if self.tree.orelse == []:
-                return [tree.body]
-            if isinstance(tree.orelse[0], ast.If):
-                return [tree.body] + _find_if_bodies(tree.orelse[0])
-
-            return [tree.body] + [tree.orelse]
-
-        return [Node(ast.Module(body, [])) for body in _find_if_bodies(self.tree)]
-
     def find_whiles(self):
         return self._find_all(ast.While)
-
-    def find_while_conditions(self):
-        def _find_while_conditions(tree):
-            if not isinstance(tree, ast.While):
-                return []
-            test = tree.test
-            if self.tree.orelse == []:
-                return [test]
-            if isinstance(tree.orelse[0], ast.While):
-                return [test] + _find_while_conditions(tree.orelse[0])
-
-            return [test, None]
-
-        return [Node(test) for test in _find_while_conditions(self.tree)]
-
-    def find_while_bodies(self):
-        def _find_while_bodies(tree):
-            if not isinstance(tree, ast.While):
-                return []
-            if self.tree.orelse == []:
-                return [tree.body]
-            if isinstance(tree.orelse[0], ast.While):
-                return [tree.body] + _find_while_bodies(tree.orelse[0])
-
-            return [tree.body] + [tree.orelse]
-
-        return [Node(ast.Module(body, [])) for body in _find_while_bodies(self.tree)]
 
     def find_for_loops(self):
         return self._find_all(ast.For)
@@ -241,19 +185,6 @@ class Node:
             return Node()
         return Node(self.tree.iter)
 
-    def find_for_bodies(self):
-        def _find_for_bodies(tree):
-            if not isinstance(tree, ast.For):
-                return []
-            if self.tree.orelse == []:
-                return [tree.body]
-            if isinstance(tree.orelse[0], ast.For):
-                return [tree.body] + _find_for_bodies(tree.orelse[0])
-
-            return [tree.body] + [tree.orelse]
-
-        return [Node(ast.Module(body, [])) for body in _find_for_bodies(self.tree)]
-    
     def find_if(self, if_str):
         if_list = self._find_all(ast.If)
         for if_statement in if_list:
@@ -264,7 +195,7 @@ class Node:
     def find_while(self, while_str):
         while_list = self._find_all(ast.While)
         for while_loop in while_list:
-            if while_loop.find_while_conditions()[0].is_equivalent(while_str):                
+            if while_loop.find_conditions()[0].is_equivalent(while_str):                
                 return while_loop
         return Node()
             
@@ -275,3 +206,34 @@ class Node:
                 and for_loop.find_for_iter().is_equivalent(iter_str):                
                 return for_loop
         return Node()
+    
+    # Find an array of bodies in if/elif statement and while or for loops
+
+    def find_bodies(self):
+        def _find_bodies(tree):
+            if not isinstance(tree, (ast.If, ast.While, ast.For)):
+                return []
+            if self.tree.orelse == []:
+                return [tree.body]
+            if isinstance(tree.orelse[0], (ast.If, ast.While, ast.For)):
+                return [tree.body] + _find_bodies(tree.orelse[0])
+
+            return [tree.body] + [tree.orelse]
+
+        return [Node(ast.Module(body, [])) for body in _find_bodies(self.tree)]
+    
+    # Find an array of conditions in if/elif statement or while loop
+    
+    def find_conditions(self):
+        def _find_conditions(tree):
+            if not isinstance(tree, (ast.If, ast.While)):
+                return []
+            test = tree.test
+            if self.tree.orelse == []:
+                return [test]
+            if isinstance(tree.orelse[0], (ast.If, ast.While)):
+                return [test] + _find_conditions(tree.orelse[0])
+
+            return [test, None]
+
+        return [Node(test) for test in _find_conditions(self.tree)]
