@@ -85,6 +85,22 @@ export class Tower<T extends Node> {
         }
       }
 
+      if (is("VariableDeclarator", node)) {
+        const init = node.init;
+        if (is("CallExpression", init)) {
+          const callee = init.callee;
+
+          switch (callee.type) {
+            case "Identifier":
+              return callee.name === callSite;
+            case "MemberExpression":
+              return generate(callee).code === callSite;
+            default:
+              return true;
+          }
+        }
+      }
+
       return false;
     });
     assertIsType<ExpressionStatement[]>(calls);
