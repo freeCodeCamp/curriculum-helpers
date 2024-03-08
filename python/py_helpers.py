@@ -170,6 +170,16 @@ class Node:
                 if node.name == class_name:
                     return Node(node)
         return Node()
+    
+    def inherits_from(self, *args):
+        if not isinstance(self.tree, ast.ClassDef):
+            return False
+        if not self.tree.bases:
+            return False        
+        if len(args) == len(self.tree.bases) \
+        and all(node.id in args for node in self.tree.bases):
+            return True
+        return False
 
     # Find an array of conditions in an if statement
 
