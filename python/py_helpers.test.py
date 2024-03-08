@@ -264,6 +264,19 @@ class Foo:
 
         self.assertEqual(node.find_variable("x").find_body(), Node())
 
+    def test_inherits_from(self):
+        code_str = """
+class A:
+   pass
+   
+class B(A, C):
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertFalse(node.find_class("A").inherits_from("B"))
+        self.assertTrue(node.find_class("B").inherits_from("C", "A"))
+        
 
 class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
