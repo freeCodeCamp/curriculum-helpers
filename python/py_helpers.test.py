@@ -172,6 +172,16 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
             node.find_function("foo").find_function("bar").has_variable("x")
         )
 
+    def test_has_args(self):
+        code_str = """
+def foo(*, a, b, c=0):
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_args("*, a, b, c=0"))
+        self.assertFalse(node.find_function("foo").has_args("*, a, b, c"))
+    
     def test_find_class(self):
         class_str = """
 class Foo:
