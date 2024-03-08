@@ -65,6 +65,12 @@ class Node:
                 if node.name == func:
                     return Node(node)
         return Node()
+    
+    def has_args(self, arg_str):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        func_str = f'def {self.tree.name}({arg_str}):\n  {self.find_body()}'
+        return self.is_equivalent(func_str)
 
     def find_body(self):
         if not isinstance(self.tree, ast.AST):
