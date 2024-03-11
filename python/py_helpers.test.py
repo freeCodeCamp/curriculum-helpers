@@ -681,6 +681,16 @@ while True:
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
             .find_ifs()[0].find_bodies()[2].is_equivalent("x+=i"))
 
+    def test_find_bodies_nested_ifs(self):
+        code_str = """if x == 1:
+  pass
+elif x == 2:
+  if True:
+    pass"""
+        node = Node(code_str)
+
+        node.find_ifs()[0].find_bodies()[1].is_equivalent("if True:\n  pass")
+
     def test_find_conditions_nested(self):
         code_str = """
 while True:
@@ -710,7 +720,7 @@ else:
     pass
 """
         node = Node(code_str)
-        
+
         self.assertFalse(node.find_ifs()[0].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[0].has_pass())
         self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
