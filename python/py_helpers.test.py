@@ -708,6 +708,33 @@ while True:
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[1].is_equivalent("i==1"))
         self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)
 
+    def test_find_conditions_nested_ifs(self):
+        code_str = """
+if x > 0:
+  if x == 1:
+    pass
+elif x < 0:
+  if x == -1:
+    pass
+else:
+  if y:
+    return y
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_ifs()[0].find_ifs()[0].find_conditions()[0].is_equivalent("x == 1"))
+        self.assertTrue(node.find_ifs()[0].find_bodies()[1].find_ifs()[0].find_conditions()[0].is_equivalent("x == -1"))
+        
+        # if x: pass
+        # else:
+        #   if y: return y
+        
+        # is equivalent to
+
+        # if x: pass
+        # elif y: return y
+        self.assertTrue(node.find_ifs()[0].find_conditions()[2].is_equivalent("y"))
+        
 
 class TestPassHelpers(unittest.TestCase):
     def test_has_pass(self):
