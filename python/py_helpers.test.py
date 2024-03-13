@@ -181,6 +181,35 @@ def foo(*, a, b, c=0):
 
         self.assertTrue(node.find_function("foo").has_args("*, a, b, c=0"))
         self.assertFalse(node.find_function("foo").has_args("*, a, b, c"))
+
+    def test_has_args_annotations(self):
+        code_str = """
+def foo(a: int, b: int) -> int:
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_args("a: int, b: int"))
+        self.assertFalse(node.find_function("foo").has_args("a, b"))
+
+    def test_has_returns(self):
+        code_str = """
+def foo() -> int:
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_returns("int"))
+        self.assertFalse(node.find_function("foo").has_args("str"))
+
+    def test_has_returns_without_returns(self):
+        code_str = """
+def foo():
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertFalse(node.find_function("foo").has_args("int"))
     
     def test_find_class(self):
         class_str = """

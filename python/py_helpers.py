@@ -69,8 +69,18 @@ class Node:
     def has_args(self, arg_str):
         if not isinstance(self.tree, ast.FunctionDef):
             return False
-        func_str = f'def {self.tree.name}({arg_str}):\n  {self.find_body()}'
+        if id:= getattr(self.tree.returns, "id", False):
+            returns = f"-> {id}"
+        else:
+            returns = ""
+        func_str = f'def {self.tree.name}({arg_str}) {returns}:\n  {self.find_body()}'
         return self.is_equivalent(func_str)
+    
+    def has_returns(self, returns_str):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        id = getattr(self.tree.returns, "id", False)
+        return id == returns_str
 
     def find_body(self):
         if not isinstance(self.tree, ast.AST):
