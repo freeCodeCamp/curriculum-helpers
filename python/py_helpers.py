@@ -104,6 +104,28 @@ class Node:
                     if isinstance(target, ast.Name):
                         if target.id == name:
                             return Node(node)
+            elif isinstance(node, ast.AnnAssign):
+                if isinstance(node.target, ast.Name):
+                    if node.target.id == name:
+                        return Node(node)
+                # elif isinstance(node.target, ast.Attribute):
+                #     if node.target.value.id == name.split('.')[0] and\
+                #     node.target.attr == name.split('.')[1]:                
+                #         return Node(node)
+                # elif isinstance(node.target, ast.Subscript):
+                #     if node.target.value.id == name[:-1].split('[')[0] and\
+                #     node.target.slice == name[:-1].split('[')[1]:
+                #         return Node(node)
+        return Node()
+    
+    def find_aug_variable(self, name):
+        if not self._has_body():
+            return Node()
+        for node in self.tree.body:
+            if isinstance(node, ast.AugAssign):
+                if isinstance(node.target, ast.Name):
+                    if node.target.id == name:
+                        return Node(node)
         return Node()
 
     def get_variable(self, name):
@@ -115,6 +137,14 @@ class Node:
 
     def has_function(self, name):
         return self.find_function(name) != Node()
+    
+    def has_decorators(self, *args):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        if len(args) == len(self.tree.decorator_list) \
+        and all(node.id in args for node in self.tree.decorator_list):
+            return True
+        return False
 
     # Checks if the current scope contains a "pass" statement
 
