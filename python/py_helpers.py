@@ -217,7 +217,7 @@ class Node:
         def _find_bodies(tree):
             if not isinstance(tree, (ast.If, ast.While, ast.For)):
                 return []
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [tree.body]
             if isinstance(tree.orelse[0], (ast.If, ast.While, ast.For)):
                 return [tree.body] + _find_bodies(tree.orelse[0])
@@ -233,7 +233,7 @@ class Node:
             if not isinstance(tree, (ast.If, ast.While)):
                 return []
             test = tree.test
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [test]
             if isinstance(tree.orelse[0], (ast.If, ast.While)):
                 return [test] + _find_conditions(tree.orelse[0])
