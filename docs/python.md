@@ -190,15 +190,18 @@ Node(class_str).find_class("Foo").has_function("__init__") # True
 
 ```python
 if_str = """
-x = 1
 if x == 1:
-  x = 2
+  x += 1
+elif x == 2:
+  pass
+else:
+  return
 
 if True:
   pass
 """
 
-Node(if_str).find_ifs()[0].is_equivalent("if x == 1:\n  x = 2")
+Node(if_str).find_ifs()[0].is_equivalent("if x == 1:\n  x += 1\nelif x == 2:\n  pass\nelse:\n  return")
 Node(if_str).find_ifs()[1].is_equivalent("if True:\n  pass")
 ```
 
@@ -206,15 +209,18 @@ Node(if_str).find_ifs()[1].is_equivalent("if True:\n  pass")
 
 ```python
 if_str = """
-x = 1
 if x == 1:
-  x = 2
+  x += 1
+elif x == 2:
+  pass
+else:
+  return
 
 if True:
   pass
 """
 
-Node(if_str).find_if("x == 1").is_equivalent("if x == 1:\n  x = 2")
+Node(if_str).find_if("x == 1").is_equivalent("if x == 1:\n  x += 1\nelif x == 2:\n  pass\nelse:\n  return")
 Node(if_str).find_if("True").is_equivalent("if True:\n  pass")
 ```
 
@@ -224,12 +230,14 @@ Node(if_str).find_if("True").is_equivalent("if True:\n  pass")
 while_str = """
 while True:
   x += 1
+else:
+  return
 
 while False:
   pass
 """
 explorer = Node(while_str)
-explorer.find_whiles()[0].is_equivalent("while True:\n  x += 1") # True
+explorer.find_whiles()[0].is_equivalent("while True:\n  x += 1\nelse:\n  return") # True
 explorer.find_whiles()[1].is_equivalent("while False:\n  pass") # True
 ```
 
@@ -239,12 +247,14 @@ explorer.find_whiles()[1].is_equivalent("while False:\n  pass") # True
 while_str = """
 while True:
   x += 1
+else:
+  return
 
 while False:
   pass
 """
 explorer = Node(while_str)
-explorer.find_while("True").is_equivalent("while True:\n  x += 1") # True
+explorer.find_while("True").is_equivalent("while True:\n  x += 1\nelse:\n  return") # True
 explorer.find_while("False").is_equivalent("while False:\n  pass") # True
 ```
 
@@ -252,26 +262,33 @@ explorer.find_while("False").is_equivalent("while False:\n  pass") # True
 
 ```python
 if_str = """
-if True:
+if x > 0:
   x = 1
+elif x < 0:
+  x = -1
 else:
-  x = 4
+  return x
 """
 explorer1 = Node(if_str)
-len(explorer1.find_ifs()[0].find_conditions()) # 2
-explorer1.find_ifs()[0].find_conditions()[0].is_equivalent("True")
+len(explorer1.find_ifs()[0].find_conditions()) # 3
+explorer1.find_ifs()[0].find_conditions()[0].is_equivalent("x > 0") # True
+explorer1.find_ifs()[0].find_conditions()[1].is_equivalent("x < 0") # True
+explorer1.find_ifs()[0].find_conditions()[2] == Node() # True
 Node("x = 1").find_conditions() # []
 
 while_str = """
 while True:
   x += 1
+else:
+  return
 
 while False:
   pass
 """
 explorer2 = Node(while_str)
-explorer2.find_while()[0].find_conditions()[0].is_equivalent("True") # True
-explorer2.find_while()[1].find_conditions()[0].is_equivalent("False") # True
+explorer2.find_whiles()[0].find_conditions()[0].is_equivalent("True") # True
+explorer2.find_whiles()[0].find_conditions()[1] == Node() # True
+explorer2.find_whiles()[1].find_conditions()[0].is_equivalent("False") # True
 ```
 
 #### `find_for_loops`
@@ -352,9 +369,12 @@ explorer.find_for_loops()[1].find_for_iter().is_equivalent("range(4)") # True
 if_str = """
 if True:
   x = 1
+elif False:
+  x = 2
 """
 explorer1 = Node(if_str)
 explorer1.find_ifs()[0].find_bodies()[0].is_equivalent("x = 1") # True
+explorer1.find_ifs()[0].find_bodies()[1].is_equivalent("x = 2") # True
 
 while_str = """
 while True:
@@ -366,9 +386,9 @@ while False:
   pass
 """
 explorer2 = Node(while_str)
-explorer2.find_while()[0].find_bodies()[0].is_equivalent("x += 1") # True
-explorer2.find_while()[0].find_bodies()[1].is_equivalent("x = 0") # True
-explorer2.find_while()[1].find_bodies()[0].is_equivalent("pass") # True
+explorer2.find_whiles()[0].find_bodies()[0].is_equivalent("x += 1") # True
+explorer2.find_whiles()[0].find_bodies()[1].is_equivalent("x = 0") # True
+explorer2.find_whiles()[1].find_bodies()[0].is_equivalent("pass") # True
 
 for_str = """
 dict = {'a': 1, 'b': 2, 'c': 3}
