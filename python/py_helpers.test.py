@@ -724,17 +724,17 @@ else:
 
         self.assertTrue(node.find_ifs()[0].find_ifs()[0].find_conditions()[0].is_equivalent("x == 1"))
         self.assertTrue(node.find_ifs()[0].find_bodies()[1].find_ifs()[0].find_conditions()[0].is_equivalent("x == -1"))
-        
+
         # if x: pass
         # else:
         #   if y: return y
-        
+
         # is equivalent to
 
         # if x: pass
         # elif y: return y
         self.assertTrue(node.find_ifs()[0].find_conditions()[2].is_equivalent("y"))
-        
+
 
 class TestPassHelpers(unittest.TestCase):
     def test_has_pass(self):
@@ -754,6 +754,15 @@ else:
         self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
 
 class TestGenericHelpers(unittest.TestCase):
+
+    def test_is_empty(self):
+        self.assertTrue(Node().is_empty())
+        self.assertFalse(Node("x = 1").is_empty())
+
+    def test_else_is_empty(self):
+        node = Node("if True:\n  pass\nelse:\n  pass")
+        self.assertTrue(node.find_ifs()[0].find_conditions()[1].is_empty())
+
     def test_equality(self):
         self.assertEqual(
             Node("def foo():\n  pass"),

@@ -154,6 +154,9 @@ class Node:
         # comparison returns True as expected.
         return ast.unparse(ast.parse(code_str)) == ast.unparse(ast.parse(target_str))
 
+    def is_empty(self):
+        return self.tree == None
+
     # Finds the class definition with the given name
 
     def find_class(self, class_name):
