@@ -76,6 +76,7 @@ class Node:
         func_str = f'def {self.tree.name}({arg_str}) {returns}:\n  {self.find_body()}'
         return self.is_equivalent(func_str)
     
+    # returns_str is the annotation of the type returned by the function
     def has_returns(self, returns_str):
         if not isinstance(self.tree, ast.FunctionDef):
             return False
@@ -110,6 +111,7 @@ class Node:
                         return Node(node)
         return Node()
     
+    # find variable incremented or decremented using += or -=
     def find_aug_variable(self, name):
         if not self._has_body():
             return Node()
