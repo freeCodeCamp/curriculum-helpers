@@ -200,6 +200,9 @@ class Node:
         # comparison returns True as expected.
         return ast.unparse(ast.parse(code_str)) == ast.unparse(ast.parse(target_str))
 
+    def is_empty(self):
+        return self.tree == None
+
     # Finds the class definition with the given name
 
     def find_class(self, class_name):
@@ -273,7 +276,7 @@ class Node:
         def _find_bodies(tree):
             if not isinstance(tree, (ast.If, ast.While, ast.For)):
                 return []
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [tree.body]
             if isinstance(tree.orelse[0], (ast.If, ast.While, ast.For)):
                 return [tree.body] + _find_bodies(tree.orelse[0])
@@ -289,7 +292,7 @@ class Node:
             if not isinstance(tree, (ast.If, ast.While)):
                 return []
             test = tree.test
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [test]
             if isinstance(tree.orelse[0], (ast.If, ast.While)):
                 return [test] + _find_conditions(tree.orelse[0])

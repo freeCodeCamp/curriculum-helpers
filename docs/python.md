@@ -431,6 +431,15 @@ Node("\nx = 1").is_equivalent("x =    1") # True
 Node("x = 1").is_equivalent("x = 2") # False
 ```
 
+#### `is_empty`
+
+This is syntactic sugar for `== Node()`.
+
+```python
+Node().is_empty() # True
+Node("x = 1").find_variable("x").is_empty() # False
+```
+
 #### get the nth statement
 
 ```python
