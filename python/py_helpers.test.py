@@ -117,6 +117,23 @@ x = None
 
         self.assertFalse(node.find_function("foo").value_is_call("bar"))
 
+    def test_find_aug_variable(self):
+        node = Node("x += 1")
+
+        self.assertTrue(node.find_aug_variable("x").is_equivalent("x += 1"))
+
+    def test_find_aug_variable_nested(self):
+        code_str ="""
+def foo():
+  x = 5
+  while x > 0:
+    x -= 1
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").find_whiles()[0].find_aug_variable("x").is_equivalent("x -= 1"))
+        self.assertEqual(node.find_function("foo").find_aug_variable("x"), Node())
+
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
     def test_find_function_returns_node(self):
@@ -200,7 +217,7 @@ def foo() -> int:
         node = Node(code_str)
 
         self.assertTrue(node.find_function("foo").has_returns("int"))
-        self.assertFalse(node.find_function("foo").has_args("str"))
+        self.assertFalse(node.find_function("foo").has_returns("str"))
 
     def test_has_returns_without_returns(self):
         code_str = """
@@ -305,6 +322,33 @@ class B(A, C):
 
         self.assertFalse(node.find_class("A").inherits_from("B"))
         self.assertTrue(node.find_class("B").inherits_from("C", "A"))
+
+    def test_find_method_args(self):
+        code_str = """
+class A:
+   def __init__(self, *, a, b=0):
+     pass
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_class("A").find_function("__init__").has_args("self, *, a, b=0"))
+
+    def test_has_decorators(self):
+        code_str = """
+class A:
+  @property
+  @staticmethod
+  def foo():
+    pass
+    
+  def bar():
+    pass    
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property", "staticmethod"))
+        self.assertFalse(node.find_class("A").find_function("foo").has_decorators("property"))
+        self.assertFalse(node.find_class("A").find_function("bar").has_decorators("property"))
         
 
 class TestEquivalenceHelpers(unittest.TestCase):
@@ -404,7 +448,6 @@ if x == 1:
 if True:
   pass
 """
-
         node = Node(if_str)
         # it should return an array of nodes, not a node of an array
         for if_node in node.find_ifs():

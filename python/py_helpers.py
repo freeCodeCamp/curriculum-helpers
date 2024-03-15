@@ -108,14 +108,6 @@ class Node:
                 if isinstance(node.target, ast.Name):
                     if node.target.id == name:
                         return Node(node)
-                # elif isinstance(node.target, ast.Attribute):
-                #     if node.target.value.id == name.split('.')[0] and\
-                #     node.target.attr == name.split('.')[1]:                
-                #         return Node(node)
-                # elif isinstance(node.target, ast.Subscript):
-                #     if node.target.value.id == name[:-1].split('[')[0] and\
-                #     node.target.slice == name[:-1].split('[')[1]:
-                #         return Node(node)
         return Node()
     
     def find_aug_variable(self, name):
