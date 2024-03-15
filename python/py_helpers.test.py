@@ -430,7 +430,6 @@ else:
         self.assertNotIsInstance(node.find_ifs()[0].find_conditions(), Node)
         self.assertEqual(len(node.find_ifs()[0].find_conditions()), 2)
         self.assertIsNone(node.find_ifs()[0].find_conditions()[1].tree)
-        self.assertTrue(node.find_ifs()[0].find_conditions()[1].is_empty())
 
     def test_find_conditions_without_if(self):
         node = Node("x = 1")

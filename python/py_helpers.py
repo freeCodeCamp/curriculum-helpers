@@ -301,7 +301,3 @@ class Node:
 
         return [Node(test) for test in _find_conditions(self.tree)]
     
-    def is_empty(self):
-        if self.tree is None:
-            return True
-        return False
