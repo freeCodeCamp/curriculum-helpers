@@ -322,6 +322,7 @@ class B(A, C):
 
         self.assertFalse(node.find_class("A").inherits_from("B"))
         self.assertTrue(node.find_class("B").inherits_from("C", "A"))
+        self.assertTrue(node.find_class("B").inherits_from("A"))
 
     def test_find_method_args(self):
         code_str = """
@@ -347,7 +348,7 @@ class A:
         node = Node(code_str)
 
         self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property", "staticmethod"))
-        self.assertFalse(node.find_class("A").find_function("foo").has_decorators("property"))
+        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property"))
         self.assertFalse(node.find_class("A").find_function("bar").has_decorators("property"))
         
 

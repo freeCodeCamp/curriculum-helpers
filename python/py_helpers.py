@@ -71,6 +71,8 @@ class Node:
             return False
         if id:= getattr(self.tree.returns, "id", False):
             returns = f"-> {id}"
+        elif val:= getattr(self.tree.returns, "value", False):
+            returns = f"-> '{val}'"
         else:
             returns = ""
         func_str = f'def {self.tree.name}({arg_str}) {returns}:\n  {self.find_body()}'
@@ -80,8 +82,11 @@ class Node:
     def has_returns(self, returns_str):
         if not isinstance(self.tree, ast.FunctionDef):
             return False
-        id = getattr(self.tree.returns, "id", False)
-        return id == returns_str
+        if isinstance(self.tree.returns, ast.Name):
+            return returns_str == self.tree.returns.id
+        elif isinstance(self.tree.returns, ast.Constant):
+            return returns_str == self.tree.returns.value
+        return False
 
     def find_body(self):
         if not isinstance(self.tree, ast.AST):
@@ -135,11 +140,9 @@ class Node:
     def has_decorators(self, *args):
         if not isinstance(self.tree, ast.FunctionDef):
             return False
-        if len(args) == len(self.tree.decorator_list) \
-        and all(node.id in args for node in self.tree.decorator_list):
-            return True
-        return False
-
+        id_list = (node.id for node in self.tree.decorator_list)
+        return all(arg in id_list for arg in args)        
+    
     # Checks if the current scope contains a "pass" statement
 
     def has_pass(self):
@@ -212,11 +215,9 @@ class Node:
         if not isinstance(self.tree, ast.ClassDef):
             return False
         if not self.tree.bases:
-            return False        
-        if len(args) == len(self.tree.bases) \
-        and all(node.id in args for node in self.tree.bases):
-            return True
-        return False
+            return False
+        id_list = [node.id for node in self.tree.bases]
+        return all(arg in id_list for arg in args)
 
     # Find an array of conditions in an if statement
 
