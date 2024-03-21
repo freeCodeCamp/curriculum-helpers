@@ -317,3 +317,29 @@ class Node:
             return [test, None]
 
         return [Node(test) for test in _find_conditions(self.tree)]
+
+
+# Exception formatting functions. Currently bundled with the Node class, until
+# we improve the testing, building and CI so that they can easily handle
+# multiple files.
+
+
+def drop_until(*, traces, filename):
+    from itertools import dropwhile
+
+    return list(
+        dropwhile(lambda line: not line.startswith(f'  File "{filename}"'), traces)
+    )
+
+
+def build_message(*, traces, exception_list):
+    return "".join(["Traceback (most recent call last):\n"] + traces + exception_list)
+
+
+def format_exception(*, exception, traceback, filename):
+    from traceback import format_exception_only, format_tb
+
+    # The trace up to "filename" are the frames that are not part of the user's
+    # code so we drop them.
+    traces = drop_until(traces=format_tb(traceback), filename=filename)
+    return build_message(traces=traces, exception_list=format_exception_only(exception))
