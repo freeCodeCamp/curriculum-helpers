@@ -160,6 +160,13 @@ Node('def foo():\n  x = "1"').find_function("foo").has_variable("x") # True
 Node("y = 2\nx = 1").find_variable("x").is_equivalent("x = 1")
 ```
 
+#### `find_aug_variable`
+
+```python
+Node("x += 1").find_aug_variable("x").is_equivalent("x += 1")
+Node("x -= 1").find_aug_variable("x").is_equivalent("x -= 1")
+```
+
 When the variable is out of scope, `find_variable` returns an `None` node (i.e. `Node()` or `Node(None)`):
 
 ```python
@@ -432,11 +439,38 @@ Node("x = 1").has_variable("x") # True
 Node("def foo():\n  pass").has_function("foo") # True
 ```
 
+#### `has_args`
+
+```python
+Node("def foo(*, a, b, c=0):\n  pass").find_function("foo").has_args("*, a, b, c=0") # True
+```
+
 ### `has_pass`
 
 ```python
 Node("def foo():\n  pass").find_function("foo").has_pass() # True
 Node("if x==1:\n  x+=1\nelse:  pass").find_ifs()[0].find_bodies()[1].has_pass() # True
+```
+
+#### `has_returns`
+
+```python
+Node("def foo() -> int:\n  return 0").find_function("foo").has_returns("int") # True
+Node("def foo() -> 'spam':\n  pass").find_function("foo").has_returns("spam") # True
+```
+
+#### `has_decorators`
+
+```python
+code_str = """
+class A:
+  @property
+  @staticmethod
+  def foo():
+    pass
+"""
+Node(code_str).find_class("A").find_function("foo").has_decorators("property") # True
+Node(code_str).find_class("A").find_function("foo").has_decorators("property", "staticmethod") # True
 ```
 
 ### Misc
@@ -479,6 +513,13 @@ explorer.find_function("foo").find_variable("x").value_is_call("bar") # True
 ```python
 Node("x = 1").find_variable("x").is_integer() # True
 Node("x = '1'").find_variable("x").is_integer() # False
+```
+
+#### `inherits_from`
+
+```python
+Node("class C(A, B):\n  pass").find_class("C").inherits_from("A") # True
+Node("class C(A, B):\n  pass").find_class("C").inherits_from("A", "B") # True
 ```
 
 ## Notes on Python
