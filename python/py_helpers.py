@@ -65,6 +65,28 @@ class Node:
                 if node.name == func:
                     return Node(node)
         return Node()
+    
+    def has_args(self, arg_str):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        if id:= getattr(self.tree.returns, "id", False):
+            returns = f"-> {id}"
+        elif val:= getattr(self.tree.returns, "value", False):
+            returns = f"-> '{val}'"
+        else:
+            returns = ""
+        func_str = f'def {self.tree.name}({arg_str}) {returns}:\n  {self.find_body()}'
+        return self.is_equivalent(func_str)
+    
+    # returns_str is the annotation of the type returned by the function
+    def has_returns(self, returns_str):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        if isinstance(self.tree.returns, ast.Name):
+            return returns_str == self.tree.returns.id
+        elif isinstance(self.tree.returns, ast.Constant):
+            return returns_str == self.tree.returns.value
+        return False
 
     def find_body(self):
         if not isinstance(self.tree, ast.AST):
@@ -88,6 +110,21 @@ class Node:
                     if isinstance(target, ast.Name):
                         if target.id == name:
                             return Node(node)
+            elif isinstance(node, ast.AnnAssign):
+                if isinstance(node.target, ast.Name):
+                    if node.target.id == name:
+                        return Node(node)
+        return Node()
+    
+    # find variable incremented or decremented using += or -=
+    def find_aug_variable(self, name):
+        if not self._has_body():
+            return Node()
+        for node in self.tree.body:
+            if isinstance(node, ast.AugAssign):
+                if isinstance(node.target, ast.Name):
+                    if node.target.id == name:
+                        return Node(node)
         return Node()
 
     def get_variable(self, name):
@@ -99,7 +136,13 @@ class Node:
 
     def has_function(self, name):
         return self.find_function(name) != Node()
-
+    
+    def has_decorators(self, *args):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return False
+        id_list = (node.id for node in self.tree.decorator_list)
+        return all(arg in id_list for arg in args)        
+    
     # Checks if the current scope contains a "pass" statement
 
     def has_pass(self):
@@ -154,6 +197,9 @@ class Node:
         # comparison returns True as expected.
         return ast.unparse(ast.parse(code_str)) == ast.unparse(ast.parse(target_str))
 
+    def is_empty(self):
+        return self.tree == None
+
     # Finds the class definition with the given name
 
     def find_class(self, class_name):
@@ -164,6 +210,14 @@ class Node:
                 if node.name == class_name:
                     return Node(node)
         return Node()
+    
+    def inherits_from(self, *args):
+        if not isinstance(self.tree, ast.ClassDef):
+            return False
+        if not self.tree.bases:
+            return False
+        id_list = [node.id for node in self.tree.bases]
+        return all(arg in id_list for arg in args)
 
     # Find an array of conditions in an if statement
 
@@ -217,7 +271,7 @@ class Node:
         def _find_bodies(tree):
             if not isinstance(tree, (ast.If, ast.While, ast.For)):
                 return []
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [tree.body]
             if isinstance(tree.orelse[0], (ast.If, ast.While, ast.For)):
                 return [tree.body] + _find_bodies(tree.orelse[0])
@@ -233,7 +287,7 @@ class Node:
             if not isinstance(tree, (ast.If, ast.While)):
                 return []
             test = tree.test
-            if self.tree.orelse == []:
+            if tree.orelse == []:
                 return [test]
             if isinstance(tree.orelse[0], (ast.If, ast.While)):
                 return [test] + _find_conditions(tree.orelse[0])
@@ -241,3 +295,4 @@ class Node:
             return [test, None]
 
         return [Node(test) for test in _find_conditions(self.tree)]
+    

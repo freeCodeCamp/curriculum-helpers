@@ -117,6 +117,23 @@ x = None
 
         self.assertFalse(node.find_function("foo").value_is_call("bar"))
 
+    def test_find_aug_variable(self):
+        node = Node("x += 1")
+
+        self.assertTrue(node.find_aug_variable("x").is_equivalent("x += 1"))
+
+    def test_find_aug_variable_nested(self):
+        code_str ="""
+def foo():
+  x = 5
+  while x > 0:
+    x -= 1
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").find_whiles()[0].find_aug_variable("x").is_equivalent("x -= 1"))
+        self.assertEqual(node.find_function("foo").find_aug_variable("x"), Node())
+
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
     def test_find_function_returns_node(self):
@@ -172,6 +189,45 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
             node.find_function("foo").find_function("bar").has_variable("x")
         )
 
+    def test_has_args(self):
+        code_str = """
+def foo(*, a, b, c=0):
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_args("*, a, b, c=0"))
+        self.assertFalse(node.find_function("foo").has_args("*, a, b, c"))
+
+    def test_has_args_annotations(self):
+        code_str = """
+def foo(a: int, b: int) -> int:
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_args("a: int, b: int"))
+        self.assertFalse(node.find_function("foo").has_args("a, b"))
+
+    def test_has_returns(self):
+        code_str = """
+def foo() -> int:
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_returns("int"))
+        self.assertFalse(node.find_function("foo").has_returns("str"))
+
+    def test_has_returns_without_returns(self):
+        code_str = """
+def foo():
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertFalse(node.find_function("foo").has_args("int"))
+    
     def test_find_class(self):
         class_str = """
 class Foo:
@@ -254,6 +310,47 @@ class Foo:
 
         self.assertEqual(node.find_variable("x").find_body(), Node())
 
+    def test_inherits_from(self):
+        code_str = """
+class A:
+   pass
+   
+class B(A, C):
+   pass
+"""
+        node = Node(code_str)
+
+        self.assertFalse(node.find_class("A").inherits_from("B"))
+        self.assertTrue(node.find_class("B").inherits_from("C", "A"))
+        self.assertTrue(node.find_class("B").inherits_from("A"))
+
+    def test_find_method_args(self):
+        code_str = """
+class A:
+   def __init__(self, *, a, b=0):
+     pass
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_class("A").find_function("__init__").has_args("self, *, a, b=0"))
+
+    def test_has_decorators(self):
+        code_str = """
+class A:
+  @property
+  @staticmethod
+  def foo():
+    pass
+    
+  def bar():
+    pass    
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property", "staticmethod"))
+        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property"))
+        self.assertFalse(node.find_class("A").find_function("bar").has_decorators("property"))
+        
 
 class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
@@ -352,7 +449,6 @@ if x == 1:
 if True:
   pass
 """
-
         node = Node(if_str)
         # it should return an array of nodes, not a node of an array
         for if_node in node.find_ifs():
@@ -377,7 +473,6 @@ else:
             self.assertIsInstance(if_cond, Node)
         self.assertNotIsInstance(node.find_ifs()[0].find_conditions(), Node)
         self.assertEqual(len(node.find_ifs()[0].find_conditions()), 2)
-
         self.assertIsNone(node.find_ifs()[0].find_conditions()[1].tree)
 
     def test_find_conditions_without_if(self):
@@ -681,6 +776,16 @@ while True:
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
             .find_ifs()[0].find_bodies()[2].is_equivalent("x+=i"))
 
+    def test_find_bodies_nested_ifs(self):
+        code_str = """if x == 1:
+  pass
+elif x == 2:
+  if True:
+    pass"""
+        node = Node(code_str)
+
+        node.find_ifs()[0].find_bodies()[1].is_equivalent("if True:\n  pass")
+
     def test_find_conditions_nested(self):
         code_str = """
 while True:
@@ -698,6 +803,33 @@ while True:
         self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[1].is_equivalent("i==1"))
         self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)
 
+    def test_find_conditions_nested_ifs(self):
+        code_str = """
+if x > 0:
+  if x == 1:
+    pass
+elif x < 0:
+  if x == -1:
+    pass
+else:
+  if y:
+    return y
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_ifs()[0].find_ifs()[0].find_conditions()[0].is_equivalent("x == 1"))
+        self.assertTrue(node.find_ifs()[0].find_bodies()[1].find_ifs()[0].find_conditions()[0].is_equivalent("x == -1"))
+
+        # if x: pass
+        # else:
+        #   if y: return y
+
+        # is equivalent to
+
+        # if x: pass
+        # elif y: return y
+        self.assertTrue(node.find_ifs()[0].find_conditions()[2].is_equivalent("y"))
+
 
 class TestPassHelpers(unittest.TestCase):
     def test_has_pass(self):
@@ -710,13 +842,22 @@ else:
     pass
 """
         node = Node(code_str)
-        
+
         self.assertFalse(node.find_ifs()[0].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[0].has_pass())
         self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
 
 class TestGenericHelpers(unittest.TestCase):
+
+    def test_is_empty(self):
+        self.assertTrue(Node().is_empty())
+        self.assertFalse(Node("x = 1").is_empty())
+
+    def test_else_is_empty(self):
+        node = Node("if True:\n  pass\nelse:\n  pass")
+        self.assertTrue(node.find_ifs()[0].find_conditions()[1].is_empty())
+
     def test_equality(self):
         self.assertEqual(
             Node("def foo():\n  pass"),
