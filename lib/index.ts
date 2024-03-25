@@ -1,5 +1,6 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
+export { Tower, generate } from "./class/tower";
 
 /**
  * Removes every HTML-comment from the string that is provided
