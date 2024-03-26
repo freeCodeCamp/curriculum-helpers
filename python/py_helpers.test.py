@@ -228,6 +228,16 @@ def foo():
 
         self.assertFalse(node.find_function("foo").has_args("int"))
     
+    def test_has_class(self):
+        class_str = """
+class Foo:
+  def __init__(self):
+    pass
+"""
+        node = Node(class_str)
+
+        self.assertTrue(node.has_class("Foo"))
+
     def test_find_class(self):
         class_str = """
 class Foo:

@@ -137,6 +137,9 @@ class Node:
     def has_function(self, name):
         return self.find_function(name) != Node()
     
+    def has_class(self, name):
+        return self.find_class(name) != Node()
+    
     def has_decorators(self, *args):
         if not isinstance(self.tree, ast.FunctionDef):
             return False
