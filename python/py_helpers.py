@@ -106,12 +106,13 @@ class Node:
                 # elif isinstance(expr.tree.value.func, ast.Attribute):                    
                 
         return call_list
+    
+    def find_imports(self):
+        return self._find_all((ast.Import, ast.ImportFrom))
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
-    def has_call(name, ):
-        pass
     
     def has_variable(self, name):
         return self.find_variable(name) != Node()
