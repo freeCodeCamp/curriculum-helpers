@@ -94,10 +94,25 @@ class Node:
         if not hasattr(self.tree, "body"):
             return Node()
         return Node(ast.Module(self.tree.body, []))
+    
+    def find_calls(self, name):
+        expr_list = self._find_all(ast.Expr)
+        call_list = []
+        for expr in expr_list:
+            if isinstance(expr.tree.value, ast.Call):
+                if isinstance(expr.tree.value.func, ast.Name):
+                    if expr.tree.value.func.id == name:
+                        call_list.append(expr)
+                # elif isinstance(expr.tree.value.func, ast.Attribute):                    
+                
+        return call_list
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
+    def has_call(name, ):
+        pass
+    
     def has_variable(self, name):
         return self.find_variable(name) != Node()
 

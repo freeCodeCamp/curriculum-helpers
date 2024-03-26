@@ -228,6 +228,20 @@ def foo():
 
         self.assertFalse(node.find_function("foo").has_args("int"))
     
+    def test_find_calls(self):
+        code_str = """
+print(1)
+int("1")
+print(2)
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_calls("print")), 2)        
+        self.assertTrue(node.find_calls("print")[0].is_equivalent("print(1)"))
+        self.assertTrue(node.find_calls("print")[1].is_equivalent("print(2)"))
+        self.assertEqual(len(node.find_calls("int")), 1)
+        self.assertTrue(node.find_calls("int")[0].is_equivalent("int('1')"))
+
     def test_has_class(self):
         class_str = """
 class Foo:
