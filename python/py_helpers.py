@@ -95,18 +95,6 @@ class Node:
             return Node()
         return Node(ast.Module(self.tree.body, []))
     
-    def find_calls(self, name):
-        expr_list = self._find_all(ast.Expr)
-        call_list = []
-        for expr in expr_list:
-            if isinstance(expr.tree.value, ast.Call):
-                if isinstance(expr.tree.value.func, ast.Name):
-                    if expr.tree.value.func.id == name:
-                        call_list.append(expr)
-                # elif isinstance(expr.tree.value.func, ast.Attribute):                    
-                
-        return call_list
-    
     def find_imports(self):
         return self._find_all((ast.Import, ast.ImportFrom))
 
@@ -120,6 +108,9 @@ class Node:
     def has_import(self, import_str):        
         return any(import_node.is_equivalent(import_str) for import_node in self.find_imports())
 
+    def has_call(self, call):        
+        return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
+    
     def find_variable(self, name):
         if not self._has_body():
             return Node()
@@ -128,6 +119,11 @@ class Node:
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         if target.id == name:
+                            return Node(node)
+                    if isinstance(target, ast.Attribute):
+                        names = name.split(".")
+                        if target.value.id == names[0] and\
+                        target.attr == names[1]:
                             return Node(node)
             elif isinstance(node, ast.AnnAssign):
                 if isinstance(node.target, ast.Name):
