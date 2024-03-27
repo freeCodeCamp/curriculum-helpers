@@ -97,13 +97,23 @@ class Node:
         if not hasattr(self.tree, "body"):
             return Node()
         return Node(ast.Module(self.tree.body, []))
+    
+    def find_imports(self):
+        return self._find_all((ast.Import, ast.ImportFrom))
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
+    
     def has_variable(self, name):
         return self.find_variable(name) != Node()
+    
+    def has_import(self, import_str):        
+        return any(import_node.is_equivalent(import_str) for import_node in self.find_imports())
 
+    def has_call(self, call):        
+        return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
+    
     def find_variable(self, name):
         if not self._has_body():
             return Node()
@@ -112,6 +122,11 @@ class Node:
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         if target.id == name:
+                            return Node(node)
+                    if isinstance(target, ast.Attribute):
+                        names = name.split(".")
+                        if target.value.id == names[0] and\
+                        target.attr == names[1]:
                             return Node(node)
             elif isinstance(node, ast.AnnAssign):
                 if isinstance(node.target, ast.Name):
@@ -139,6 +154,9 @@ class Node:
 
     def has_function(self, name):
         return self.find_function(name) != Node()
+    
+    def has_class(self, name):
+        return self.find_class(name) != Node()
     
     def has_decorators(self, *args):
         if not isinstance(self.tree, ast.FunctionDef):
