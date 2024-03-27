@@ -62,6 +62,18 @@ b = 2
         node = Node(scopes_str)
         self.assertFalse(node.has_variable("a"))
 
+    def test_has_variable_attr(self):
+        code_str = """
+class A:
+  def __init__(self, x, y):
+    self.x = x
+    self.y = y
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_class("A").find_function("__init__").has_variable("self.x"))
+        self.assertTrue(node.find_class("A").find_function("__init__").has_variable("self.y"))
+    
     def test_is_integer(self):
         two_locals = """
 def foo():
@@ -99,6 +111,11 @@ x = None
         self.assertTrue(
             node.find_function("foo").find_variable("x").is_equivalent('x = "1"'),
         )
+
+    def test_find_variable_attr(self):
+        node = Node('self.x = x')
+
+        self.assertTrue(node.find_variable("self.x").is_equivalent("self.x = x"))
 
     def test_find_variable_not_found(self):
         node = Node('def foo():\n  x = "1"')
@@ -228,19 +245,19 @@ def foo():
 
         self.assertFalse(node.find_function("foo").has_args("int"))
     
-    def test_find_calls(self):
+    def test_has_call(self):
         code_str = """
 print(1)
 int("1")
 print(2)
+obj.foo("spam")
 """
         node = Node(code_str)
 
-        self.assertEqual(len(node.find_calls("print")), 2)        
-        self.assertTrue(node.find_calls("print")[0].is_equivalent("print(1)"))
-        self.assertTrue(node.find_calls("print")[1].is_equivalent("print(2)"))
-        self.assertEqual(len(node.find_calls("int")), 1)
-        self.assertTrue(node.find_calls("int")[0].is_equivalent("int('1')"))
+        self.assertTrue(node.has_call("print(1)"))
+        self.assertTrue(node.has_call("print(2)"))
+        self.assertTrue(node.has_call("int('1')"))
+        self.assertTrue(node.has_call("obj.foo('spam')"))
 
     def test_has_class(self):
         class_str = """
