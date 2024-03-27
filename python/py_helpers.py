@@ -116,6 +116,9 @@ class Node:
     
     def has_variable(self, name):
         return self.find_variable(name) != Node()
+    
+    def has_import(self, import_str):        
+        return any(import_node.is_equivalent(import_str) for import_node in self.find_imports())
 
     def find_variable(self, name):
         if not self._has_body():

@@ -872,6 +872,28 @@ else:
         self.assertFalse(node.find_ifs()[0].find_bodies()[1].has_pass())
         self.assertTrue(node.find_ifs()[0].find_bodies()[2].has_pass())
 
+
+class TestImportHelpers(unittest.TestCase):
+    def test_find_imports(self):
+        code_str = """
+import ast
+from py_helpers import Node as _Node
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_imports()), 2)
+
+    def test_has_import(self):
+        code_str = """
+import ast
+from py_helpers import Node as _Node
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.has_import("import ast"))
+        self.assertTrue(node.has_import("from py_helpers import Node as _Node"))
+
+
 class TestGenericHelpers(unittest.TestCase):
 
     def test_is_empty(self):
