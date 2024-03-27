@@ -75,7 +75,10 @@ class Node:
             returns = f"-> '{val}'"
         else:
             returns = ""
-        func_str = f'def {self.tree.name}({arg_str}) {returns}:\n  {self.find_body()}'
+            
+        body_lines = str(self.find_body()).split("\n")         
+        new_body = "".join([f"\n  {line}" for line in body_lines])
+        func_str = f'def {self.tree.name}({arg_str}) {returns}:{new_body}'
         return self.is_equivalent(func_str)
     
     # returns_str is the annotation of the type returned by the function

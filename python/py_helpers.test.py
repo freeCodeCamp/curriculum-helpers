@@ -369,7 +369,8 @@ class B(A, C):
         code_str = """
 class A:
    def __init__(self, *, a, b=0):
-     pass
+     self.a = a
+     self.b = b
 """
         node = Node(code_str)
         
