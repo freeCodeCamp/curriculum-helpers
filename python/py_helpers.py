@@ -98,8 +98,58 @@ class Node:
             return Node()
         return Node(ast.Module(self.tree.body, []))
     
+    # find the return statement of a function
+    def find_return(self):
+        if not isinstance(self.tree, ast.FunctionDef):
+            return Node()
+        if return_list := self._find_all(ast.Return):
+            return return_list[0]
+        return Node()
+    
+    def has_return(self, statement):
+        return self.find_return().is_equivalent(statement)
+    
     def find_imports(self):
         return self._find_all((ast.Import, ast.ImportFrom))
+    
+    # find a list of iterables of a comprehension/generator expression
+    def find_comp_iters(self):
+        if value := getattr(self.tree, "value", False):
+            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
+                return [Node(gen.iter) for gen in value.generators]                
+        return []
+    
+    # find a list of targets (iteration variables) of a comprehension/generator expression
+    def find_comp_targets(self):
+        if value := getattr(self.tree, "value", False):
+            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
+                return [Node(gen.target) for gen in value.generators]                
+        return []
+    
+    # find the key of a dictionary comprehension
+    def find_comp_key(self):
+        if value := getattr(self.tree, "value", False):
+            if isinstance(value, ast.DictComp):
+                return Node(value.key)
+        return Node()
+    
+    # find the expression evaluated for a comprehension/generator expression
+    # which is the value of the key in case of a dictionary comprehension
+    def find_comp_expr(self):
+        if value := getattr(self.tree, "value", False):
+            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+                return Node(value.elt)
+            elif isinstance(value, ast.DictComp):
+                return Node(value.value)
+        return Node()
+    
+    # find a list of `IfExpr`s at the end of the comprehension/generator expression
+    def find_comp_ifs(self):
+        if value := getattr(self.tree, "value", False):
+            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
+                return [Node(ast.Module(gen.ifs, [])) for gen in value.generators]                
+        return []
+
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
