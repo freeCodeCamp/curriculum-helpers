@@ -158,6 +158,8 @@ Node('def foo():\n  x = "1"').find_function("foo").has_variable("x") # True
 
 ```python
 Node("y = 2\nx = 1").find_variable("x").is_equivalent("x = 1")
+Node("a: int = 1").find_variable("a").is_equivalent("a: int = 1")
+Node("self.spam = spam").find_variable("self.spam").is_equivalent("self.spam = spam")
 ```
 
 #### `find_aug_variable`
@@ -413,6 +415,20 @@ explorer3.find_for_loops()[0].find_bodies()[1].is_equivalent("print(x)") # True
 explorer3.find_for_loops()[1].find_bodies()[0].is_equivalent("pass") # True
 ```
 
+#### `find_imports`
+
+```python
+code_str = """
+import ast, sys
+from math import factorial as f
+"""
+
+explorer = Node(code_str)
+len(explorer.find_imports()) # 2
+explorer.find_imports()[0].is_equivalent("import ast, sys")
+explorer.find_imports()[1].is_equivalent("from math import factorial as f")
+```
+
 ### Getting values
 
 `get_` functions return the value of the node, not the node itself.
@@ -471,6 +487,44 @@ class A:
 """
 Node(code_str).find_class("A").find_function("foo").has_decorators("property") # True
 Node(code_str).find_class("A").find_function("foo").has_decorators("property", "staticmethod") # True
+```
+
+#### `has_call`
+
+```python
+code_str = """
+print(math.sqrt(25))
+if True:
+  spam()
+"""
+
+explorer = Node(code_str)
+explorer.has_call("print(math.sqrt(25))")
+explorer.find_ifs()[0].find_bodies()[0].has_call("spam()")
+```
+
+#### `has_import`
+
+```python
+code_str = """
+import ast, sys
+from math import factorial as f
+"""
+
+explorer = Node(code_str)
+explorer.has_import("import ast, sys")
+explorer.has_import("from math import factorial as f")
+```
+
+#### `has_class`
+
+```python
+code_str = """
+class spam:
+  pass
+"""
+
+Node(code_str).has_class("spam")
 ```
 
 ### Misc
