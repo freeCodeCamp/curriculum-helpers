@@ -66,8 +66,20 @@ class Node:
                     return Node(node)
         return Node()
     
+    def find_async_function(self, func):
+        if not self._has_body():
+            return Node()
+        for node in self.tree.body:
+            if isinstance(node, ast.AsyncFunctionDef):
+                if node.name == func:
+                    return Node(node)
+        return Node()
+    
+    def find_awaits(self):
+        return [node for node in self._find_all(ast.Expr) if isinstance(node.tree.value, ast.Await)]        
+    
     def has_args(self, arg_str):
-        if not isinstance(self.tree, ast.FunctionDef):
+        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
         if id:= getattr(self.tree.returns, "id", False):
             returns = f"-> {id}"
@@ -75,15 +87,17 @@ class Node:
             returns = f"-> '{val}'"
         else:
             returns = ""
-            
+        async_kw = ""
+        if isinstance(self.tree, ast.AsyncFunctionDef):
+            async_kw = "async "
         body_lines = str(self.find_body()).split("\n")         
         new_body = "".join([f"\n  {line}" for line in body_lines])
-        func_str = f'def {self.tree.name}({arg_str}) {returns}:{new_body}'
+        func_str = f"{async_kw}def {self.tree.name}({arg_str}) {returns}:{new_body}"
         return self.is_equivalent(func_str)
     
     # returns_str is the annotation of the type returned by the function
     def has_returns(self, returns_str):
-        if not isinstance(self.tree, ast.FunctionDef):
+        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
         if isinstance(self.tree.returns, ast.Name):
             return returns_str == self.tree.returns.id
@@ -100,14 +114,14 @@ class Node:
     
     # find the return statement of a function
     def find_return(self):
-        if not isinstance(self.tree, ast.FunctionDef):
+        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return Node()
         if return_list := self._find_all(ast.Return):
             return return_list[0]
         return Node()
     
-    def has_return(self, statement):
-        return self.find_return().is_equivalent(statement)
+    def has_return(self, return_value):
+        return self.find_return().is_equivalent(f"return {return_value}")
     
     def find_imports(self):
         return self._find_all((ast.Import, ast.ImportFrom))
@@ -209,7 +223,7 @@ class Node:
         return self.find_class(name) != Node()
     
     def has_decorators(self, *args):
-        if not isinstance(self.tree, ast.FunctionDef):
+        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
         id_list = (node.id for node in self.tree.decorator_list)
         return all(arg in id_list for arg in args)        

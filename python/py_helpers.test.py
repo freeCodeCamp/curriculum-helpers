@@ -216,6 +216,28 @@ def foo(*, a, b, c=0):
         self.assertTrue(node.find_function("foo").has_args("*, a, b, c=0"))
         self.assertFalse(node.find_function("foo").has_args("*, a, b, c"))
 
+    def test_find_return(self):
+        code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").find_return().is_equivalent("return True"))
+
+    def test_has_return(self):
+        code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_return("True"))
+
     def test_has_args_annotations(self):
         code_str = """
 def foo(a: int, b: int) -> int:
@@ -393,6 +415,62 @@ class A:
         self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property"))
         self.assertFalse(node.find_class("A").find_function("bar").has_decorators("property"))
         
+
+class TestAsyncHelpers(unittest.TestCase):
+    def test_find_async_function(self):
+        code_str = """
+async def foo():
+  await bar()
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_async_function("foo").is_equivalent("async def foo():\n  await bar()"))
+
+    def test_find_async_function_args(self):
+        code_str = """
+async def foo(spam):
+  await bar()
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_async_function("foo").has_args("spam"))
+
+    def test_find_async_function_return(self):
+        code_str = """
+async def foo(spam):
+  await bar()
+  return True
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_async_function("foo").has_return("True"))
+
+    def test_find_async_function_returns(self):
+        code_str = """
+async def foo(spam) -> bool:
+  await bar()
+  return True
+"""
+        node = Node(code_str)
+        
+        self.assertTrue(node.find_async_function("foo").has_returns("bool"))
+
+    def test_find_awaits(self):
+        code_str = """
+async def foo(spam):
+  if spam:
+    await spam()
+  await bar()
+  await func()
+"""
+        node = Node(code_str)
+        
+        self.assertEqual(len(node.find_async_function("foo").find_awaits()), 2)
+        self.assertTrue(node.find_async_function("foo").find_awaits()[0].is_equivalent("await bar()"))
+        self.assertTrue(node.find_async_function("foo").find_awaits()[1].is_equivalent("await func()"))
+        self.assertEqual(len(node.find_async_function("foo").find_ifs()[0].find_awaits()), 1)
+        self.assertTrue(node.find_async_function("foo").find_ifs()[0].find_awaits()[0].is_equivalent("await spam()"))
+
 
 class TestEquivalenceHelpers(unittest.TestCase):
     def test_is_equivalent(self):
