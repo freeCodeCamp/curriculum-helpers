@@ -8,7 +8,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
       - uses: psf/black@552baf822992936134cbd31a38f69c8cfe7c0f05 # v24.3.0
 
   tests:
@@ -17,7 +17,7 @@ jobs:
     needs: lint
     steps:
       # Checkout the Repo
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
 
       # Install Node 18
       - name: Setup Node
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout the Repo
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4
 
       # Install Python
       - name: Setup Python
