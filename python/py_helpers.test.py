@@ -71,9 +71,13 @@ class A:
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_class("A").find_function("__init__").has_variable("self.x"))
-        self.assertTrue(node.find_class("A").find_function("__init__").has_variable("self.y"))
-    
+        self.assertTrue(
+            node.find_class("A").find_function("__init__").has_variable("self.x")
+        )
+        self.assertTrue(
+            node.find_class("A").find_function("__init__").has_variable("self.y")
+        )
+
     def test_is_integer(self):
         two_locals = """
 def foo():
@@ -113,7 +117,7 @@ x = None
         )
 
     def test_find_variable_attr(self):
-        node = Node('self.x = x')
+        node = Node("self.x = x")
 
         self.assertTrue(node.find_variable("self.x").is_equivalent("self.x = x"))
 
@@ -140,7 +144,7 @@ x = None
         self.assertTrue(node.find_aug_variable("x").is_equivalent("x += 1"))
 
     def test_find_aug_variable_nested(self):
-        code_str ="""
+        code_str = """
 def foo():
   x = 5
   while x > 0:
@@ -148,7 +152,12 @@ def foo():
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_function("foo").find_whiles()[0].find_aug_variable("x").is_equivalent("x -= 1"))
+        self.assertTrue(
+            node.find_function("foo")
+            .find_whiles()[0]
+            .find_aug_variable("x")
+            .is_equivalent("x -= 1")
+        )
         self.assertEqual(node.find_function("foo").find_aug_variable("x"), Node())
 
 
@@ -266,7 +275,7 @@ def foo():
         node = Node(code_str)
 
         self.assertFalse(node.find_function("foo").has_args("int"))
-    
+
     def test_has_call(self):
         code_str = """
 print(1)
@@ -377,7 +386,7 @@ class Foo:
         code_str = """
 class A:
    pass
-   
+
 class B(A, C):
    pass
 """
@@ -395,8 +404,10 @@ class A:
      self.b = b
 """
         node = Node(code_str)
-        
-        self.assertTrue(node.find_class("A").find_function("__init__").has_args("self, *, a, b=0"))
+
+        self.assertTrue(
+            node.find_class("A").find_function("__init__").has_args("self, *, a, b=0")
+        )
 
     def test_has_decorators(self):
         code_str = """
@@ -405,16 +416,24 @@ class A:
   @staticmethod
   def foo():
     pass
-    
+
   def bar():
-    pass    
+    pass
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property", "staticmethod"))
-        self.assertTrue(node.find_class("A").find_function("foo").has_decorators("property"))
-        self.assertFalse(node.find_class("A").find_function("bar").has_decorators("property"))
-        
+        self.assertTrue(
+            node.find_class("A")
+            .find_function("foo")
+            .has_decorators("property", "staticmethod")
+        )
+        self.assertTrue(
+            node.find_class("A").find_function("foo").has_decorators("property")
+        )
+        self.assertFalse(
+            node.find_class("A").find_function("bar").has_decorators("property")
+        )
+
 
 class TestAsyncHelpers(unittest.TestCase):
     def test_find_async_function(self):
@@ -669,7 +688,6 @@ else:
 
         self.assertEqual(len(node.find_bodies()), 0)
 
-
     def test_find_specific_if(self):
         if_str = """
 if True:
@@ -728,7 +746,9 @@ else:
         self.assertNotIsInstance(node.find_whiles()[0].find_conditions(), Node)
         self.assertEqual(len(node.find_whiles()[0].find_conditions()), 2)
 
-        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("x > 0"))
+        self.assertTrue(
+            node.find_whiles()[0].find_conditions()[0].is_equivalent("x > 0")
+        )
         self.assertIsNone(node.find_whiles()[0].find_conditions()[1].tree)
 
     def test_while_bodies(self):
@@ -746,9 +766,9 @@ else:
 
         self.assertEqual(len(node.find_whiles()[0].find_bodies()), 1)
         self.assertEqual(len(node.find_whiles()[1].find_bodies()), 2)
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].is_equivalent('x -= 1'))
-        self.assertTrue(node.find_whiles()[1].find_bodies()[0].is_equivalent('x += 1'))
-        self.assertTrue(node.find_whiles()[1].find_bodies()[1].is_equivalent('x = 6'))
+        self.assertTrue(node.find_whiles()[0].find_bodies()[0].is_equivalent("x -= 1"))
+        self.assertTrue(node.find_whiles()[1].find_bodies()[0].is_equivalent("x += 1"))
+        self.assertTrue(node.find_whiles()[1].find_bodies()[1].is_equivalent("x = 6"))
 
     def test_find_specific_while(self):
         while_str = """
@@ -765,8 +785,12 @@ else:
 
         self.assertTrue(node.find_while("x > 0"))
         self.assertTrue(node.find_while("x <= 0"))
-        self.assertTrue(node.find_while("x > 0").find_bodies()[0].is_equivalent("x -= 1"))
-        self.assertTrue(node.find_while("x <= 0").find_bodies()[0].is_equivalent("x += 1"))
+        self.assertTrue(
+            node.find_while("x > 0").find_bodies()[0].is_equivalent("x -= 1")
+        )
+        self.assertTrue(
+            node.find_while("x <= 0").find_bodies()[0].is_equivalent("x += 1")
+        )
 
 
 class TestForLoopsHelpers(unittest.TestCase):
@@ -789,8 +813,14 @@ for i in range(4):
         self.assertNotIsInstance(node.find_for_loops(), Node)
         self.assertEqual(len(node.find_for_loops()), 2)
 
-        self.assertTrue(node.find_for_loops()[0].is_equivalent('for x, y in enumerate(dict):\n  print(x, y)\nelse:\n  pass'))
-        self.assertTrue(node.find_for_loops()[1].is_equivalent('for i in range(4):\n  pass'))
+        self.assertTrue(
+            node.find_for_loops()[0].is_equivalent(
+                "for x, y in enumerate(dict):\n  print(x, y)\nelse:\n  pass"
+            )
+        )
+        self.assertTrue(
+            node.find_for_loops()[1].is_equivalent("for i in range(4):\n  pass")
+        )
 
     def test_find_for_vars(self):
         self.maxDiff = None
@@ -810,9 +840,10 @@ for i in range(4):
         self.assertIsInstance(node.find_for_loops()[0].find_for_vars(), Node)
         self.assertIsInstance(node.find_for_loops()[1].find_for_vars(), Node)
 
-        self.assertTrue(node.find_for_loops()[0].find_for_vars().is_equivalent('(x, y)'))
-        self.assertTrue(node.find_for_loops()[1].find_for_vars().is_equivalent('i'))
-
+        self.assertTrue(
+            node.find_for_loops()[0].find_for_vars().is_equivalent("(x, y)")
+        )
+        self.assertTrue(node.find_for_loops()[1].find_for_vars().is_equivalent("i"))
 
     def test_find_for_iter(self):
         self.maxDiff = None
@@ -827,8 +858,12 @@ for i in range(4):
 
         node = Node(for_str)
 
-        self.assertTrue(node.find_for_loops()[0].find_for_iter().is_equivalent('enumerate(dict)'))
-        self.assertTrue(node.find_for_loops()[1].find_for_iter().is_equivalent('range(4)'))
+        self.assertTrue(
+            node.find_for_loops()[0].find_for_iter().is_equivalent("enumerate(dict)")
+        )
+        self.assertTrue(
+            node.find_for_loops()[1].find_for_iter().is_equivalent("range(4)")
+        )
 
     def test_find_for_bodies(self):
         self.maxDiff = None
@@ -846,9 +881,13 @@ for i in range(4):
         node = Node(for_str)
 
         self.assertEqual(len(node.find_for_loops()[0].find_bodies()), 2)
-        self.assertTrue(node.find_for_loops()[0].find_bodies()[0].is_equivalent('print(x, y)'))
-        self.assertTrue(node.find_for_loops()[0].find_bodies()[1].is_equivalent('print("Hi")'))
-        self.assertTrue(node.find_for_loops()[1].find_bodies()[0].is_equivalent('pass'))
+        self.assertTrue(
+            node.find_for_loops()[0].find_bodies()[0].is_equivalent("print(x, y)")
+        )
+        self.assertTrue(
+            node.find_for_loops()[0].find_bodies()[1].is_equivalent('print("Hi")')
+        )
+        self.assertTrue(node.find_for_loops()[1].find_bodies()[0].is_equivalent("pass"))
 
     def test_find_specific_for(self):
         for_str = """
@@ -866,8 +905,14 @@ for i in range(4):
         self.assertTrue(node.find_for("(x,y)", "enumerate(dict)"))
         self.assertTrue(node.find_for("i", "range(4)"))
         self.assertIsNone(node.find_for("x", "dict").tree)
-        self.assertTrue(node.find_for("(x,y)", "enumerate(dict)").find_bodies()[0].is_equivalent("print(x)"))
-        self.assertTrue(node.find_for("i", "range(4)").find_bodies()[0].is_equivalent("print(i)"))
+        self.assertTrue(
+            node.find_for("(x,y)", "enumerate(dict)")
+            .find_bodies()[0]
+            .is_equivalent("print(x)")
+        )
+        self.assertTrue(
+            node.find_for("i", "range(4)").find_bodies()[0].is_equivalent("print(i)")
+        )
 
 
 class TestNestedLoopsAndConditionalHelpers(unittest.TestCase):
@@ -884,17 +929,47 @@ while True:
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0]
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
             .is_equivalent(
-                "for i in range(5):\n  if i==0:\n    continue\n  elif i==1:\n    pass\n  else:\n    x+=i"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
-            .is_equivalent("if i==0:\n  continue\nelif i==1:\n  pass\nelse:\n  x+=i"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
-            .find_ifs()[0].find_bodies()[0].is_equivalent("continue"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
-            .find_ifs()[0].find_bodies()[1].is_equivalent("pass"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_for_loops()[0].find_bodies()[0]
-            .find_ifs()[0].find_bodies()[2].is_equivalent("x+=i"))
+                "for i in range(5):\n  if i==0:\n    continue\n  elif i==1:\n    pass\n  else:\n    x+=i"
+            )
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_for_loops()[0]
+            .find_bodies()[0]
+            .is_equivalent("if i==0:\n  continue\nelif i==1:\n  pass\nelse:\n  x+=i")
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_for_loops()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_bodies()[0]
+            .is_equivalent("continue")
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_for_loops()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_bodies()[1]
+            .is_equivalent("pass")
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_for_loops()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_bodies()[2]
+            .is_equivalent("x+=i")
+        )
 
     def test_find_bodies_nested_ifs(self):
         code_str = """if x == 1:
@@ -918,10 +993,30 @@ while True:
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_whiles()[0].find_conditions()[0].is_equivalent("True"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[0].is_equivalent("i==0"))
-        self.assertTrue(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[1].is_equivalent("i==1"))
-        self.assertIsNone(node.find_whiles()[0].find_bodies()[0].find_ifs()[0].find_conditions()[2].tree)
+        self.assertTrue(
+            node.find_whiles()[0].find_conditions()[0].is_equivalent("True")
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_conditions()[0]
+            .is_equivalent("i==0")
+        )
+        self.assertTrue(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_conditions()[1]
+            .is_equivalent("i==1")
+        )
+        self.assertIsNone(
+            node.find_whiles()[0]
+            .find_bodies()[0]
+            .find_ifs()[0]
+            .find_conditions()[2]
+            .tree
+        )
 
     def test_find_conditions_nested_ifs(self):
         code_str = """
@@ -937,8 +1032,19 @@ else:
 """
         node = Node(code_str)
 
-        self.assertTrue(node.find_ifs()[0].find_ifs()[0].find_conditions()[0].is_equivalent("x == 1"))
-        self.assertTrue(node.find_ifs()[0].find_bodies()[1].find_ifs()[0].find_conditions()[0].is_equivalent("x == -1"))
+        self.assertTrue(
+            node.find_ifs()[0]
+            .find_ifs()[0]
+            .find_conditions()[0]
+            .is_equivalent("x == 1")
+        )
+        self.assertTrue(
+            node.find_ifs()[0]
+            .find_bodies()[1]
+            .find_ifs()[0]
+            .find_conditions()[0]
+            .is_equivalent("x == -1")
+        )
 
         # if x: pass
         # else:
@@ -991,7 +1097,6 @@ from py_helpers import Node as _Node
 
 
 class TestGenericHelpers(unittest.TestCase):
-
     def test_is_empty(self):
         self.assertTrue(Node().is_empty())
         self.assertFalse(Node("x = 1").is_empty())

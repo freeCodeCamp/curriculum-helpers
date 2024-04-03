@@ -81,9 +81,9 @@ class Node:
     def has_args(self, arg_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
-        if id:= getattr(self.tree.returns, "id", False):
+        if id := getattr(self.tree.returns, "id", False):
             returns = f"-> {id}"
-        elif val:= getattr(self.tree.returns, "value", False):
+        elif val := getattr(self.tree.returns, "value", False):
             returns = f"-> '{val}'"
         else:
             returns = ""
@@ -94,7 +94,7 @@ class Node:
         new_body = "".join([f"\n  {line}" for line in body_lines])
         func_str = f"{async_kw}def {self.tree.name}({arg_str}) {returns}:{new_body}"
         return self.is_equivalent(func_str)
-    
+
     # returns_str is the annotation of the type returned by the function
     def has_returns(self, returns_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -168,16 +168,17 @@ class Node:
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
 
-    
     def has_variable(self, name):
         return self.find_variable(name) != Node()
-    
-    def has_import(self, import_str):        
-        return any(import_node.is_equivalent(import_str) for import_node in self.find_imports())
 
-    def has_call(self, call):        
+    def has_import(self, import_str):
+        return any(
+            import_node.is_equivalent(import_str) for import_node in self.find_imports()
+        )
+
+    def has_call(self, call):
         return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
-    
+
     def find_variable(self, name):
         if not self._has_body():
             return Node()
@@ -189,15 +190,14 @@ class Node:
                             return Node(node)
                     if isinstance(target, ast.Attribute):
                         names = name.split(".")
-                        if target.value.id == names[0] and\
-                        target.attr == names[1]:
+                        if target.value.id == names[0] and target.attr == names[1]:
                             return Node(node)
             elif isinstance(node, ast.AnnAssign):
                 if isinstance(node.target, ast.Name):
                     if node.target.id == name:
                         return Node(node)
         return Node()
-    
+
     # find variable incremented or decremented using += or -=
     def find_aug_variable(self, name):
         if not self._has_body():
@@ -218,22 +218,22 @@ class Node:
 
     def has_function(self, name):
         return self.find_function(name) != Node()
-    
+
     def has_class(self, name):
         return self.find_class(name) != Node()
-    
+
     def has_decorators(self, *args):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
         id_list = (node.id for node in self.tree.decorator_list)
-        return all(arg in id_list for arg in args)        
-    
+        return all(arg in id_list for arg in args)
+
     # Checks if the current scope contains a "pass" statement
 
     def has_pass(self):
         if isinstance(self.tree, (ast.If, ast.While, ast.For)):
             return False
-        if getattr(self.tree, 'body', False):
+        if getattr(self.tree, "body", False):
             return any(isinstance(node, ast.Pass) for node in self.tree.body)
         return False
 
@@ -295,7 +295,7 @@ class Node:
                 if node.name == class_name:
                     return Node(node)
         return Node()
-    
+
     def inherits_from(self, *args):
         if not isinstance(self.tree, ast.ClassDef):
             return False
@@ -345,8 +345,9 @@ class Node:
     def find_for(self, target_str, iter_str):
         for_list = self._find_all(ast.For)
         for for_loop in for_list:
-            if for_loop.find_for_vars().is_equivalent(target_str) \
-                and for_loop.find_for_iter().is_equivalent(iter_str):
+            if for_loop.find_for_vars().is_equivalent(
+                target_str
+            ) and for_loop.find_for_iter().is_equivalent(iter_str):
                 return for_loop
         return Node()
 
@@ -380,4 +381,3 @@ class Node:
             return [test, None]
 
         return [Node(test) for test in _find_conditions(self.tree)]
-    
