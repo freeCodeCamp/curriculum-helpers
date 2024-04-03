@@ -1153,7 +1153,7 @@ class TestErrorFormatter(unittest.TestCase):
             "    value, tb = _parse_value_tb(exc, value, tb)\n",
             "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
             '  File "/lib/python311.zip/traceback.py", line 98, in _parse_value_tb\n',
-            '    raise ValueError("Both or neither of value and tb must be given")\n'
+            '    raise ValueError("Both or neither of value and tb must be given")\n',
         ]
         self.exception_only = [
             "ValueError: Both or neither of value and tb must be given\n"
@@ -1172,7 +1172,6 @@ class TestErrorFormatter(unittest.TestCase):
             ]
         )
 
-
     def test_drop_until(self):
         self.assertListEqual(
             drop_until(traces=self.traceback_list, filename="<exec>"),
@@ -1183,7 +1182,7 @@ class TestErrorFormatter(unittest.TestCase):
                 "    value, tb = _parse_value_tb(exc, value, tb)\n",
                 "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
                 '  File "/lib/python311.zip/traceback.py", line 98, in _parse_value_tb\n',
-                '    raise ValueError("Both or neither of value and tb must be given")\n'
+                '    raise ValueError("Both or neither of value and tb must be given")\n',
             ],
         )
 
@@ -1214,10 +1213,13 @@ ValueError: This error has no value
         try:
             exec(code)
         except Exception:
-          import sys
-          _last_type, last_value, last_traceback = sys.exc_info()
-          formatted_exception = format_exception(exception= last_value, traceback= last_traceback, filename="<string>")
-          self.assertEqual(formatted_exception, expected_str)
+            import sys
+
+            _last_type, last_value, last_traceback = sys.exc_info()
+            formatted_exception = format_exception(
+                exception=last_value, traceback=last_traceback, filename="<string>"
+            )
+            self.assertEqual(formatted_exception, expected_str)
 
     def test_format_syntax_error(self):
         code = """
@@ -1232,11 +1234,15 @@ SyntaxError: invalid syntax
         try:
             exec(code)
         except Exception:
-          import sys
-          _last_type, last_value, last_traceback = sys.exc_info()
+            import sys
 
-          formatted_exception = format_exception(exception= last_value, traceback= last_traceback, filename="<string>")
-          self.assertEqual(formatted_exception, expected_str)
+            _last_type, last_value, last_traceback = sys.exc_info()
+
+            formatted_exception = format_exception(
+                exception=last_value, traceback=last_traceback, filename="<string>"
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
 
 if __name__ == "__main__":
     unittest.main()
