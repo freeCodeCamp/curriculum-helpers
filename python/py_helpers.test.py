@@ -1,5 +1,6 @@
 import unittest
 import ast
+import sys
 from py_helpers import Node, drop_until, build_message, format_exception
 
 
@@ -1213,8 +1214,6 @@ ValueError: This error has no value
         try:
             exec(code)
         except Exception:
-            import sys
-
             _last_type, last_value, last_traceback = sys.exc_info()
             formatted_exception = format_exception(
                 exception=last_value, traceback=last_traceback, filename="<string>"
@@ -1234,13 +1233,64 @@ SyntaxError: invalid syntax
         try:
             exec(code)
         except Exception:
-            import sys
-
             _last_type, last_value, last_traceback = sys.exc_info()
 
             formatted_exception = format_exception(
                 exception=last_value, traceback=last_traceback, filename="<string>"
             )
+            self.assertEqual(formatted_exception, expected_str)
+
+    def test_format_and_rename(self):
+        code = """
+def nest():
+    raise ValueError("This error has no value")
+nest()
+"""
+        expected_str = """Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+  File "main.py", line 3, in nest
+ValueError: This error has no value
+"""
+
+        try:
+            exec(code)
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+            formatted_exception = format_exception(
+                exception=last_value,
+                traceback=last_traceback,
+                filename="<string>",
+                new_filename="main.py",
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
+    def test_replaces_only_start_of_line(self):
+        code = """
+def nest():
+    raise ValueError("This error has no value")
+nest()
+"""
+        expected_str = """Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+  File "main.py", line 3, in nest
+ValueError: This error has no value
+"""
+
+        try:
+            codeObject = compile(code, "line", "exec")
+            # When using compiled code, we need to pass an empty dictionary
+            # or else the code will be executed in the current scope.
+            exec(codeObject, dict())
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+
+            formatted_exception = format_exception(
+                exception=last_value,
+                traceback=last_traceback,
+                filename="line",
+                new_filename="main.py",
+            )
+
             self.assertEqual(formatted_exception, expected_str)
 
 

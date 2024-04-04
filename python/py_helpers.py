@@ -336,10 +336,24 @@ def build_message(*, traces, exception_list):
     return "".join(["Traceback (most recent call last):\n"] + traces + exception_list)
 
 
-def format_exception(*, exception, traceback, filename):
+def _replace_startswith(string, old, new):
+    if string.startswith(old):
+        return new + string[len(old) :]
+    return string
+
+
+def format_exception(*, exception, traceback, filename, new_filename=None):
+    if new_filename is None:
+        new_filename = filename
     from traceback import format_exception_only, format_tb
 
     # The trace up to "filename" are the frames that are not part of the user's
     # code so we drop them.
     traces = drop_until(traces=format_tb(traceback), filename=filename)
-    return build_message(traces=traces, exception_list=format_exception_only(exception))
+    renamed_traces = [
+        _replace_startswith(trace, f'  File "{filename}"', f'  File "{new_filename}"')
+        for trace in traces
+    ]
+    return build_message(
+        traces=renamed_traces, exception_list=format_exception_only(exception)
+    )
