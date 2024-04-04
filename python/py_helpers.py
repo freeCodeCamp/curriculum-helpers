@@ -65,7 +65,7 @@ class Node:
                 if node.name == func:
                     return Node(node)
         return Node()
-    
+
     def find_async_function(self, func):
         if not self._has_body():
             return Node()
@@ -74,10 +74,18 @@ class Node:
                 if node.name == func:
                     return Node(node)
         return Node()
-    
+
     def find_awaits(self):
-        return [node for node in self._find_all(ast.Expr) if isinstance(node.tree.value, ast.Await)]        
-    
+        return [
+            node
+            for node in self._find_all(ast.Expr)
+            if isinstance(node.tree.value, ast.Await)
+        ]
+
+    def find_args(self):
+        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            return []
+
     def has_args(self, arg_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
@@ -90,7 +98,7 @@ class Node:
         async_kw = ""
         if isinstance(self.tree, ast.AsyncFunctionDef):
             async_kw = "async "
-        body_lines = str(self.find_body()).split("\n")         
+        body_lines = str(self.find_body()).split("\n")
         new_body = "".join([f"\n  {line}" for line in body_lines])
         func_str = f"{async_kw}def {self.tree.name}({arg_str}) {returns}:{new_body}"
         return self.is_equivalent(func_str)
@@ -111,7 +119,7 @@ class Node:
         if not hasattr(self.tree, "body"):
             return Node()
         return Node(ast.Module(self.tree.body, []))
-    
+
     # find the return statement of a function
     def find_return(self):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -119,51 +127,61 @@ class Node:
         if return_list := self._find_all(ast.Return):
             return return_list[0]
         return Node()
-    
+
     def has_return(self, return_value):
         return self.find_return().is_equivalent(f"return {return_value}")
-    
+
     def find_imports(self):
         return self._find_all((ast.Import, ast.ImportFrom))
-    
+
+    def _find_comp(
+        self, classes=(ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)
+    ):
+        if isinstance(self.tree, classes):
+            return Node(self.tree)
+        elif isinstance(self.tree, (ast.Assign, ast.AnnAssign, ast.Return)):
+            if isinstance(self.tree.value, classes):
+                return Node(self.tree.value)
+            return Node()
+        # elif isinstance(self.tree, ast.Expr):...
+
     # find a list of iterables of a comprehension/generator expression
     def find_comp_iters(self):
-        if value := getattr(self.tree, "value", False):
-            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
-                return [Node(gen.iter) for gen in value.generators]                
-        return []
-    
+        if not (node := self._find_comp()):
+            return []
+        return [Node(gen.iter) for gen in node.tree.generators]
+
     # find a list of targets (iteration variables) of a comprehension/generator expression
     def find_comp_targets(self):
-        if value := getattr(self.tree, "value", False):
-            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
-                return [Node(gen.target) for gen in value.generators]                
-        return []
-    
+        if not (node := self._find_comp()):
+            return []
+        return [Node(gen.target) for gen in node.tree.generators]
+
     # find the key of a dictionary comprehension
     def find_comp_key(self):
-        if value := getattr(self.tree, "value", False):
-            if isinstance(value, ast.DictComp):
-                return Node(value.key)
-        return Node()
-    
+        if not (node := self._find_comp(ast.DictComp)):
+            return Node()
+        return Node(node.tree.key)
+
     # find the expression evaluated for a comprehension/generator expression
     # which is the value of the key in case of a dictionary comprehension
     def find_comp_expr(self):
-        if value := getattr(self.tree, "value", False):
-            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
-                return Node(value.elt)
-            elif isinstance(value, ast.DictComp):
-                return Node(value.value)
-        return Node()
-    
+        if not (node := self._find_comp()):
+            return Node()
+        if isinstance(node.tree, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
+            return Node(node.tree.elt)
+        elif isinstance(node.tree, ast.DictComp):
+            return Node(node.tree.value)
+
     # find a list of `IfExpr`s at the end of the comprehension/generator expression
     def find_comp_ifs(self):
-        if value := getattr(self.tree, "value", False):
-            if isinstance(value, (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)):
-                return [Node(ast.Module(gen.ifs, [])) for gen in value.generators]                
-        return []
-
+        if not (node := self._find_comp()):
+            return []
+        return [
+            Node(gen.ifs[i])
+            for gen in node.tree.generators
+            for i in range(len(gen.ifs))
+        ]
 
     # "has" functions return a boolean indicating whether whatever is being
     # searched for exists. In this case, it returns True if the variable exists.
@@ -176,8 +194,20 @@ class Node:
             import_node.is_equivalent(import_str) for import_node in self.find_imports()
         )
 
+    def find_call(self, call):
+        return [
+            Node(node.tree.value)
+            for node in self._find_all(ast.Expr)
+            if node.is_equivalent(call)
+        ]
+
     def has_call(self, call):
-        return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
+        return bool(self.find_call(call))
+
+    def find_call_args(self):
+        if not isinstance(self.tree, ast.Call):
+            return []
+        return [Node(arg) for arg in self.tree.args]
 
     def find_variable(self, name):
         if not self._has_body():
