@@ -248,6 +248,7 @@ def foo():
         node = Node(code_str)
 
         self.assertTrue(node.find_function("foo").has_return("True"))
+        self.assertTrue(node.find_function("foo").find_ifs()[0].has_return("False"))
 
     def test_has_args_annotations(self):
         code_str = """

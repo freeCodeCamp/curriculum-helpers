@@ -122,8 +122,6 @@ class Node:
 
     # find the return statement of a function
     def find_return(self):
-        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return Node()
         if return_list := self._find_all(ast.Return):
             return return_list[0]
         return Node()
