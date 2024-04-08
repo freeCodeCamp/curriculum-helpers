@@ -56,6 +56,12 @@ myFunc();
 */
 `;
 
+const codeString1 = "function myFunction(param1, param2 = 'default', param3) {";
+const codeString2 =
+  "const myFunction = (param1, param2 = 'default', param3) => {";
+const codeString3 =
+  "let myFunction = function(param1, param2 = 'default', param3) {";
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -65,6 +71,9 @@ const testValues = {
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
   jsCodeWithCommentedCall,
+  codeString1,
+  codeString2,
+  codeString3,
 };
 
 export default testValues;

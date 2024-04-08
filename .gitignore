@@ -140,3 +140,12 @@ book
 # python
 python/__pycache__
 
+# Visual Studio Code dependencies
+
+.vscode/*
+!.vscode/settings.json
+
+# Local History for Visual Studio Code
+.history/
+
+

@@ -352,3 +352,32 @@ export class CSSHelp {
     return [...new Set(allSelectors)];
   }
 }
+
+export class JSHelpers {
+  /**
+   * Extracts all function parameters and default values from a function
+   * @param functionObject A function in string form
+   * @returns {{name:String,defaultValue: String | undefined}}
+   */
+  getFunctionArgs(code: string) {
+    const start = code.indexOf("(");
+    const end = code.indexOf(")");
+
+    if (start !== -1 && end !== -1) {
+      const paramString = code.substring(start + 1, end);
+      const params = paramString.split(",").map((param) => {
+        const parts = param.trim().split("=");
+        return {
+          name: parts[0].trim(),
+          defaultValue:
+            parts[1] === undefined
+              ? undefined
+              : parts[1].replace(/['"]/g, "").trim(),
+        };
+      });
+      return params;
+    }
+
+    return [];
+  }
+}
