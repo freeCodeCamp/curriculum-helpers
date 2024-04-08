@@ -207,6 +207,9 @@ class Node:
             return []
         return [Node(arg) for arg in self.tree.args]
 
+    def has_node(self, node_str):
+        return any(Node(node).is_equivalent(node_str) for node in self.tree.body)
+
     def find_variable(self, name):
         if not self._has_body():
             return Node()
