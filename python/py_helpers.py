@@ -141,7 +141,6 @@ class Node:
             if isinstance(self.tree.value, classes):
                 return Node(self.tree.value)
             return Node()
-        # elif isinstance(self.tree, ast.Expr):...
 
     # find a list of iterables of a comprehension/generator expression
     def find_comp_iters(self):
