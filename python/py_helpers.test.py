@@ -279,6 +279,47 @@ def foo():
 
         self.assertFalse(node.find_function("foo").has_args("int"))
 
+    def test_find_calls(self):
+        code_str = """
+print(1)
+int("1")
+print(2)
+obj.foo("spam")
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_calls("print")), 2)
+        self.assertTrue(node.find_calls("print")[0].is_equivalent("print(1)"))
+        self.assertTrue(node.find_calls("print")[1].is_equivalent("print(2)"))
+        self.assertEqual(len(node.find_calls("int")), 1)
+        self.assertTrue(node.find_calls("int")[0].is_equivalent("int('1')"))
+        self.assertEqual(len(node.find_calls("foo")), 1)
+        self.assertTrue(node.find_calls("foo")[0].is_equivalent("obj.foo('spam')"))
+
+    def test_find_call_args(self):
+        code_str = """
+print(1)
+print(2, 3)
+obj.foo("spam")
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_calls("print")[0].find_call_args()), 1)
+        self.assertTrue(
+            node.find_calls("print")[0].find_call_args()[0].is_equivalent("1")
+        )
+        self.assertEqual(len(node.find_calls("print")[1].find_call_args()), 2)
+        self.assertTrue(
+            node.find_calls("print")[1].find_call_args()[0].is_equivalent("2")
+        )
+        self.assertTrue(
+            node.find_calls("print")[1].find_call_args()[1].is_equivalent("3")
+        )
+        self.assertEqual(len(node.find_calls("foo")[0].find_call_args()), 1)
+        self.assertTrue(
+            node.find_calls("foo")[0].find_call_args()[0].is_equivalent("'spam'")
+        )
+
     def test_has_call(self):
         code_str = """
 print(1)

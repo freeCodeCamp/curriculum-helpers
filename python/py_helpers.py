@@ -82,10 +82,6 @@ class Node:
             if isinstance(node.tree.value, ast.Await)
         ]
 
-    def find_args(self):
-        if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            return []
-
     def has_args(self, arg_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
@@ -191,15 +187,19 @@ class Node:
             import_node.is_equivalent(import_str) for import_node in self.find_imports()
         )
 
-    def find_call(self, call):
-        return [
-            Node(node.tree.value)
-            for node in self._find_all(ast.Expr)
-            if node.is_equivalent(call)
-        ]
+    # find a list of function calls of the 'name' function
+    def find_calls(self, name):
+        call_list = []
+        for node in self._find_all(ast.Expr):
+            if func := getattr(node.tree.value, "func", False):
+                if isinstance(func, ast.Name) and func.id == name:
+                    call_list.append(Node(node.tree.value))
+                elif isinstance(func, ast.Attribute) and func.attr == name:
+                    call_list.append(Node(node.tree.value))
+        return call_list
 
     def has_call(self, call):
-        return bool(self.find_call(call))
+        return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
 
     def find_call_args(self):
         if not isinstance(self.tree, ast.Call):
