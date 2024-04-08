@@ -128,6 +128,16 @@ class Node:
     def find_imports(self):
         return self._find_all((ast.Import, ast.ImportFrom))
 
+    def find_comps(self):
+        return [
+            node
+            for node in self._find_all(ast.Expr)
+            if isinstance(
+                node.tree.value,
+                (ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp),
+            )
+        ]
+
     def _find_comp(
         self, classes=(ast.ListComp, ast.SetComp, ast.GeneratorExp, ast.DictComp)
     ):

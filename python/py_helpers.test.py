@@ -1160,6 +1160,23 @@ from py_helpers import Node as _Node
 
 
 class TestComprehensionHelpers(unittest.TestCase):
+    def test_find_comps(self):
+        code_str = """
+[i**2 for i in lst]
+(i for i in lst)
+{i * j for i in spam for j in lst}
+{k: v for k,v in dict}
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_comps()), 4)
+        self.assertTrue(node.find_comps()[0].is_equivalent("[i**2 for i in lst]"))
+        self.assertTrue(node.find_comps()[1].is_equivalent("(i for i in lst)"))
+        self.assertTrue(
+            node.find_comps()[2].is_equivalent("{i * j for i in spam for j in lst}")
+        )
+        self.assertTrue(node.find_comps()[3].is_equivalent("{k: v for k,v in dict}"))
+
     def test_find_comp_iters(self):
         code_str = """
 x = [i**2 for i in lst]
