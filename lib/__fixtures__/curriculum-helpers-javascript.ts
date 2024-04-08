@@ -62,6 +62,8 @@ const codeString2 =
 const codeString3 =
   "let myFunction = function(param1, param2 = 'default', param3) {";
 
+const codeString4 = `const myFunc = name => console.log("Name")`;
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -74,6 +76,7 @@ const testValues = {
   codeString1,
   codeString2,
   codeString3,
+  codeString4,
 };
 
 export default testValues;

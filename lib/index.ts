@@ -360,24 +360,33 @@ export class JSHelpers {
    * @returns {{name:String,defaultValue: String | undefined}}
    */
   getFunctionArgs(code: string) {
-    const start = code.indexOf("(");
-    const end = code.indexOf(")");
+    // Regular expression to match function declarations, arrow functions, and function expressions
+    const funcRegex =
+      /(?:function\s*[^(]*\(([^)]*)\))|(?:\(([^)]*)\)\s*=>)|(?:\b(?:const|let|var)\s*\w+\s*=\s*function\s*\(([^)]*)\))| =\s+([^)]*)=>/;
+    // Match the function parameters
+    const paramMatch = code.match(funcRegex);
 
-    if (start !== -1 && end !== -1) {
-      const paramString = code.substring(start + 1, end);
-      const params = paramString.split(",").map((param) => {
+    if (paramMatch) {
+      // Find the captured group containing the parameters
+      const paramString =
+        paramMatch[1] || paramMatch[2] || paramMatch[3] || paramMatch[4];
+      // Split the parameter string by commas to get individual parameters
+      const params = paramString.split(",").map((param: string) => {
+        // Split each parameter by '=' to separate name and default value
         const parts = param.trim().split("=");
+        // If the parameter has a default value, extract it, otherwise set it to undefined
+        const defaultValue =
+          parts.length > 1 ? parts[1].replace(/['"]/g, "").trim() : undefined;
+        // Return an object with the parameter name and default value
         return {
           name: parts[0].trim(),
-          defaultValue:
-            parts[1] === undefined
-              ? undefined
-              : parts[1].replace(/['"]/g, "").trim(),
+          defaultValue: defaultValue,
         };
       });
       return params;
     }
 
+    // Return an empty array if no function parameters are found
     return [];
   }
 }

@@ -2,7 +2,7 @@ import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
 
 import { JSHelpers } from "../index";
 
-const { codeString1, codeString2, codeString3 } = jsTestValues;
+const { codeString1, codeString2, codeString3, codeString4 } = jsTestValues;
 
 describe("js-help", () => {
   describe("getFunctionArgs", () => {
@@ -29,6 +29,11 @@ describe("js-help", () => {
       expect(parameters[1].defaultValue).toBe("default");
       expect(parameters[1].name).toBe("param2");
       expect(parameters[2].name).toBe("param3");
+    });
+    it("arrow", function () {
+      const helpers = new JSHelpers();
+      const parameters = helpers.getFunctionArgs(codeString4);
+      expect(parameters[0].name).toBe("name");
     });
   });
 });

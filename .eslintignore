@@ -3,4 +3,3 @@ coverage
 docs/tools/
 /theme/
 webpack.config.js
-/lib/__fixtures__
