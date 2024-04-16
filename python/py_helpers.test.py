@@ -1296,8 +1296,12 @@ def foo(spam):
 
 
 class TestGenericHelpers(unittest.TestCase):
-    def test_has_node(self):
-        self.assertTrue(Node("self.matrix[1][5] = 3").has_node("self.matrix[1][5] = 3"))
+    def test_has_stmt(self):
+        self.assertTrue(
+            Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt(
+                "self.matrix[1][5] = 3"
+            )
+        )
 
     def test_is_empty(self):
         self.assertTrue(Node().is_empty())
