@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - uses: psf/black@552baf822992936134cbd31a38f69c8cfe7c0f05 # v24.3.0
+      - uses: psf/black@8fe627072f15ff2e3d380887b92f7868efaf6d05 # 24.4.0
 
   tests:
     name: "Node CI"
