@@ -56,13 +56,14 @@ myFunc();
 */
 `;
 
-const codeString1 = "function myFunction(param1, param2 = 'default', param3) {";
-const codeString2 =
+const functionDeclaration =
+  "function myFunction(param1, param2 = 'default', param3) {";
+const constFunction =
   "const myFunction = (param1, param2 = 'default', param3) => {";
-const codeString3 =
+const letFunction =
   "let myFunction = function(param1, param2 = 'default', param3) {";
 
-const codeString4 = `const myFunc = name => console.log("Name")`;
+const arrowFunction = `const myFunc = name => console.log("Name")`;
 
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
@@ -73,10 +74,10 @@ const testValues = {
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
   jsCodeWithCommentedCall,
-  codeString1,
-  codeString2,
-  codeString3,
-  codeString4,
+  functionDeclaration,
+  constFunction,
+  letFunction,
+  arrowFunction,
 };
 
 export default testValues;
