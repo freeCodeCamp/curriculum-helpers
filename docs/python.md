@@ -154,6 +154,28 @@ The output and source string compile to the same AST, but the output is indented
 Node('def foo():\n  x = "1"').find_function("foo").has_variable("x") # True
 ```
 
+#### `find_async_function`
+
+```python
+Node('async def foo():\n  await bar()').find_async_function("foo").is_equivalent("async def foo():\n  await bar()") # True
+```
+
+#### `find_awaits`
+
+```python
+code_str = """
+async def foo(spam):
+  if spam:
+    await spam()
+  await bar()
+  await func()
+"""
+explorer = Node(code_str)
+explorer.find_async_function("foo").find_awaits()[0].is_equivalent("await bar()") # True
+explorer.find_async_function("foo").find_awaits()[1].is_equivalent("await func()") # True
+explorer.find_async_function("foo").find_ifs()[0].find_awaits()[0].is_equivalent("await spam()") # True
+```
+
 #### `find_variable`
 
 ```python
@@ -182,6 +204,48 @@ func_str = """
 def foo():
     x = 1"""
 Node(func_str).find_function("foo").find_body().is_equivalent("x = 1") # True
+```
+
+#### `find_return`
+
+```python
+code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+Node(code_str).find_function("foo").find_return().is_equivalent("return True") # True
+Node(code_str).find_function("foo").find_ifs()[0].find_return().is_equivalent("return False") # True
+```
+
+#### `find_calls`
+
+```python
+ code_str = """
+print(1)
+print(2)
+foo("spam")
+obj.foo("spam")
+obj.bar.foo("spam")
+"""
+explorer = Node(code_str)
+len(explorer.find_calls("print")) # 2
+explorer.find_calls("print")[0].is_equivalent("print(1)")
+explorer.find_calls("print")[1].is_equivalent("print(2)")
+len(explorer.find_calls("foo")) # 3
+explorer.find_calls("foo")[0].is_equivalent("foo('spam')")
+explorer.find_calls("foo")[1].is_equivalent("obj.foo('spam')")
+explorer.find_calls("foo")[2].is_equivalent("obj.bar.foo('spam')")
+```
+
+#### `find_call_args`
+
+```python
+explorer = Node("print(1, 2)")
+len(explorer.find_calls("print")[0].find_call_args()) # 2
+explorer.find_calls("print")[0].find_call_args()[0].is_equivalent("1")
+explorer.find_calls("print")[0].find_call_args()[1].is_equivalent("2")
 ```
 
 #### `find_class`
@@ -429,6 +493,107 @@ explorer.find_imports()[0].is_equivalent("import ast, sys")
 explorer.find_imports()[1].is_equivalent("from math import factorial as f")
 ```
 
+#### `find_comps`
+
+```python
+code_str = """
+[i**2 for i in lst]
+(i for i in lst)
+{i * j for i in spam for j in lst}
+{k: v for k,v in dict}
+comp = [i for i in lst]
+"""
+explorer = Node(code_str)
+len(explorer.find_comps()) # 4
+explorer.find_comps()[0].is_equivalent("[i**2 for i in lst]")
+explorer.find_comps()[1].is_equivalent("(i for i in lst)")
+explorer.find_comps()[2].is_equivalent("{i * j for i in spam for j in lst}")
+explorer.find_comps()[3].is_equivalent("{k: v for k,v in dict}")
+```
+
+#### `find_comp_iters`
+
+```python
+code_str = """
+x = [i**2 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+explorer = Node(code_str)
+len(explorer.find_variable("x").find_comp_iters()) # 1
+explorer.find_variable("x").find_comp_iters()[0].is_equivalent("lst")
+
+len(explorer.find_function("foo").find_return().find_comp_iters()) # 2
+explorer.find_function("foo").find_return().find_comp_iters()[0].is_equivalent("spam")
+explorer.find_function("foo").find_return().find_comp_iters()[1].is_equivalent("lst")
+```
+
+#### `find_comp_targets`
+
+```python
+code_str = """
+x = [i**2 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+explorer = Node(code_str)
+len(explorer.find_variable("x").find_comp_targets()) # 1
+explorer.find_variable("x").find_comp_targets()[0].is_equivalent("i")
+
+len(explorer.find_function("foo").find_return().find_comp_targets()) # 2
+explorer.find_function("foo").find_return().find_comp_targets()[0].is_equivalent("i")
+explorer.find_function("foo").find_return().find_comp_targets()[1].is_equivalent("j")
+```
+
+#### `find_comp_key`
+
+```python
+code_str = """
+x = {k: v for k,v in dict}
+
+def foo(spam):
+  return {k: v for k in spam for v in lst}
+"""
+explorer = Node(code_str)
+explorer.find_variable("x").find_comp_key().is_equivalent("k")
+
+explorer.find_function("foo").find_return().find_comp_key().is_equivalent("k")
+```
+
+#### `find_comp_expr`
+
+```python
+code_str = """
+x = [i**2 if i else -1 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+explorer = Node(code_str)
+explorer.find_variable("x").find_comp_expr().is_equivalent("i**2 if i else -1")
+
+explorer.find_function("foo").find_return().find_comp_expr().is_equivalent("i * j")
+```
+
+#### `find_comp_ifs`
+
+```python
+code_str = """
+x = [i**2 if i else -1 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam if i > 0 for j in lst if j != 6]
+"""
+explorer = Node(code_str)
+len(explorer.find_variable("x").find_comp_ifs()) # 0
+
+len(explorer.find_function("foo").find_return().find_comp_ifs()) # 2
+explorer.find_function("foo").find_return().find_comp_ifs()[0].is_equivalent("i > 0")
+explorer.find_function("foo").find_return().find_comp_ifs()[1].is_equivalent("j != 6")
+```
+
 ### Getting values
 
 `get_` functions return the value of the node, not the node itself.
@@ -455,6 +620,12 @@ Node("x = 1").has_variable("x") # True
 Node("def foo():\n  pass").has_function("foo") # True
 ```
 
+#### `has_stmt`
+
+```python
+Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt("self.matrix[1][5] = 3") # True
+```
+
 #### `has_args`
 
 ```python
@@ -466,6 +637,20 @@ Node("def foo(*, a, b, c=0):\n  pass").find_function("foo").has_args("*, a, b, c
 ```python
 Node("def foo():\n  pass").find_function("foo").has_pass() # True
 Node("if x==1:\n  x+=1\nelse:  pass").find_ifs()[0].find_bodies()[1].has_pass() # True
+```
+
+#### `has_return`
+
+```python
+code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+explorer = Node(code_str)
+explorer.find_function("foo").has_return("True") # True
+explorer.find_function("foo").find_ifs()[0].has_return("False") # True
 ```
 
 #### `has_returns`
