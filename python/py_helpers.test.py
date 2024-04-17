@@ -284,7 +284,9 @@ def foo():
 print(1)
 int("1")
 print(2)
+foo("spam")
 obj.foo("spam")
+obj.bar.foo("spam")
 """
         node = Node(code_str)
 
@@ -293,8 +295,10 @@ obj.foo("spam")
         self.assertTrue(node.find_calls("print")[1].is_equivalent("print(2)"))
         self.assertEqual(len(node.find_calls("int")), 1)
         self.assertTrue(node.find_calls("int")[0].is_equivalent("int('1')"))
-        self.assertEqual(len(node.find_calls("foo")), 1)
-        self.assertTrue(node.find_calls("foo")[0].is_equivalent("obj.foo('spam')"))
+        self.assertEqual(len(node.find_calls("foo")), 3)
+        self.assertTrue(node.find_calls("foo")[0].is_equivalent("foo('spam')"))
+        self.assertTrue(node.find_calls("foo")[1].is_equivalent("obj.foo('spam')"))
+        self.assertTrue(node.find_calls("foo")[2].is_equivalent("obj.bar.foo('spam')"))
 
     def test_find_call_args(self):
         code_str = """
