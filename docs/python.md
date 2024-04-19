@@ -82,7 +82,7 @@ def b(d, e):
 
 ### `__pyodide.runPython`
 
-Running the code of a singluar function to get the output:
+Running the code of a singular function to get the output:
 
 ```javascript,mdbook-runnable,hidelines=#
 # {{#rustdoc_include tools/helpers.js:1}}
@@ -495,6 +495,8 @@ explorer.find_imports()[1].is_equivalent("from math import factorial as f")
 
 #### `find_comps`
 
+Returns a list of list comprehensions, set comprehensions, dictionary comprehensions and generator expressions nodes not assigned to a variable or part of other statements.
+
 ```python
 code_str = """
 [i**2 for i in lst]
@@ -512,6 +514,8 @@ explorer.find_comps()[3].is_equivalent("{k: v for k,v in dict}")
 ```
 
 #### `find_comp_iters`
+
+Returns a list of comprehension/generator expression iterables. It can be chained to `find_variable`, `find_return`, `find_call_args()[n]`.
 
 ```python
 code_str = """
@@ -531,6 +535,8 @@ explorer.find_function("foo").find_return().find_comp_iters()[1].is_equivalent("
 
 #### `find_comp_targets`
 
+Returns a list of comprhension/generator expression targets (i.e. the iteration variables).
+
 ```python
 code_str = """
 x = [i**2 for i in lst]
@@ -549,6 +555,8 @@ explorer.find_function("foo").find_return().find_comp_targets()[1].is_equivalent
 
 #### `find_comp_key`
 
+Returns the dictionary comprehension key.
+
 ```python
 code_str = """
 x = {k: v for k,v in dict}
@@ -564,6 +572,8 @@ explorer.find_function("foo").find_return().find_comp_key().is_equivalent("k")
 
 #### `find_comp_expr`
 
+Returns the expression evaluated at each iteration of comprehensions/generator expressions. It includes the `if`/`else` portion. In case only the `if` is present, use `find_comp_ifs`.
+
 ```python
 code_str = """
 x = [i**2 if i else -1 for i in lst]
@@ -578,6 +588,8 @@ explorer.find_function("foo").find_return().find_comp_expr().is_equivalent("i * 
 ```
 
 #### `find_comp_ifs`
+
+Returns a list of comprehension/generator expression `if` conditions. The `if`/`else` construct instead is part of the expression and is found with `find_comp_expr`.
 
 ```python
 code_str = """
@@ -622,6 +634,8 @@ Node("def foo():\n  pass").has_function("foo") # True
 
 #### `has_stmt`
 
+Returns a boolean indicating if the specified statement is found.
+
 ```python
 Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt("self.matrix[1][5] = 3") # True
 ```
@@ -641,6 +655,8 @@ Node("if x==1:\n  x+=1\nelse:  pass").find_ifs()[0].find_bodies()[1].has_pass() 
 
 #### `has_return`
 
+Returns a boolean indicating if the function returns the specified expression/object.
+
 ```python
 code_str = """
 def foo():
@@ -654,6 +670,8 @@ explorer.find_function("foo").find_ifs()[0].has_return("False") # True
 ```
 
 #### `has_returns`
+
+Returns a boolean indicating if the function has the specified return annotation.
 
 ```python
 Node("def foo() -> int:\n  return 0").find_function("foo").has_returns("int") # True
