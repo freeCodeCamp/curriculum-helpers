@@ -56,6 +56,15 @@ myFunc();
 */
 `;
 
+const functionDeclaration =
+  "function myFunction(param1, param2 = 'default', param3) {";
+const constFunction =
+  "const myFunction = (param1, param2 = 'default', param3) => {";
+const letFunction =
+  "let myFunction = function(param1, param2 = 'default', param3) {";
+
+const arrowFunction = `const myFunc = name => console.log("Name")`;
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -65,6 +74,10 @@ const testValues = {
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
   jsCodeWithCommentedCall,
+  functionDeclaration,
+  constFunction,
+  letFunction,
+  arrowFunction,
 };
 
 export default testValues;

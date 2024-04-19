@@ -352,3 +352,47 @@ export class CSSHelp {
     return [...new Set(allSelectors)];
   }
 }
+
+/**
+ * Extracts all function parameters and default values from a function
+ * @param functionObject A function in string form
+ * @returns {{name:String,defaultValue: String | undefined}}
+ */
+export function getFunctionParams(code: string) {
+  // Regular expression to match function declarations, arrow functions, and function expressions
+  const functionDeclareRegex = /(?:function\s*[^(]*\(([^)]*)\))/;
+
+  const functionVariableRegex =
+    /(?:\b(?:const|let|var)\s*\w+\s*=\s*(?:function)?\s*\(([^)]*)\))/;
+
+  const arrowFunctionRegex = /=\s+([^)]*)=>/;
+
+  // Match the function parameters
+  const paramMatch =
+    code.match(functionDeclareRegex) ||
+    code.match(functionVariableRegex) ||
+    code.match(arrowFunctionRegex);
+
+  if (paramMatch) {
+    // Find the captured group containing the parameters
+    const paramString =
+      paramMatch[1] || paramMatch[2] || paramMatch[3] || paramMatch[4];
+    // Split the parameter string by commas to get individual parameters
+    const params = paramString.split(",").map((param: string) => {
+      // Split each parameter by '=' to separate name and default value
+      const parts = param.trim().split("=");
+      // If the parameter has a default value, extract it, otherwise set it to undefined
+      const defaultValue =
+        parts.length > 1 ? parts[1].replace(/['"]/g, "").trim() : undefined;
+      // Return an object with the parameter name and default value
+      return {
+        name: parts[0].trim(),
+        defaultValue: defaultValue,
+      };
+    });
+    return params;
+  }
+
+  // Return an empty array if no function parameters are found
+  return [];
+}

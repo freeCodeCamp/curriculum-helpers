@@ -1,6 +1,6 @@
 {
   "name": "@freecodecamp/curriculum-helpers",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
   "author": {
@@ -22,8 +22,8 @@
     ""
   ],
   "devDependencies": {
-    "@babel/core": "7.24.3",
-    "@babel/preset-env": "7.24.3",
+    "@babel/core": "7.24.4",
+    "@babel/preset-env": "7.24.4",
     "@babel/preset-typescript": "7.24.1",
     "@types/jest": "27.5.2",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
