@@ -22,9 +22,16 @@ not a comment
 not a comment
 `;
 
+const commentInQuoteExample = `
+The string "<!--".
+Optionally, text, with the additional restriction that the text must not start with the string ">", nor start with the string "->", nor contain the strings "<!--", "-->", or "--!>", nor end with the string "<!-".
+The string "-->".
+`;
+
 const testValues = {
   htmlFullExample,
   htmlCodeWithCommentsRemoved,
+  commentInQuoteExample,
 };
 
 export default testValues;
