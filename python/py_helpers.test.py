@@ -1,6 +1,7 @@
 import unittest
 import ast
-from py_helpers import Node
+import sys
+from py_helpers import Node, drop_until, build_message, format_exception
 
 
 class TestConstructor(unittest.TestCase):
@@ -1423,6 +1424,162 @@ if True:
         node = Node(func_str)
 
         self.assertEqual(repr(node), "Node:\n" + ast.dump(node.tree, indent=2))
+
+
+class TestErrorFormatter(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.traceback_list = [
+            '  File "/lib/python311.zip/_pyodide/_base.py", line 468, in eval_code\n',
+            "    .run(globals, locals)\n",
+            "     ^^^^^^^^^^^^^^^^^^^^\n",
+            '  File "/lib/python311.zip/_pyodide/_base.py", line 310, in run\n',
+            "    coroutine = eval(self.code, globals, locals)\n",
+            "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            '  File "<exec>", line 9, in <module>\n',
+            '  File "<exec>", line 7, in nest\n',
+            '  File "/lib/python311.zip/traceback.py", line 138, in format_exception\n',
+            "    value, tb = _parse_value_tb(exc, value, tb)\n",
+            "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            '  File "/lib/python311.zip/traceback.py", line 98, in _parse_value_tb\n',
+            '    raise ValueError("Both or neither of value and tb must be given")\n',
+        ]
+        self.exception_only = [
+            "ValueError: Both or neither of value and tb must be given\n"
+        ]
+        self.formatted_exception = "".join(
+            [
+                "Traceback (most recent call last):\n",
+                '  File "<exec>", line 9, in <module>\n',
+                '  File "<exec>", line 7, in nest\n',
+                '  File "/lib/python311.zip/traceback.py", line 138, in format_exception\n',
+                "    value, tb = _parse_value_tb(exc, value, tb)\n",
+                "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                '  File "/lib/python311.zip/traceback.py", line 98, in _parse_value_tb\n',
+                '    raise ValueError("Both or neither of value and tb must be given")\n',
+                "ValueError: Both or neither of value and tb must be given\n",
+            ]
+        )
+
+    def test_drop_until(self):
+        self.assertListEqual(
+            drop_until(traces=self.traceback_list, filename="<exec>"),
+            [
+                '  File "<exec>", line 9, in <module>\n',
+                '  File "<exec>", line 7, in nest\n',
+                '  File "/lib/python311.zip/traceback.py", line 138, in format_exception\n',
+                "    value, tb = _parse_value_tb(exc, value, tb)\n",
+                "                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+                '  File "/lib/python311.zip/traceback.py", line 98, in _parse_value_tb\n',
+                '    raise ValueError("Both or neither of value and tb must be given")\n',
+            ],
+        )
+
+    def test_drop_until_missing_filename(self):
+        self.assertListEqual(
+            drop_until(traces=self.traceback_list, filename="<not-here>"),
+            [],
+        )
+
+    def test_build_message(self):
+        trimmed_trace = drop_until(traces=self.traceback_list, filename="<exec>")
+        self.assertEqual(
+            build_message(traces=trimmed_trace, exception_list=self.exception_only),
+            self.formatted_exception,
+        )
+
+    def test_format_exception(self):
+        code = """
+def nest():
+    raise ValueError("This error has no value")
+nest()
+"""
+        expected_str = """Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+  File "<string>", line 3, in nest
+ValueError: This error has no value
+"""
+        try:
+            exec(code)
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+            formatted_exception = format_exception(
+                exception=last_value, traceback=last_traceback, filename="<string>"
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
+    def test_format_syntax_error(self):
+        code = """
+def
+"""
+        expected_str = """Traceback (most recent call last):
+  File "<string>", line 2
+    def
+       ^
+SyntaxError: invalid syntax
+"""
+        try:
+            exec(code)
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+
+            formatted_exception = format_exception(
+                exception=last_value, traceback=last_traceback, filename="<string>"
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
+    def test_format_and_rename(self):
+        code = """
+def nest():
+    raise ValueError("This error has no value")
+nest()
+"""
+        expected_str = """Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+  File "main.py", line 3, in nest
+ValueError: This error has no value
+"""
+
+        try:
+            exec(code)
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+            formatted_exception = format_exception(
+                exception=last_value,
+                traceback=last_traceback,
+                filename="<string>",
+                new_filename="main.py",
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
+    def test_replaces_only_start_of_line(self):
+        code = """
+def nest():
+    raise ValueError("This error has no value")
+nest()
+"""
+        expected_str = """Traceback (most recent call last):
+  File "main.py", line 4, in <module>
+  File "main.py", line 3, in nest
+ValueError: This error has no value
+"""
+
+        try:
+            codeObject = compile(code, "line", "exec")
+            # When using compiled code, we need to pass an empty dictionary
+            # or else the code will be executed in the current scope.
+            exec(codeObject, dict())
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+
+            formatted_exception = format_exception(
+                exception=last_value,
+                traceback=last_traceback,
+                filename="line",
+                new_filename="main.py",
+            )
+
+            self.assertEqual(formatted_exception, expected_str)
 
 
 if __name__ == "__main__":
