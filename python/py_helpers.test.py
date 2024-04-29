@@ -226,6 +226,31 @@ def foo(*, a, b, c=0):
         self.assertTrue(node.find_function("foo").has_args("*, a, b, c=0"))
         self.assertFalse(node.find_function("foo").has_args("*, a, b, c"))
 
+    def test_find_return(self):
+        code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(
+            node.find_function("foo").find_return().is_equivalent("return True")
+        )
+
+    def test_has_return(self):
+        code_str = """
+def foo():
+  if x == 1:
+    return False
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("foo").has_return("True"))
+        self.assertTrue(node.find_function("foo").find_ifs()[0].has_return("False"))
+
     def test_has_args_annotations(self):
         code_str = """
 def foo(a: int, b: int) -> int:
@@ -254,6 +279,51 @@ def foo():
         node = Node(code_str)
 
         self.assertFalse(node.find_function("foo").has_args("int"))
+
+    def test_find_calls(self):
+        code_str = """
+print(1)
+int("1")
+print(2)
+foo("spam")
+obj.foo("spam")
+obj.bar.foo("spam")
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_calls("print")), 2)
+        self.assertTrue(node.find_calls("print")[0].is_equivalent("print(1)"))
+        self.assertTrue(node.find_calls("print")[1].is_equivalent("print(2)"))
+        self.assertEqual(len(node.find_calls("int")), 1)
+        self.assertTrue(node.find_calls("int")[0].is_equivalent("int('1')"))
+        self.assertEqual(len(node.find_calls("foo")), 3)
+        self.assertTrue(node.find_calls("foo")[0].is_equivalent("foo('spam')"))
+        self.assertTrue(node.find_calls("foo")[1].is_equivalent("obj.foo('spam')"))
+        self.assertTrue(node.find_calls("foo")[2].is_equivalent("obj.bar.foo('spam')"))
+
+    def test_find_call_args(self):
+        code_str = """
+print(1)
+print(2, 3)
+obj.foo("spam")
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_calls("print")[0].find_call_args()), 1)
+        self.assertTrue(
+            node.find_calls("print")[0].find_call_args()[0].is_equivalent("1")
+        )
+        self.assertEqual(len(node.find_calls("print")[1].find_call_args()), 2)
+        self.assertTrue(
+            node.find_calls("print")[1].find_call_args()[0].is_equivalent("2")
+        )
+        self.assertTrue(
+            node.find_calls("print")[1].find_call_args()[1].is_equivalent("3")
+        )
+        self.assertEqual(len(node.find_calls("foo")[0].find_call_args()), 1)
+        self.assertTrue(
+            node.find_calls("foo")[0].find_call_args()[0].is_equivalent("'spam'")
+        )
 
     def test_has_call(self):
         code_str = """
@@ -411,6 +481,81 @@ class A:
         )
         self.assertFalse(
             node.find_class("A").find_function("bar").has_decorators("property")
+        )
+
+
+class TestAsyncHelpers(unittest.TestCase):
+    def test_find_async_function(self):
+        code_str = """
+async def foo():
+  await bar()
+"""
+        node = Node(code_str)
+
+        self.assertTrue(
+            node.find_async_function("foo").is_equivalent(
+                "async def foo():\n  await bar()"
+            )
+        )
+
+    def test_find_async_function_args(self):
+        code_str = """
+async def foo(spam):
+  await bar()
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_async_function("foo").has_args("spam"))
+
+    def test_find_async_function_return(self):
+        code_str = """
+async def foo(spam):
+  await bar()
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_async_function("foo").has_return("True"))
+
+    def test_find_async_function_returns(self):
+        code_str = """
+async def foo(spam) -> bool:
+  await bar()
+  return True
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_async_function("foo").has_returns("bool"))
+
+    def test_find_awaits(self):
+        code_str = """
+async def foo(spam):
+  if spam:
+    await spam()
+  await bar()
+  await func()
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_async_function("foo").find_awaits()), 2)
+        self.assertTrue(
+            node.find_async_function("foo")
+            .find_awaits()[0]
+            .is_equivalent("await bar()")
+        )
+        self.assertTrue(
+            node.find_async_function("foo")
+            .find_awaits()[1]
+            .is_equivalent("await func()")
+        )
+        self.assertEqual(
+            len(node.find_async_function("foo").find_ifs()[0].find_awaits()), 1
+        )
+        self.assertTrue(
+            node.find_async_function("foo")
+            .find_ifs()[0]
+            .find_awaits()[0]
+            .is_equivalent("await spam()")
         )
 
 
@@ -1019,7 +1164,150 @@ from py_helpers import Node as _Node
         self.assertTrue(node.has_import("from py_helpers import Node as _Node"))
 
 
+class TestComprehensionHelpers(unittest.TestCase):
+    def test_find_comps(self):
+        code_str = """
+[i**2 for i in lst]
+(i for i in lst)
+{i * j for i in spam for j in lst}
+{k: v for k,v in dict}
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_comps()), 4)
+        self.assertTrue(node.find_comps()[0].is_equivalent("[i**2 for i in lst]"))
+        self.assertTrue(node.find_comps()[1].is_equivalent("(i for i in lst)"))
+        self.assertTrue(
+            node.find_comps()[2].is_equivalent("{i * j for i in spam for j in lst}")
+        )
+        self.assertTrue(node.find_comps()[3].is_equivalent("{k: v for k,v in dict}"))
+
+    def test_find_comp_iters(self):
+        code_str = """
+x = [i**2 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_variable("x").find_comp_iters()), 1)
+        self.assertTrue(
+            node.find_variable("x").find_comp_iters()[0].is_equivalent("lst")
+        )
+        self.assertEqual(
+            len(node.find_function("foo").find_return().find_comp_iters()), 2
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_iters()[0]
+            .is_equivalent("spam")
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_iters()[1]
+            .is_equivalent("lst")
+        )
+
+    def test_find_comp_targets(self):
+        code_str = """
+x = [i**2 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_variable("x").find_comp_targets()), 1)
+        self.assertTrue(
+            node.find_variable("x").find_comp_targets()[0].is_equivalent("i")
+        )
+        self.assertEqual(
+            len(node.find_function("foo").find_return().find_comp_targets()), 2
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_targets()[0]
+            .is_equivalent("i")
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_targets()[1]
+            .is_equivalent("j")
+        )
+
+    def test_find_comp_key(self):
+        code_str = """
+x = {k: v for k,v in dict}
+
+def foo(spam):
+  return {k: v for k in spam for v in lst}
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_variable("x").find_comp_key().is_equivalent("k"))
+        self.assertTrue(
+            node.find_function("foo").find_return().find_comp_key().is_equivalent("k")
+        )
+
+    def test_find_comp_expr(self):
+        code_str = """
+x = [i**2 if i else -1 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam for j in lst]
+"""
+        node = Node(code_str)
+
+        self.assertTrue(
+            node.find_variable("x").find_comp_expr().is_equivalent("i**2 if i else -1")
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_expr()
+            .is_equivalent("i*j")
+        )
+
+    def test_find_comp_ifs(self):
+        code_str = """
+x = [i**2 if i else -1 for i in lst]
+
+def foo(spam):
+  return [i * j for i in spam if i for j in lst if j]
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_variable("x").find_comp_ifs()), 0)
+        self.assertEqual(
+            len(node.find_function("foo").find_return().find_comp_ifs()), 2
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_ifs()[0]
+            .is_equivalent("i")
+        )
+        self.assertTrue(
+            node.find_function("foo")
+            .find_return()
+            .find_comp_ifs()[1]
+            .is_equivalent("j")
+        )
+
+
 class TestGenericHelpers(unittest.TestCase):
+    def test_has_stmt(self):
+        self.assertTrue(
+            Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt(
+                "self.matrix[1][5] = 3"
+            )
+        )
+
     def test_is_empty(self):
         self.assertTrue(Node().is_empty())
         self.assertFalse(Node("x = 1").is_empty())
