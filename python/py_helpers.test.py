@@ -1552,6 +1552,27 @@ ValueError: This error has no value
             )
             self.assertEqual(formatted_exception, expected_str)
 
+    def test_format_and_rename_syntax_error(self):
+        code = "var ="
+        expected_str = """Traceback (most recent call last):
+  File "main.py", line 1
+    var =
+         ^
+SyntaxError: invalid syntax
+"""
+
+        try:
+            exec(code)
+        except Exception:
+            _last_type, last_value, last_traceback = sys.exc_info()
+            formatted_exception = format_exception(
+                exception=last_value,
+                traceback=last_traceback,
+                filename="<string>",
+                new_filename="main.py",
+            )
+            self.assertEqual(formatted_exception, expected_str)
+
     def test_replaces_only_start_of_line(self):
         code = """
 def nest():
