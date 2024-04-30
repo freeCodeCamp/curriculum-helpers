@@ -460,6 +460,8 @@ def format_exception(*, exception, traceback, filename, new_filename=None):
         _replace_startswith(trace, f'  File "{filename}"', f'  File "{new_filename}"')
         for trace in traces
     ]
-    return build_message(
-        traces=renamed_traces, exception_list=format_exception_only(exception)
-    )
+    renamed_exception = [
+        _replace_startswith(e, f'  File "{filename}"', f'  File "{new_filename}"')
+        for e in format_exception_only(exception)
+    ]
+    return build_message(traces=renamed_traces, exception_list=renamed_exception)
