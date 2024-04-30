@@ -448,15 +448,21 @@ class B(A, C):
     def test_find_method_args(self):
         code_str = """
 class A:
-   def __init__(self, *, a, b=0):
-     self.a = a
-     self.b = b
+  def __init__(self, *, a, b=0):
+    self.a = a
+    self.b = b
+  
+  @property
+  @staticmethod
+  def foo(*, a, b=0):
+    pass
 """
         node = Node(code_str)
 
         self.assertTrue(
             node.find_class("A").find_function("__init__").has_args("self, *, a, b=0")
         )
+        self.assertTrue(node.find_class("A").find_function("foo").has_args("*, a, b=0"))
 
     def test_has_decorators(self):
         code_str = """
@@ -475,6 +481,11 @@ class A:
             node.find_class("A")
             .find_function("foo")
             .has_decorators("property", "staticmethod")
+        )
+        self.assertFalse(
+            node.find_class("A")
+            .find_function("foo")
+            .has_decorators("staticmethod", "property")
         )
         self.assertTrue(
             node.find_class("A").find_function("foo").has_decorators("property")

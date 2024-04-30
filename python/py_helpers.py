@@ -85,10 +85,12 @@ class Node:
     def has_args(self, arg_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
+        dec_list = (f"@{Node(node)}" for node in self.tree.decorator_list)
+        dec_str = "\n".join(dec_list) + "\n" if dec_list else ""
         if id := getattr(self.tree.returns, "id", False):
-            returns = f"-> {id}"
+            returns = f" -> {id}"
         elif val := getattr(self.tree.returns, "value", False):
-            returns = f"-> '{val}'"
+            returns = f" -> '{val}'"
         else:
             returns = ""
         async_kw = ""
@@ -96,7 +98,9 @@ class Node:
             async_kw = "async "
         body_lines = str(self.find_body()).split("\n")
         new_body = "".join([f"\n  {line}" for line in body_lines])
-        func_str = f"{async_kw}def {self.tree.name}({arg_str}) {returns}:{new_body}"
+        func_str = (
+            f"{dec_str}{async_kw}def {self.tree.name}({arg_str}){returns}:{new_body}"
+        )
         return self.is_equivalent(func_str)
 
     # returns_str is the annotation of the type returned by the function
@@ -265,10 +269,11 @@ class Node:
         return self.find_class(name) != Node()
 
     def has_decorators(self, *args):
+        # the order of args does matter
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
-        id_list = (node.id for node in self.tree.decorator_list)
-        return all(arg in id_list for arg in args)
+        dec_list = (Node(node) for node in self.tree.decorator_list)
+        return all(any(dec.is_equivalent(arg) for dec in dec_list) for arg in args)
 
     # Checks if the current scope contains a "pass" statement
 
