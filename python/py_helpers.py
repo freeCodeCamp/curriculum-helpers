@@ -66,6 +66,13 @@ class Node:
                     return Node(node)
         return Node()
 
+    def find_functions(self, func):
+        return [
+            node
+            for node in self._find_all((ast.FunctionDef, ast.AsyncFunctionDef))
+            if node.tree.name == func
+        ]
+
     def find_async_function(self, func):
         if not self._has_body():
             return Node()

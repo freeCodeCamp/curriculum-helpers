@@ -216,6 +216,37 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
             node.find_function("foo").find_function("bar").has_variable("x")
         )
 
+    def test_find_functions(self):
+        code_str = """
+class Spam(ABC):
+    @property
+    @abstractmethod
+    def foo(self):
+      return self.x
+
+    @foo.setter
+    @abstractmethod
+    def foo(self, new_x):
+        self.x = new_x
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_class("Spam").find_functions("foo")), 2)
+        self.assertTrue(
+            node.find_class("Spam")
+            .find_functions("foo")[0]
+            .is_equivalent(
+                "@property\n@abstractmethod\ndef foo(self):\n  return self.x"
+            )
+        )
+        self.assertTrue(
+            node.find_class("Spam")
+            .find_functions("foo")[1]
+            .is_equivalent(
+                "@foo.setter\n@abstractmethod\ndef foo(self, new_x):\n  self.x = new_x"
+            )
+        )
+
     def test_has_args(self):
         code_str = """
 def foo(*, a, b, c=0):
