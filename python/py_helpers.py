@@ -436,6 +436,20 @@ class Node:
 
         return [Node(test) for test in _find_conditions(self.tree)]
 
+    # Returs a Boolean indicating if node1 comes before node2
+    def is_ordered(self, node1, node2):
+        if not self._has_body():
+            return False
+        first, second = None, None
+        for index, node in enumerate(self.tree.body):
+            if Node(node).is_equivalent(node1):
+                first = index
+            elif Node(node).is_equivalent(node2):
+                second = index
+        if first is not None and second is not None:
+            return first < second
+        return False
+
 
 # Exception formatting functions. Currently bundled with the Node class, until
 # we improve the testing, building and CI so that they can easily handle

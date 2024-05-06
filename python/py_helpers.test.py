@@ -1343,6 +1343,24 @@ def foo(spam):
 
 
 class TestGenericHelpers(unittest.TestCase):
+    def test_is_ordered(self):
+        code_str = """
+x = 1
+if x:
+  print("x is:")
+  print(x)
+x = 0
+"""
+        self.assertTrue(Node(code_str).is_ordered("x=1", "x=0"))
+        self.assertTrue(
+            Node(code_str).find_ifs()[0].is_ordered("print('x is:')", "print(x)")
+        )
+        self.assertFalse(Node(code_str).is_ordered("x=0", "x=1"))
+        self.assertFalse(
+            Node(code_str).find_ifs()[0].is_ordered("print(x)", "print('x is:')")
+        )
+        self.assertFalse(Node(code_str).is_ordered("x=2", "x=0"))
+
     def test_has_stmt(self):
         self.assertTrue(
             Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt(
