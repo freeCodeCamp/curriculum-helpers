@@ -1348,18 +1348,30 @@ class TestGenericHelpers(unittest.TestCase):
 x = 1
 if x:
   print("x is:")
+  y = 0
   print(x)
+  return y
 x = 0
 """
+        if_str = """
+if x:
+  print("x is:")
+  y = 0
+  print(x)
+  return y        
+"""
         self.assertTrue(Node(code_str).is_ordered("x=1", "x=0"))
+        self.assertTrue(Node(code_str).is_ordered("x=1", if_str, "x=0"))
         self.assertTrue(
-            Node(code_str).find_ifs()[0].is_ordered("print('x is:')", "print(x)")
+            Node(code_str)
+            .find_ifs()[0]
+            .is_ordered("print('x is:')", "print(x)", "return y")
         )
         self.assertFalse(Node(code_str).is_ordered("x=0", "x=1"))
         self.assertFalse(
             Node(code_str).find_ifs()[0].is_ordered("print(x)", "print('x is:')")
         )
-        self.assertFalse(Node(code_str).is_ordered("x=2", "x=0"))
+        self.assertFalse(Node(code_str).is_ordered("x=1", "x=0", "y=0"))
 
     def test_has_stmt(self):
         self.assertTrue(

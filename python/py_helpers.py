@@ -436,19 +436,22 @@ class Node:
 
         return [Node(test) for test in _find_conditions(self.tree)]
 
-    # Returs a Boolean indicating if node1 comes before node2
-    def is_ordered(self, node1, node2):
+    # Returs a Boolean indicating if the statements passed as arguments
+    # are found in the same order in the tree (statements can be non-consecutive)
+    def is_ordered(self, *args):
         if not self._has_body():
             return False
-        first, second = None, None
-        for index, node in enumerate(self.tree.body):
-            if Node(node).is_equivalent(node1):
-                first = index
-            elif Node(node).is_equivalent(node2):
-                second = index
-        if first is not None and second is not None:
-            return first < second
-        return False
+        if len(args) < 2:
+            return False
+        arg_dict = {key: None for key in range(len(args))}
+        for i, node in enumerate(self.tree.body):
+            for j, arg in enumerate(args):
+                if Node(node).is_equivalent(arg):
+                    arg_dict[j] = i
+                    break
+        if None in arg_dict.values():
+            return False
+        return all(arg_dict[n] < arg_dict[n + 1] for n in range(len(arg_dict) - 1))
 
 
 # Exception formatting functions. Currently bundled with the Node class, until
