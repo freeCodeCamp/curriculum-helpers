@@ -66,6 +66,13 @@ class Node:
                     return Node(node)
         return Node()
 
+    def find_functions(self, func):
+        return [
+            node
+            for node in self._find_all((ast.FunctionDef, ast.AsyncFunctionDef))
+            if node.tree.name == func
+        ]
+
     def find_async_function(self, func):
         if not self._has_body():
             return Node()
@@ -85,10 +92,12 @@ class Node:
     def has_args(self, arg_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
+        dec_list = (f"@{Node(node)}" for node in self.tree.decorator_list)
+        dec_str = "\n".join(dec_list) + "\n" if dec_list else ""
         if id := getattr(self.tree.returns, "id", False):
-            returns = f"-> {id}"
+            returns = f" -> {id}"
         elif val := getattr(self.tree.returns, "value", False):
-            returns = f"-> '{val}'"
+            returns = f" -> '{val}'"
         else:
             returns = ""
         async_kw = ""
@@ -96,7 +105,9 @@ class Node:
             async_kw = "async "
         body_lines = str(self.find_body()).split("\n")
         new_body = "".join([f"\n  {line}" for line in body_lines])
-        func_str = f"{async_kw}def {self.tree.name}({arg_str}) {returns}:{new_body}"
+        func_str = (
+            f"{dec_str}{async_kw}def {self.tree.name}({arg_str}){returns}:{new_body}"
+        )
         return self.is_equivalent(func_str)
 
     # returns_str is the annotation of the type returned by the function
@@ -265,10 +276,11 @@ class Node:
         return self.find_class(name) != Node()
 
     def has_decorators(self, *args):
+        # the order of args does matter
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
-        id_list = (node.id for node in self.tree.decorator_list)
-        return all(arg in id_list for arg in args)
+        dec_list = (Node(node) for node in self.tree.decorator_list)
+        return all(any(dec.is_equivalent(arg) for dec in dec_list) for arg in args)
 
     # Checks if the current scope contains a "pass" statement
 
@@ -423,6 +435,23 @@ class Node:
             return [test, None]
 
         return [Node(test) for test in _find_conditions(self.tree)]
+
+    # Returs a Boolean indicating if the statements passed as arguments
+    # are found in the same order in the tree (statements can be non-consecutive)
+    def is_ordered(self, *args):
+        if not self._has_body():
+            return False
+        if len(args) < 2:
+            return False
+        arg_dict = {key: None for key in range(len(args))}
+        for i, node in enumerate(self.tree.body):
+            for j, arg in enumerate(args):
+                if Node(node).is_equivalent(arg):
+                    arg_dict[j] = i
+                    break
+        if None in arg_dict.values():
+            return False
+        return all(arg_dict[n] < arg_dict[n + 1] for n in range(len(arg_dict) - 1))
 
 
 # Exception formatting functions. Currently bundled with the Node class, until

@@ -216,6 +216,37 @@ class TestFunctionAndClassHelpers(unittest.TestCase):
             node.find_function("foo").find_function("bar").has_variable("x")
         )
 
+    def test_find_functions(self):
+        code_str = """
+class Spam(ABC):
+    @property
+    @abstractmethod
+    def foo(self):
+      return self.x
+
+    @foo.setter
+    @abstractmethod
+    def foo(self, new_x):
+        self.x = new_x
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_class("Spam").find_functions("foo")), 2)
+        self.assertTrue(
+            node.find_class("Spam")
+            .find_functions("foo")[0]
+            .is_equivalent(
+                "@property\n@abstractmethod\ndef foo(self):\n  return self.x"
+            )
+        )
+        self.assertTrue(
+            node.find_class("Spam")
+            .find_functions("foo")[1]
+            .is_equivalent(
+                "@foo.setter\n@abstractmethod\ndef foo(self, new_x):\n  self.x = new_x"
+            )
+        )
+
     def test_has_args(self):
         code_str = """
 def foo(*, a, b, c=0):
@@ -448,15 +479,21 @@ class B(A, C):
     def test_find_method_args(self):
         code_str = """
 class A:
-   def __init__(self, *, a, b=0):
-     self.a = a
-     self.b = b
+  def __init__(self, *, a, b=0):
+    self.a = a
+    self.b = b
+  
+  @property
+  @staticmethod
+  def foo(*, a, b=0):
+    pass
 """
         node = Node(code_str)
 
         self.assertTrue(
             node.find_class("A").find_function("__init__").has_args("self, *, a, b=0")
         )
+        self.assertTrue(node.find_class("A").find_function("foo").has_args("*, a, b=0"))
 
     def test_has_decorators(self):
         code_str = """
@@ -475,6 +512,11 @@ class A:
             node.find_class("A")
             .find_function("foo")
             .has_decorators("property", "staticmethod")
+        )
+        self.assertFalse(
+            node.find_class("A")
+            .find_function("foo")
+            .has_decorators("staticmethod", "property")
         )
         self.assertTrue(
             node.find_class("A").find_function("foo").has_decorators("property")
@@ -1301,6 +1343,36 @@ def foo(spam):
 
 
 class TestGenericHelpers(unittest.TestCase):
+    def test_is_ordered(self):
+        code_str = """
+x = 1
+if x:
+  print("x is:")
+  y = 0
+  print(x)
+  return y
+x = 0
+"""
+        if_str = """
+if x:
+  print("x is:")
+  y = 0
+  print(x)
+  return y        
+"""
+        self.assertTrue(Node(code_str).is_ordered("x=1", "x=0"))
+        self.assertTrue(Node(code_str).is_ordered("x=1", if_str, "x=0"))
+        self.assertTrue(
+            Node(code_str)
+            .find_ifs()[0]
+            .is_ordered("print('x is:')", "print(x)", "return y")
+        )
+        self.assertFalse(Node(code_str).is_ordered("x=0", "x=1"))
+        self.assertFalse(
+            Node(code_str).find_ifs()[0].is_ordered("print(x)", "print('x is:')")
+        )
+        self.assertFalse(Node(code_str).is_ordered("x=1", "x=0", "y=0"))
+
     def test_has_stmt(self):
         self.assertTrue(
             Node("name = input('hi')\nself.matrix[1][5] = 3").has_stmt(
