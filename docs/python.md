@@ -154,6 +154,27 @@ The output and source string compile to the same AST, but the output is indented
 Node('def foo():\n  x = "1"').find_function("foo").has_variable("x") # True
 ```
 
+#### `find_functions`
+
+```python
+code_str = """
+class Spam(ABC):
+  @property
+  @abstractmethod
+  def foo(self):
+    return self.x
+
+  @foo.setter
+  @abstractmethod
+  def foo(self, new_x):
+    self.x = new_x
+"""
+explorer = Node(code_str)
+len(explorer.find_class("Spam").find_functions("foo")) # 2
+explorer.find_class("Spam").find_functions("foo")[0].is_equivalent("@property\n@abstractmethod\ndef foo(self):\n  return self.x") # True
+explorer.find_class("Spam").find_functions("foo")[1].is_equivalent("@foo.setter\n@abstractmethod\ndef foo(self, new_x):\n  self.x = new_x") # True
+```
+
 #### `find_async_function`
 
 ```python
@@ -680,6 +701,8 @@ Node("def foo() -> 'spam':\n  pass").find_function("foo").has_returns("spam") # 
 
 #### `has_decorators`
 
+
+
 ```python
 code_str = """
 class A:
@@ -690,6 +713,7 @@ class A:
 """
 Node(code_str).find_class("A").find_function("foo").has_decorators("property") # True
 Node(code_str).find_class("A").find_function("foo").has_decorators("property", "staticmethod") # True
+Node(code_str).find_class("A").find_function("foo").has_decorators("staticmethod", "property") # False, order does matter
 ```
 
 #### `has_call`
@@ -786,6 +810,36 @@ Node("x = '1'").find_variable("x").is_integer() # False
 ```python
 Node("class C(A, B):\n  pass").find_class("C").inherits_from("A") # True
 Node("class C(A, B):\n  pass").find_class("C").inherits_from("A", "B") # True
+```
+
+#### `is_ordered`
+
+Returs a boolean indicating if the statements passed as arguments are found in the same order in the tree (statements can be non-consecutive)
+
+```python
+code_str = """
+x = 1
+if x:
+  print("x is:")
+  y = 0
+  print(x)
+  return y
+x = 0
+"""
+
+if_str = """
+if x:
+  print("x is:")
+  y = 0
+  print(x)
+  return y        
+"""
+explorer = Node(code_str)
+explorer.is_ordered("x=1", "x=0") # True
+explorer.is_ordered("x=1", if_str, "x=0") # True
+explorer.find_ifs()[0].is_ordered("print('x is:')", "print(x)", "return y") # True
+explorer.is_ordered("x=0", "x=1") # False
+explorer.find_ifs()[0].is_ordered("print(x)", "print('x is:')") # False
 ```
 
 ## Notes on Python
