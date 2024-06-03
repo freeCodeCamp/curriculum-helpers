@@ -102,7 +102,7 @@ export function functionRegex(
 
   const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
   const arrowFunctionName = funcName
-    ? `${escapeRegExp(funcName)}\\s*=\\s*`
+    ? `(let|const|var)?\\s?${escapeRegExp(funcName)}\\s*=\\s*`
     : "";
   const body = "[^}]*";
 

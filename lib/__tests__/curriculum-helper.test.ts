@@ -189,6 +189,13 @@ describe("functionRegex", () => {
     expect(regEx.test("(arg1, arg2) => {}")).toBe(true);
   });
 
+  it("matches let or const declarations if they are present", () => {
+    const regEx = functionRegex("myFunc", ["arg1", "arg2"]);
+    const match = "let myFunc = (arg1, arg2) => {}".match(regEx);
+    expect(match).not.toBeNull();
+    expect(match![0]).toBe("let myFunc = (arg1, arg2) => {}");
+  });
+
   it("ignores irrelevant whitespace", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
@@ -244,19 +251,18 @@ describe("functionRegex", () => {
   });
 
   it("can match just up to the opening bracket for an arrow function", () => {
-    const func = `naomi = (love) => {
+    const code = `const naomi = (love) => {
   return love ** 2
 }`;
-    const code = `const ${func}`;
     const startRE = functionRegex("naomi", ["love"], { closed: false });
     const endRE = /\s*return\s*love\s*\*\*\s*2\s*\}/;
     const fullRE = helper.concatRegex(startRE, endRE);
 
     expect(startRE.test(code)).toBe(true);
-    expect(code.match(startRE)![0]).toBe("naomi = (love) => {");
+    expect(code.match(startRE)![0]).toBe("const naomi = (love) => {");
 
     expect(fullRE.test(code)).toBe(true);
-    expect(code.match(fullRE)![0]).toBe(func);
+    expect(code.match(fullRE)![0]).toBe(code);
   });
 
   it("can match just up to the opening bracket for a function declaration", () => {
@@ -302,9 +308,8 @@ describe("functionRegex", () => {
       "var x = 'y'; let myFunc = (arg1, arg2) => {return true}".match(
         combinedRegEx
       );
-    console.log(combinedRegEx);
     expect(match).not.toBeNull();
-    expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) =>{");
-    expect(match![1]).toBe("let myFunc = (arg1, arg2) =>{");
+    expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) => {");
+    expect(match![1]).toBe("let myFunc = (arg1, arg2) => {");
   });
 });
