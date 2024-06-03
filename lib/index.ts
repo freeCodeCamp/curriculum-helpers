@@ -84,6 +84,44 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
   return new RegExp(source);
 }
 
+/**
+ * Generates a regex string to match a function expressions and declarations
+ * @param funcName - The name of the function to be matched
+ * @param paramList - Optional list of parameters to be matched
+ * @param options - Optional object determining whether to capture the match
+ * (defaults to non-capturing) and whether to include the body in the match (defaults
+ * to true)
+ */
+
+export function functionRegex(
+  funcName: string | null,
+  paramList?: string[],
+  options?: { capture?: boolean; includeBody?: boolean }
+): RegExp {
+  const capture = options?.capture ?? false;
+  const includeBody = options?.includeBody ?? true;
+  const params = (paramList ?? []).join("\\s*,\\s*");
+
+  const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
+  const arrowFunctionName = funcName
+    ? `(let|const|var)?\\s?${escapeRegExp(funcName)}\\s*=\\s*`
+    : "";
+  const body = "[^}]*";
+
+  const funcREHead = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{`;
+  const funcREBody = `${body}\\}`;
+  const funcRegEx = includeBody
+    ? `${funcREHead}${funcREBody}`
+    : `${funcREHead}`;
+
+  const arrowFuncREHead = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?`;
+  const arrowFuncREBody = `${body}\\}?`;
+  const arrowFuncRegEx = includeBody
+    ? `${arrowFuncREHead}${arrowFuncREBody}`
+    : `${arrowFuncREHead}`;
+  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
+}
+
 export interface ExtendedStyleRule extends CSSStyleRule {
   isDeclaredAfter: (selector: string) => boolean;
 }
