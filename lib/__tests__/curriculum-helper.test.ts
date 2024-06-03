@@ -312,4 +312,14 @@ describe("functionRegex", () => {
     expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) => {");
     expect(match![1]).toBe("let myFunc = (arg1, arg2) => {");
   });
+
+  it("ignores the body if there are no brackets and it's asked for the closed body", () => {
+    const code = `const naomi = (love) => 2 * love;`;
+    const funcRE = functionRegex("naomi", ["love"], {
+      closed: false,
+    });
+
+    expect(funcRE.test(code)).toBe(true);
+    expect(code.match(funcRE)![0]).toBe("const naomi = (love) => ");
+  });
 });
