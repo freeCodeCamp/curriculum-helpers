@@ -242,4 +242,37 @@ describe("functionRegex", () => {
       "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately"
     );
   });
+
+  it("can match just up to the opening bracket for an arrow function", () => {
+    const code = `const naomi = (love) => {
+  return love ** 2
+}`;
+    const startRE = functionRegex("naomi", ["love"], { closed: false });
+    const endRE = /\s*return\s*love\s*\*\*\s*2\)/;
+    const fullRE = helper.concatRegex(startRE, endRE);
+
+    expect(startRE.test(code)).toBe(true);
+    expect(code.match(startRE)![0]).toBe("naomi = (love) => {");
+
+    expect(fullRE.test(code)).toBe(true);
+    expect(code.match(fullRE)![0]).toBe(code);
+  });
+
+  it("can match just up to the opening bracket for a function declaration", () => {
+    const code = `function naomi(love) {
+  return love ** 2
+}`;
+    const startRE = functionRegex("naomi", ["love"], { closed: false });
+    const endRE = /\s*return\s*love\s*\*\*\s*2\s\}/;
+    const fullRE = helper.concatRegex(startRE, endRE);
+
+    console.log(startRE);
+    console.log(fullRE);
+
+    expect(startRE.test(code)).toBe(true);
+    expect(code.match(startRE)![0]).toBe("function naomi(love) {");
+
+    expect(fullRE.test(code)).toBe(true);
+    expect(code.match(fullRE)![0]).toBe(code);
+  });
 });

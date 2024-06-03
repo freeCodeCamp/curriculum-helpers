@@ -93,16 +93,22 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
 
 export function functionRegex(
   funcName: string | null,
-  paramList: string[] = [],
-  { capture }: { capture: boolean } = { capture: false }
+  paramList?: string[],
+  options?: { capture?: boolean; closed?: boolean }
 ): RegExp {
-  const params = paramList.join("\\s*,\\s*");
+  const capture = options?.capture ?? false;
+  const closed = options?.closed ?? true;
+  const params = (paramList ?? []).join("\\s*,\\s*");
+
   const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
   const arrowFunctionName = funcName
     ? `${escapeRegExp(funcName)}\\s*=\\s*`
     : "";
   const body = "[^}]*";
-  const funcRegEx = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{${body}\\}`;
+
+  const funcREHead = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{`;
+  const funcREBody = `${body}\\}`;
+  const funcRegEx = closed ? `${funcREHead}${funcREBody}` : `${funcREHead}`;
   const arrowFuncRegEx = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?${body}\\}?`;
   return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
 }
