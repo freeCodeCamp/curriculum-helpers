@@ -254,7 +254,7 @@ describe("functionRegex", () => {
     const code = `const naomi = (love) => {
   return love ** 2
 }`;
-    const startRE = functionRegex("naomi", ["love"], { closed: false });
+    const startRE = functionRegex("naomi", ["love"], { includeBody: false });
     const endRE = /\s*return\s*love\s*\*\*\s*2\s*\}/;
     const fullRE = helper.concatRegex(startRE, endRE);
 
@@ -269,7 +269,7 @@ describe("functionRegex", () => {
     const code = `function naomi(love) {
   return love ** 2
 }`;
-    const startRE = functionRegex("naomi", ["love"], { closed: false });
+    const startRE = functionRegex("naomi", ["love"], { includeBody: false });
     const endRE = /\s*return\s*love\s*\*\*\s*2\s\}/;
     const fullRE = helper.concatRegex(startRE, endRE);
 
@@ -284,7 +284,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"], {
       capture: true,
-      closed: false,
+      includeBody: false,
     });
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
@@ -300,7 +300,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"], {
       capture: true,
-      closed: false,
+      includeBody: false,
     });
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
@@ -316,7 +316,7 @@ describe("functionRegex", () => {
   it("ignores the body if there are no brackets and it's asked for the closed body", () => {
     const code = `const naomi = (love) => 2 * love;`;
     const funcRE = functionRegex("naomi", ["love"], {
-      closed: false,
+      includeBody: false,
     });
 
     expect(funcRE.test(code)).toBe(true);
