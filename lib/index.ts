@@ -109,7 +109,12 @@ export function functionRegex(
   const funcREHead = `function\\s*${normalFunctionName}\\s*\\(\\s*${params}\\s*\\)\\s*\\{`;
   const funcREBody = `${body}\\}`;
   const funcRegEx = closed ? `${funcREHead}${funcREBody}` : `${funcREHead}`;
-  const arrowFuncRegEx = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?${body}\\}?`;
+
+  const arrowFuncREHead = `${arrowFunctionName}\\(?\\s*${params}\\s*\\)?\\s*=>\\s*\\{?`;
+  const arrowFuncREBody = `${body}\\}?`;
+  const arrowFuncRegEx = closed
+    ? `${arrowFuncREHead}${arrowFuncREBody}`
+    : `${arrowFuncREHead}`;
   return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
 }
 

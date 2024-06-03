@@ -244,18 +244,19 @@ describe("functionRegex", () => {
   });
 
   it("can match just up to the opening bracket for an arrow function", () => {
-    const code = `const naomi = (love) => {
+    const func = `naomi = (love) => {
   return love ** 2
 }`;
+    const code = `const ${func}`;
     const startRE = functionRegex("naomi", ["love"], { closed: false });
-    const endRE = /\s*return\s*love\s*\*\*\s*2\)/;
+    const endRE = /\s*return\s*love\s*\*\*\s*2\s*\}/;
     const fullRE = helper.concatRegex(startRE, endRE);
 
     expect(startRE.test(code)).toBe(true);
     expect(code.match(startRE)![0]).toBe("naomi = (love) => {");
 
     expect(fullRE.test(code)).toBe(true);
-    expect(code.match(fullRE)![0]).toBe(code);
+    expect(code.match(fullRE)![0]).toBe(func);
   });
 
   it("can match just up to the opening bracket for a function declaration", () => {
@@ -266,13 +267,44 @@ describe("functionRegex", () => {
     const endRE = /\s*return\s*love\s*\*\*\s*2\s\}/;
     const fullRE = helper.concatRegex(startRE, endRE);
 
-    console.log(startRE);
-    console.log(fullRE);
-
     expect(startRE.test(code)).toBe(true);
     expect(code.match(startRE)![0]).toBe("function naomi(love) {");
 
     expect(fullRE.test(code)).toBe(true);
     expect(code.match(fullRE)![0]).toBe(code);
+  });
+
+  it("can optionally capture an open function", () => {
+    const funcName = "myFunc";
+    const regEx = functionRegex(funcName, ["arg1", "arg2"], {
+      capture: true,
+      closed: false,
+    });
+    const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
+
+    const match = "var x = 'y'; function myFunc(arg1, arg2){return true}".match(
+      combinedRegEx
+    );
+    expect(match).not.toBeNull();
+    expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){");
+    expect(match![1]).toBe("function myFunc(arg1, arg2){");
+  });
+
+  it("can optionally capture an open arrow function", () => {
+    const funcName = "myFunc";
+    const regEx = functionRegex(funcName, ["arg1", "arg2"], {
+      capture: true,
+      closed: false,
+    });
+    const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
+
+    const match =
+      "var x = 'y'; let myFunc = (arg1, arg2) => {return true}".match(
+        combinedRegEx
+      );
+    console.log(combinedRegEx);
+    expect(match).not.toBeNull();
+    expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) =>{");
+    expect(match![1]).toBe("let myFunc = (arg1, arg2) =>{");
   });
 });
