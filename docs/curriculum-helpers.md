@@ -24,6 +24,7 @@ regex.test("foo = (bar, baz) => {}"); // true
 ### Options
 
 - capture: boolean - If true, the regex will capture the function definition, including it's body, otherwise not. Defaults to false.
+- includeBody: boolean - If true, the regex will include the function body in the match. Otherwise it will stop at the first bracket. Defaults to true.
 
 ```javascript
 let regEx = functionRegex("foo", ["bar", "baz"], { capture: true });
@@ -33,6 +34,13 @@ let match = `var x = "y";
 function foo(bar, baz){}`.match(regex);
 match[1]; // "function foo(bar, baz){}"
 // i.e. only the function definition is captured
+```
+
+```javascript
+let regEx = functionRegex("foo", ["bar", "baz"], { includeBody: false });
+
+let match = `function foo(bar, baz){console.log('ignored')}`.match(regex);
+match[1]; // "function foo(bar, baz){"
 ```
 
 NOTE: capture does not work properly with arrow functions. It will capture text after the function body, too.
