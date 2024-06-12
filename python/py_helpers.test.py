@@ -161,6 +161,23 @@ def foo():
         )
         self.assertEqual(node.find_function("foo").find_aug_variable("x"), Node())
 
+    def test_find_variables(self):
+        code_str = """
+x: int = 0
+a.b = 0
+x = 5
+a.b = 2
+x = 10
+"""
+        node = Node(code_str)
+        self.assertEqual(len(node.find_variables("x")), 3)
+        self.assertTrue(node.find_variables("x")[0].is_equivalent("x: int = 0"))
+        self.assertTrue(node.find_variables("x")[1].is_equivalent("x = 5"))
+        self.assertTrue(node.find_variables("x")[2].is_equivalent("x = 10"))
+        self.assertEqual(len(node.find_variables("a.b")), 2)
+        self.assertTrue(node.find_variables("a.b")[0].is_equivalent("a.b = 0"))
+        self.assertTrue(node.find_variables("a.b")[1].is_equivalent("a.b = 2"))
+
 
 class TestFunctionAndClassHelpers(unittest.TestCase):
     def test_find_function_returns_node(self):

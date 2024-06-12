@@ -251,6 +251,25 @@ class Node:
                         return Node(node)
         return Node()
 
+    def find_variables(self, name):
+        assignments = self._find_all((ast.Assign, ast.AnnAssign))
+        var_list = []
+        for node in assignments:
+            if isinstance(node.tree, ast.Assign):
+                for target in node.tree.targets:
+                    if isinstance(target, ast.Name):
+                        if target.id == name:
+                            var_list.append(node)
+                    if isinstance(target, ast.Attribute):
+                        names = name.split(".")
+                        if target.value.id == names[0] and target.attr == names[1]:
+                            var_list.append(node)
+            elif isinstance(node.tree, ast.AnnAssign):
+                if isinstance(node.tree.target, ast.Name):
+                    if node.tree.target.id == name:
+                        var_list.append(node)
+        return var_list
+
     # find variable incremented or decremented using += or -=
     def find_aug_variable(self, name):
         if not self._has_body():
