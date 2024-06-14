@@ -118,6 +118,8 @@ class Node:
             return returns_str == self.tree.returns.id
         elif isinstance(self.tree.returns, ast.Constant):
             return returns_str == self.tree.returns.value
+        elif isinstance((ann := self.tree.returns), ast.Subscript):
+            return Node(ann).is_equivalent(returns_str)
         return False
 
     def find_body(self):
