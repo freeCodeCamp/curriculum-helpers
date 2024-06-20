@@ -312,12 +312,16 @@ def foo(a: int, b: int) -> int:
     def test_has_returns(self):
         code_str = """
 def foo() -> int:
-   pass
+  pass
+
+def spam() -> Dict[str, int]:
+  pass
 """
         node = Node(code_str)
 
         self.assertTrue(node.find_function("foo").has_returns("int"))
         self.assertFalse(node.find_function("foo").has_returns("str"))
+        self.assertTrue(node.find_function("spam").has_returns("Dict[str, int]"))
 
     def test_has_returns_without_returns(self):
         code_str = """
