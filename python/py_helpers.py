@@ -457,6 +457,36 @@ class Node:
 
         return [Node(test) for test in _find_conditions(self.tree)]
 
+    def find_matches(self):
+        return self._find_all(ast.Match)
+
+    def find_match_subject(self):
+        if not isinstance(self.tree, ast.Match):
+            return Node()
+        return Node(self.tree.subject)
+
+    def find_match_cases(self):
+        if not isinstance(self.tree, ast.Match):
+            return []
+        return [Node(case) for case in self.tree.cases]
+
+    def find_case_pattern(self):
+        if not isinstance(self.tree, ast.match_case):
+            return Node()
+        return Node(self.tree.pattern)
+
+    def find_case_guard(self):
+        if not isinstance(self.tree, ast.match_case):
+            return Node()
+        if guard := getattr(self.tree, "guard", False):
+            return Node(guard)
+        return Node()
+
+    def find_case_body(self):
+        if not isinstance(self.tree, ast.match_case):
+            return Node()
+        return Node(ast.Module(self.tree.body, []))
+
     # Returs a Boolean indicating if the statements passed as arguments
     # are found in the same order in the tree (statements can be non-consecutive)
     def is_ordered(self, *args):
