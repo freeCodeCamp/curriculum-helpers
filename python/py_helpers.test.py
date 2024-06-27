@@ -924,6 +924,175 @@ else:
         )
 
 
+class TestStructuralPatternMatching(unittest.TestCase):
+    def test_find_matches(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0:
+    pass
+  case _:
+    pass
+    
+match y:
+  case 0:
+    pass
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertEqual(len(node.find_matches()), 2)
+        self.assertTrue(
+            node.find_matches()[0].is_equivalent(
+                "match x:\n  case 0:\n    pass\n  case _:\n    pass"
+            )
+        )
+        self.assertTrue(
+            node.find_matches()[1].is_equivalent(
+                "match y:\n  case 0:\n    pass\n  case _:\n    pass"
+            )
+        )
+
+    def test_find_match_subject(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0:
+    pass
+  case _:
+    pass
+    
+match y:
+  case 0:
+    pass
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertTrue(node.find_matches()[0].find_match_subject().is_equivalent("x"))
+        self.assertTrue(node.find_matches()[1].find_match_subject().is_equivalent("y"))
+
+    def test_find_match_cases(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0:
+    pass
+  case [a, b]:
+    pass  
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertEqual(len(node.find_matches()[0].find_match_cases()), 3)
+        self.assertEqual(
+            str(node.find_matches()[0].find_match_cases()[0]), "case 0:\n    pass"
+        )
+        self.assertEqual(
+            str(node.find_matches()[0].find_match_cases()[1]), "case [a, b]:\n    pass"
+        )
+        self.assertEqual(
+            str(node.find_matches()[0].find_match_cases()[2]), "case _:\n    pass"
+        )
+
+    def test_find_case_pattern(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0 if y > 0:
+    pass
+  case [a, b]:
+    pass  
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[0]
+            .find_case_pattern()
+            .is_equivalent("0")
+        )
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[1]
+            .find_case_pattern()
+            .is_equivalent("[a, b]")
+        )
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[2]
+            .find_case_pattern()
+            .is_equivalent("_")
+        )
+
+    def test_find_case_guard(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0 if y > 0:
+    pass
+  case [a, b] if y == -1:
+    pass  
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[0]
+            .find_case_guard()
+            .is_equivalent("y > 0")
+        )
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[1]
+            .find_case_guard()
+            .is_equivalent("y == -1")
+        )
+        self.assertTrue(
+            node.find_matches()[0].find_match_cases()[2].find_case_guard().is_empty()
+        )
+
+    def test_find_case_body(self):
+        self.maxDiff = None
+        code_str = """
+match x:
+  case 0:
+    print(0)
+    print('spam')
+  case [a, b]:
+    print(a, b)  
+  case _:
+    pass
+"""
+
+        node = Node(code_str)
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[0]
+            .find_case_body()
+            .is_equivalent("print(0)\nprint('spam')")
+        )
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[1]
+            .find_case_body()
+            .is_equivalent("print(a, b)")
+        )
+        self.assertTrue(
+            node.find_matches()[0]
+            .find_match_cases()[2]
+            .find_case_body()
+            .is_equivalent("pass")
+        )
+
+
 class TestForLoopsHelpers(unittest.TestCase):
     def test_find_for_statements(self):
         self.maxDiff = None
