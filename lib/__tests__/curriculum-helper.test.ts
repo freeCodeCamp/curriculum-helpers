@@ -313,6 +313,30 @@ describe("functionRegex", () => {
     expect(match![1]).toBe("let myFunc = (arg1, arg2) => {");
   });
 
+  it("can match unnamed functions with unknown parameters", () => {
+    const code = `function (manner, of, things) {}`;
+    const funcRE = functionRegex(null);
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match named functions with unknown parameters", () => {
+    const code = `function all(manner, of, things) {}`;
+    const funcRE = functionRegex("all");
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match arrow functions with unknown parameters", () => {
+    const code = `const all = (manner, of, things) => {}`;
+    const funcRE = functionRegex("all");
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match anonymous arrow functions with unknown parameters", () => {
+    const code = `(manner, of, things) => {}`;
+    const funcRE = functionRegex(null);
+    expect(funcRE.test(code)).toBe(true);
+  });
+
   it("ignores the body if there are no brackets and it's asked for the closed body", () => {
     const code = `const naomi = (love) => 2 * love;`;
     const funcRE = functionRegex("naomi", ["love"], {
