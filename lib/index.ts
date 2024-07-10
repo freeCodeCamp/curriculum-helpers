@@ -95,12 +95,12 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
 
 export function functionRegex(
   funcName: string | null,
-  paramList?: string[],
+  paramList?: string[] | null,
   options?: { capture?: boolean; includeBody?: boolean }
 ): RegExp {
   const capture = options?.capture ?? false;
   const includeBody = options?.includeBody ?? true;
-  const params = (paramList ?? []).join("\\s*,\\s*");
+  const params = paramList ? paramList.join("\\s*,\\s*") : "[^)]*";
 
   const normalFunctionName = funcName ? "\\s" + escapeRegExp(funcName) : "";
   const arrowFunctionName = funcName
