@@ -9,7 +9,8 @@ const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
 
 const { cssFullExample, cssCodeWithCommentsRemoved } = cssTestValues;
 
-const { htmlFullExample, htmlCodeWithCommentsRemoved } = htmlTestValues;
+const { htmlFullExample, htmlCodeWithCommentsRemoved, commentInQuoteExample } =
+  htmlTestValues;
 
 const {
   jsCodeWithSingleAndMultLineComments,
@@ -85,6 +86,12 @@ describe("removeHtmlComments", () => {
   it("returns an HTML string with no single or multi-line comments", () => {
     expect(removeHtmlComments(htmlFullExample)).toBe(
       htmlCodeWithCommentsRemoved
+    );
+  });
+
+  it("returns an HTML string with comments inside quotes intact", function () {
+    expect(removeHtmlComments(commentInQuoteExample)).toBe(
+      commentInQuoteExample
     );
   });
 });
