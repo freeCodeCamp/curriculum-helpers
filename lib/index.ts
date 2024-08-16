@@ -12,6 +12,20 @@ export function removeHtmlComments(str: string): string {
 }
 
 /**
+ * Extracts the inner html of every element inside the head
+ * @param {String} code a HTML string of the head
+ * @returns {String} the inner html of every element in the head or an empty string if no head is found
+ */
+
+export function extractHTMLElement(code: string, tag: string = "head"): string {
+  const expression = new RegExp(
+    "(?<=<" + tag + "\\s*>)(?:.|\\s*)*?(?=<\\/" + tag + "\\s*>)"
+  );
+  console.log(expression.source);
+  return code.match(expression)?.toString() ?? "";
+}
+
+/**
  * Removes every CSS-comment from the string that is provided
  * @param {String} str a CSS-string where the comments need to be removed of
  * @returns {String}
