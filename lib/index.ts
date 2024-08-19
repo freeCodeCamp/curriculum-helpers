@@ -21,7 +21,6 @@ export function extractHTMLElement(code: string, tag: string = "head"): string {
   const expression = new RegExp(
     "(?<=<" + tag + "\\s*>)(?:.|\\s*)*?(?=<\\/" + tag + "\\s*>)"
   );
-  console.log(expression.source);
   return code.match(expression)?.toString() ?? "";
 }
 
