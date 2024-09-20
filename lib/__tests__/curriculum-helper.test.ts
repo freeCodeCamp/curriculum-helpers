@@ -22,6 +22,51 @@ const {
   jsCodeWithCommentedCall,
 } = jsTestValues;
 
+describe("RandomMocker", () => {
+  let random: () => number;
+
+  beforeEach(() => {
+    random = Math.random;
+  });
+
+  afterEach(() => {
+    Math.random = random;
+  });
+
+  describe("mock", () => {
+    it('should replace "Math.random" with a mock function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      expect(Math.random).not.toBe(random);
+    });
+
+    it('should mock "Math.random" with a pseudorandom function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      // Predictable random values:
+      expect(Math.random()).toBe(0.2523451747838408);
+      expect(Math.random()).toBe(0.08812504541128874);
+    });
+
+    it("should reset the pseudorandom function when called multiple times", () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      expect(Math.random()).toBe(0.2523451747838408);
+      mocker.mock();
+      expect(Math.random()).toBe(0.2523451747838408);
+    });
+  });
+
+  describe("restore", () => {
+    it('should restore "Math.random" to its original function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      mocker.restore();
+      expect(Math.random).toBe(random);
+    });
+  });
+});
+
 describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {
