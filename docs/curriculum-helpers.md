@@ -1,5 +1,20 @@
 # Curriculum Helpers
 
+## RandomMocker
+
+Mocks Math.random for testing purposes. Each time `mock()` is called the pseudo-random number generator is reset to its initial state, so that the same sequence of random numbers is generated each time. `restore()` restores the native Math.random function.
+
+```javascript
+const randomMocker = new RandomMocker();
+randomMocker.mock();
+Math.random(); // first call is always 0.2523451747838408
+Math.random(); // second call is always 0.08812504541128874
+randomMocker.mock();
+Math.random(); // generator is reset, so we get 0.2523451747838408 again
+randomMocker.restore();
+Math.random(); // back to native Math.random
+```
+
 ## concatRegex
 
 Combines one or more regular expressions into one.
