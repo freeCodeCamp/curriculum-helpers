@@ -2,6 +2,37 @@ import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
 
 /**
+ * The `RandomMocker` class provides functionality to mock and restore the global `Math.random` function.
+ * It replaces the default random number generator with a deterministic pseudo-random number generator.
+ */
+export class RandomMocker {
+  private random: () => number;
+
+  constructor() {
+    this.random = Math.random;
+  }
+
+  private createRandom() {
+    let seed = 42;
+    const a = 1664525;
+    const c = 1013904223;
+    const mod = 2 ** 32;
+    return () => {
+      seed = (a * seed + c) % mod;
+      return seed / mod;
+    };
+  }
+
+  mock(): void {
+    globalThis.Math.random = this.createRandom();
+  }
+
+  restore(): void {
+    globalThis.Math.random = this.random;
+  }
+}
+
+/**
  * Removes every HTML-comment from the string that is provided
  * @param {String} str a HTML-string where the comments need to be removed of
  * @returns {String}
