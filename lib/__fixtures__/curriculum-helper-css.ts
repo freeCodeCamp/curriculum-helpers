@@ -302,6 +302,9 @@ body {
     );
   }
 }
+.card:hover {
+  background-color: khaki;
+}
 `;
 
 const testValues = {
