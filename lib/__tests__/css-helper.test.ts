@@ -69,6 +69,11 @@ describe("css-help", () => {
         "var(--building-color4)"
       );
     });
+    it("should return value of pseudo class selector", () => {
+      expect(
+        t.getStyle(".card:hover")?.getPropertyValue("background-color")
+      ).toEqual("khaki");
+    });
   });
   describe("getCSSRules", () => {
     it("should return a CSSRules array of length 1", () => {
