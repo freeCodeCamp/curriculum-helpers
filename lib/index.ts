@@ -1,5 +1,6 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
+export { Tower, generate } from "./class/tower";
 
 /**
  * The `RandomMocker` class provides functionality to mock and restore the global `Math.random` function.
