@@ -65,6 +65,8 @@ const letFunction =
 
 const arrowFunction = `const myFunc = name => console.log("Name")`;
 
+const destructuredArgsFunctionDeclaration = `function printFruits({a, b},c = 1, ...rest) {`;
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -78,6 +80,7 @@ const testValues = {
   constFunction,
   letFunction,
   arrowFunction,
+  destructuredArgsFunctionDeclaration,
 };
 
 export default testValues;
