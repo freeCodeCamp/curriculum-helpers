@@ -38,7 +38,7 @@
     "jest-ts-webcompat-resolver": "1.0.0",
     "lint-staged": "9.5.0",
     "prettier": "2.8.8",
-    "ts-loader": "9.5.1",
+    "ts-loader": "9.5.2",
     "webpack": "5.97.1",
     "webpack-cli": "5.1.4"
   },
