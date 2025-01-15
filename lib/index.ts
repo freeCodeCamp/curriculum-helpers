@@ -383,7 +383,7 @@ export class CSSHelp {
     return Array.from(styleSheet?.cssRules || []);
   }
 
-  // Takes a CSS selector, returns all equivelant selectors from the current document
+  // Takes a CSS selector, returns all equivalent selectors from the current document
   // or an empty array if there are no matches
   selectorsFromSelector(selector: string): string[] {
     const elements = this.doc.querySelectorAll(selector);
