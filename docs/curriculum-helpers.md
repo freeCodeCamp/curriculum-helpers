@@ -66,3 +66,13 @@ let regEx = functionRegex("myFunc", ["arg1"], { capture: true });
 let match = "myFunc = arg1 => arg1; console.log();\n // captured, unfortunately".match(regEx);
 match[1] // "myFunc = arg1 => arg1; console.log();\n // captured, unfortunately"
 ```
+
+## prepTestComponent
+
+Renders a React component into a DOM element and returns a Promise containing the DOM element. The arguments are, respectively, the component to render and an (optional) object containing the props to pass to the component.
+
+```javascript
+import { SomeComponent } from "./SomeComponent";
+const element = await prepTestComponent(SomeComponent, { someProp: "someValue" });
+element.querySelector("h1").textContent === "Some Value";
+```

@@ -1,3 +1,13 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+
+declare global {
+  interface Window {
+    React?: typeof React;
+    ReactDOM?: typeof ReactDOM;
+  }
+}
+
 import cssTestValues from "../__fixtures__/curriculum-helper-css";
 import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
 import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
@@ -390,5 +400,53 @@ describe("functionRegex", () => {
 
     expect(funcRE.test(code)).toBe(true);
     expect(code.match(funcRE)![0]).toBe("const naomi = (love) => ");
+  });
+});
+
+describe("prepTestComponent", () => {
+  let MyComponent;
+  beforeEach(() => {
+    MyComponent = (props) => <main>{props.text}</main>;
+
+    window.React = React;
+    window.ReactDOM = ReactDOM;
+  });
+
+  afterEach(() => {
+    delete window.React;
+    delete window.ReactDOM;
+    jest.restoreAllMocks();
+  });
+
+  it("should return an HTML element", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent);
+
+    expect(el).toBeInstanceOf(HTMLElement);
+  });
+
+  it("should render a component", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent);
+
+    expect(el.innerHTML).toBe("<main></main>");
+  });
+
+  it("should render a component with props", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent, { text: "Hello" });
+
+    expect(el.innerHTML).toBe("<main>Hello</main>");
+  });
+
+  it("should not log any errors to the console", async () => {
+    const { prepTestComponent } = helper;
+    const spy = jest.spyOn(console, "error").mockImplementation();
+
+    await prepTestComponent(MyComponent);
+    expect(spy).not.toHaveBeenCalled();
   });
 });
