@@ -1,13 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-declare global {
-  interface Window {
-    React?: typeof React;
-    ReactDOM?: typeof ReactDOM;
-  }
-}
-
 import cssTestValues from "../__fixtures__/curriculum-helper-css";
 import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
 import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
@@ -408,13 +401,13 @@ describe("prepTestComponent", () => {
   beforeEach(() => {
     MyComponent = (props) => <main>{props.text}</main>;
 
-    window.React = React;
-    window.ReactDOM = ReactDOM;
+    globalThis.React = React;
+    globalThis.ReactDOM = ReactDOM;
   });
 
   afterEach(() => {
-    delete window.React;
-    delete window.ReactDOM;
+    delete globalThis.React;
+    delete globalThis.ReactDOM;
     jest.restoreAllMocks();
   });
 
