@@ -25,10 +25,12 @@
   "devDependencies": {
     "@babel/core": "7.26.7",
     "@babel/preset-env": "7.26.7",
+    "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "7.26.0",
     "@types/jest": "27.5.2",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
+    "babel-jest": "^29.7.0",
     "eslint": "8.57.1",
     "eslint-config-prettier": "6.15.0",
     "eslint-config-xo": "0.27.2",
@@ -38,6 +40,9 @@
     "jest-ts-webcompat-resolver": "1.0.0",
     "lint-staged": "9.5.0",
     "prettier": "2.8.8",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-test-renderer": "^18.3.1",
     "ts-loader": "9.5.2",
     "webpack": "5.97.1",
     "webpack-cli": "5.1.4"

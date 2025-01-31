@@ -1,6 +1,11 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
 
+declare global {
+  // eslint-disable-next-line no-var
+  var IS_REACT_ACT_ENVIRONMENT: boolean;
+}
+
 /**
  * The `RandomMocker` class provides functionality to mock and restore the global `Math.random` function.
  * It replaces the default random number generator with a deterministic pseudo-random number generator.
@@ -176,6 +181,23 @@ const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
   ).indexOf(previousStyleRule);
   return currPosition > prevPosition;
 };
+
+export async function prepTestComponent(
+  component: unknown,
+  props?: Record<string, unknown>
+) {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  const testDiv = document.createElement("div");
+  // @ts-expect-error the React version is determined at runtime so we can't define the types here
+  const createdElement = globalThis.React?.createElement(component, props);
+
+  // @ts-expect-error or here
+  await globalThis.React?.act(async () => {
+    // @ts-expect-error Same for ReactDOM as for React
+    globalThis.ReactDOM?.createRoot(testDiv).render(createdElement);
+  });
+  return testDiv;
+}
 
 export const python = {
   astHelpers,
