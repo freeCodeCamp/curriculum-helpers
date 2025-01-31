@@ -77,9 +77,6 @@
     "webpack": "webpack"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
-  "jest": {
-    "resolver": "jest-ts-webcompat-resolver"
-  },
   "license": "BSD-3-Clause",
   "dependencies": {
     "browserify": "^17.0.0"
