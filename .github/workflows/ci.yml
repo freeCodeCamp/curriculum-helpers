@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: psf/black@1b2427a2b785cc4aac97c19bb4b9a0de063f9547 # 24.10.0
+      - uses: psf/black@8a737e727ac5ab2f1d4cf5876720ed276dc8dc4b # 25.1.0
 
   tests:
     name: "Node CI"
@@ -21,7 +21,7 @@ jobs:
 
       # Install Node 18
       - name: Setup Node
-        uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4
         with:
           node-version: 18
 
@@ -46,7 +46,7 @@ jobs:
 
       # Install Python
       - name: Setup Python
-        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5
         with:
           python-version: 3.x
 
