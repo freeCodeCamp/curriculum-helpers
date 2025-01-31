@@ -175,7 +175,7 @@ for i in range(10):
   b = 3
   if b == 3:
     a = 4
-`
+`,
         );
       }
 
@@ -213,7 +213,7 @@ def vigenere(message, key):
       const commentless_code = python.removeComments(el);
       const { block_body } = python.getBlock(commentless_code, "else")!;
       expect(block_body).toEqual(
-        "\n            key_char = key[key_index % len(key)]"
+        "\n            key_char = key[key_index % len(key)]",
       );
     });
   });

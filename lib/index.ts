@@ -101,7 +101,7 @@ export function escapeRegExp(exp: string): string {
 
 export function isCalledWithNoArgs(
   calledFuncName: string,
-  callingCode: string
+  callingCode: string,
 ): boolean {
   const noCommentsCallingCode = strip(callingCode);
   const funcExp = `^\\s*?${escapeRegExp(calledFuncName)}\\(\\s*?\\)`;
@@ -132,7 +132,7 @@ export function concatRegex(...regexes: (string | RegExp)[]) {
 export function functionRegex(
   funcName: string | null,
   paramList?: string[] | null,
-  options?: { capture?: boolean; includeBody?: boolean }
+  options?: { capture?: boolean; includeBody?: boolean },
 ): RegExp {
   const capture = options?.capture ?? false;
   const includeBody = options?.includeBody ?? true;
@@ -167,24 +167,24 @@ interface ExtendedStyleDeclaration extends CSSStyleDeclaration {
 
 const getIsDeclaredAfter = (styleRule: CSSStyleRule) => (selector: string) => {
   const cssStyleRules = Array.from(
-    styleRule.parentStyleSheet?.cssRules || []
+    styleRule.parentStyleSheet?.cssRules || [],
   )?.filter((ele) => ele.type === CSSRule.STYLE_RULE) as CSSStyleRule[];
   const previousStyleRule = cssStyleRules.find(
-    (ele) => ele?.selectorText === selector
+    (ele) => ele?.selectorText === selector,
   );
   if (!previousStyleRule) return false;
   const currPosition = Array.from(
-    styleRule.parentStyleSheet?.cssRules || []
+    styleRule.parentStyleSheet?.cssRules || [],
   ).indexOf(styleRule);
   const prevPosition = Array.from(
-    previousStyleRule?.parentStyleSheet?.cssRules || []
+    previousStyleRule?.parentStyleSheet?.cssRules || [],
   ).indexOf(previousStyleRule);
   return currPosition > prevPosition;
 };
 
 export async function prepTestComponent(
   component: unknown,
-  props?: Record<string, unknown>
+  props?: Record<string, unknown>,
 ) {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const testDiv = document.createElement("div");
@@ -204,7 +204,7 @@ export const python = {
   getDef(code: string, functionName: string) {
     const regex = new RegExp(
       `\\n?(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\s*?\\n?(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
-      "s"
+      "s",
     );
 
     const matchedCode = regex.exec(code);
@@ -218,7 +218,7 @@ export const python = {
 
       const functionIndentationSansNewLine = function_indentation.replace(
         /\n+/,
-        ""
+        "",
       );
       return {
         // Entire function definition without leading \n
@@ -251,7 +251,7 @@ export const python = {
 
     const regex = new RegExp(
       `\\n?(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\s*?\\n(?<block_body>(\\k<block_indentation> +[^\\n]*| *\\n)+)(\n|$)`,
-      "sm"
+      "sm",
     );
 
     const matchedCode = regex.exec(code);
@@ -286,7 +286,7 @@ export class CSSHelp {
   private _getStyleRules() {
     const styleSheet = this.getStyleSheet();
     return this.styleSheetToCssRulesArray(styleSheet).filter(
-      (ele) => ele.type === CSSRule.STYLE_RULE
+      (ele) => ele.type === CSSRule.STYLE_RULE,
     ) as CSSStyleRule[];
   }
 
@@ -298,7 +298,7 @@ export class CSSHelp {
 
   getStyle(selector: string): ExtendedStyleDeclaration | null {
     const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector
+      (ele) => ele?.selectorText === selector,
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
     style.getPropVal = (prop: string, strip = false) => {
@@ -325,7 +325,7 @@ export class CSSHelp {
 
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(
-      (ele) => ele?.selectorText === selector
+      (ele) => ele?.selectorText === selector,
     );
     if (styleRule) {
       return {
@@ -357,7 +357,7 @@ export class CSSHelp {
 
   isPropertyUsed(property: string): boolean {
     return this._getStyleRules().some((ele) =>
-      ele.style?.getPropertyValue(property)
+      ele.style?.getPropertyValue(property),
     );
   }
 
@@ -371,17 +371,17 @@ export class CSSHelp {
   getStyleSheet(): CSSStyleSheet | null {
     // TODO: Change selector to match exactly 'styles.css'
     const link: HTMLLinkElement | null = this.doc?.querySelector(
-      "link[href*='styles']"
+      "link[href*='styles']",
     );
 
     // When using the styles.css tab, we add a 'fcc-injected-styles' class so we can target that. This allows users to add external scripts without them interfering
     const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
-      "style.fcc-injected-styles"
+      "style.fcc-injected-styles",
     );
 
     // For steps that use <style> tags, where they don't add the above class - most* browser extensions inject styles with class/media attributes, so it filters those
     const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
-      "style:not([class]):not([media])"
+      "style:not([class]):not([media])",
     );
 
     if (link?.sheet?.cssRules?.length) {
@@ -400,7 +400,7 @@ export class CSSHelp {
   }
 
   styleSheetToCssRulesArray(
-    styleSheet: ReturnType<CSSHelp["getStyleSheet"]>
+    styleSheet: ReturnType<CSSHelp["getStyleSheet"]>,
   ): CSSRule[] {
     return Array.from(styleSheet?.cssRules || []);
   }
