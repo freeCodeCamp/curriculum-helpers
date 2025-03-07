@@ -1,1 +1,1 @@
-declare module '@freecodecamp/strip-comments';
+declare module "@freecodecamp/strip-comments";
