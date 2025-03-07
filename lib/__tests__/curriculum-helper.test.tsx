@@ -72,8 +72,8 @@ describe("RandomMocker", () => {
 
 describe("spyOn", () => {
   const obj = {
-    method(arg = "") {
-      return "original" + arg;
+    method(arg = "", arg2 = "") {
+      return `original${arg}${arg2}`;
     },
   };
 
@@ -93,6 +93,12 @@ describe("spyOn", () => {
     obj.method("arg1");
     obj.method("arg2");
     expect(spy.calls).toEqual([["arg1"], ["arg2"]]);
+  });
+
+  it("should capture all arguments", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1", "arg2");
+    expect(spy.calls).toEqual([["arg1", "arg2"]]);
   });
 
   it("should not modify the returned value", () => {
