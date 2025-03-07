@@ -28,7 +28,7 @@ describe("css-help", () => {
     });
     it("should return a whitespaceless string", () => {
       expect(t.getStyle(".bb1d")?.getPropVal("background", true)).toEqual(
-        "linear-gradient(var(--building-color1)50%,var(--window-color1))"
+        "linear-gradient(var(--building-color1)50%,var(--window-color1))",
       );
     });
   });
@@ -56,22 +56,22 @@ describe("css-help", () => {
   describe("getPropertyValue", () => {
     it("should return custom property value needing trim", () => {
       expect(
-        t.getStyle(":root")?.getPropertyValue("--building-color1")?.trim()
+        t.getStyle(":root")?.getPropertyValue("--building-color1")?.trim(),
       ).toEqual("#aa80ff");
     });
     it("should return value to existing property", () => {
       expect(
-        t.getStyle(".bb4a")?.getPropertyValue("background-color")
+        t.getStyle(".bb4a")?.getPropertyValue("background-color"),
       ).toBeTruthy();
     });
     it("should return property value without evaluating result", () => {
       expect(t.getStyle(".bb4a")?.getPropertyValue("background-color")).toEqual(
-        "var(--building-color4)"
+        "var(--building-color4)",
       );
     });
     it("should return value of pseudo class selector", () => {
       expect(
-        t.getStyle(".card:hover")?.getPropertyValue("background-color")
+        t.getStyle(".card:hover")?.getPropertyValue("background-color"),
       ).toEqual("khaki");
     });
   });
@@ -85,7 +85,7 @@ describe("css-help", () => {
       expect(
         t
           .getRuleListsWithinMedia("(max-width: 1000px)")
-          .find((x) => x.selectorText === ".sky")
+          .find((x) => x.selectorText === ".sky"),
       ).toBeTruthy();
     });
     it("should return CSSStyleDeclaration property with complex value", () => {
@@ -93,7 +93,7 @@ describe("css-help", () => {
       expect(
         t
           .getRuleListsWithinMedia("(max-width: 1000px)")
-          .find((x) => x.selectorText === ".sky")?.style?.background
+          .find((x) => x.selectorText === ".sky")?.style?.background,
       ).toEqual(
         `radial-gradient(
       closest-corner circle at 15% 15%,
@@ -101,7 +101,7 @@ describe("css-help", () => {
       #ffcf33 20%,
       #ffff66 21%,
       #bbeeff 100%
-    )`
+    )`,
       );
     });
   });

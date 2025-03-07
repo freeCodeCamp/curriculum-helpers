@@ -126,13 +126,13 @@ describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {
     expect(typeof removeWhiteSpace("This should return a string")).toBe(
-      "string"
+      "string",
     );
   });
 
   it("returns a string with no white space characters", () => {
     expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
-      stringWithWhiteSpaceCharsRemoved
+      stringWithWhiteSpaceCharsRemoved,
     );
   });
 });
@@ -141,13 +141,13 @@ describe("removeJSComments", () => {
   const { removeJSComments } = helper;
   it("returns a string", () => {
     expect(typeof removeJSComments('const should = "return a string"')).toBe(
-      "string"
+      "string",
     );
   });
 
   it("returns a string with no single or multi-line comments", () => {
     expect(removeJSComments(jsCodeWithSingleAndMultLineComments)).toBe(
-      jsCodeWithSingleAndMultLineCommentsRemoved
+      jsCodeWithSingleAndMultLineCommentsRemoved,
     );
   });
 
@@ -177,14 +177,14 @@ describe("removeHtmlComments", () => {
   it("returns a string", () => {
     expect(
       typeof removeHtmlComments(
-        "<h1>hello world</h1><!-- a comment--><h2>h2 element</h2>"
-      )
+        "<h1>hello world</h1><!-- a comment--><h2>h2 element</h2>",
+      ),
     ).toBe("string");
   });
 
   it("returns an HTML string with no single or multi-line comments", () => {
     expect(removeHtmlComments(htmlFullExample)).toBe(
-      htmlCodeWithCommentsRemoved
+      htmlCodeWithCommentsRemoved,
     );
   });
 });
@@ -251,7 +251,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function myFunc(arg1, arg2){\n console.log()\n}")).toBe(
-      true
+      true,
     );
   });
 
@@ -300,7 +300,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function \n\n myFunc \n ( arg1 , arg2 ) \n{ }")).toBe(
-      true
+      true,
     );
   });
 
@@ -310,7 +310,7 @@ describe("functionRegex", () => {
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
     const match = "var x = 'y'; function myFunc(arg1, arg2){}".match(
-      combinedRegEx
+      combinedRegEx,
     );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){}");
@@ -319,7 +319,7 @@ describe("functionRegex", () => {
     const nonCapturingRegEx = functionRegex(funcName, ["arg1", "arg2"]);
 
     const nonCapturingMatch = "function myFunc(arg1, arg2){}".match(
-      nonCapturingRegEx
+      nonCapturingRegEx,
     );
     expect(nonCapturingMatch).not.toBeNull();
     expect(nonCapturingMatch![1]).toBeUndefined();
@@ -340,13 +340,13 @@ describe("functionRegex", () => {
 
     const match =
       "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately".match(
-        regEx
+        regEx,
       );
     expect(match).not.toBeNull();
     // It's a greedy match, since it doesn't know where the function ends.
     // This should be fine for most use cases.
     expect(match![1]).toBe(
-      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately"
+      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately",
     );
   });
 
@@ -389,7 +389,7 @@ describe("functionRegex", () => {
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
     const match = "var x = 'y'; function myFunc(arg1, arg2){return true}".match(
-      combinedRegEx
+      combinedRegEx,
     );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){");
@@ -406,7 +406,7 @@ describe("functionRegex", () => {
 
     const match =
       "var x = 'y'; let myFunc = (arg1, arg2) => {return true}".match(
-        combinedRegEx
+        combinedRegEx,
       );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) => {");

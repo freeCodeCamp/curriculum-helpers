@@ -31,7 +31,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   let prev: Block | CodeNode | undefined;
 
   const source = [BLOCK_OPEN_REGEX, BLOCK_CLOSE_REGEX].filter<RegExp>(
-    (x): x is RegExp => typeof x !== "undefined"
+    (x): x is RegExp => typeof x !== "undefined",
   );
   let tripleQuotes = false;
 
@@ -50,7 +50,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
 
   const scan = (
     regex: RegExp,
-    type = "text"
+    type = "text",
   ):
     | { type: string; match: RegExpExecArray; value: string; newline?: string }
     | undefined => {
