@@ -70,6 +70,58 @@ describe("RandomMocker", () => {
   });
 });
 
+describe("spyOn", () => {
+  const obj = {
+    method(arg = "") {
+      return "original" + arg;
+    },
+  };
+
+  it("should return a wrapped function", () => {
+    const spy = helper.spyOn(obj, "method");
+    expect(spy).toBeInstanceOf(Function);
+  });
+
+  it("should spy on the given method", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg");
+    expect(spy.calls).toEqual([["arg"]]);
+  });
+
+  it("should collect multiple calls", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1");
+    obj.method("arg2");
+    expect(spy.calls).toEqual([["arg1"], ["arg2"]]);
+  });
+
+  it("should not modify the returned value", () => {
+    const spy = helper.spyOn(obj, "method");
+    const result = obj.method("arg");
+    expect(result).toBe("originalarg");
+  });
+
+  it("should track the return value", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg");
+    expect(spy.returns[0]).toBe("originalarg");
+  });
+
+  it("should track the return value of multiple calls", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1");
+    obj.method("arg2");
+    expect(spy.returns).toEqual(["originalarg1", "originalarg2"]);
+  });
+
+  it("should restore the original method", () => {
+    const spy = helper.spyOn(obj, "method");
+    spy.restore();
+    obj.method("arg");
+    expect(spy.calls).toEqual([]);
+  });
+});
+
 describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {

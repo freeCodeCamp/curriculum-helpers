@@ -37,6 +37,41 @@ export class RandomMocker {
   }
 }
 
+/** spyOn creates a simple spy, inspired by Jest and Jasmine's spyOn functions.
+ * @param obj - The object to spy on
+ * @param method - The method to spy on
+ * @returns A spy function that can be used to track calls to the original method
+ */
+export function spyOn(
+  obj: { [key: string]: Function },
+  method: string,
+): Function & {
+  restore: () => void;
+  calls: string[][];
+  returns: unknown[];
+} {
+  const original = obj[method];
+  const calls: string[][] = [];
+  const results: unknown[] = [];
+
+  const fn = (...args: string[]) => {
+    calls.push(args);
+    const result = original(...args);
+    results.push(result);
+    return result;
+  };
+
+  obj[method] = fn;
+
+  fn.calls = calls;
+  fn.returns = results;
+  fn.restore = () => {
+    obj[method] = original;
+  };
+
+  return fn;
+}
+
 /**
  * Removes every HTML-comment from the string that is provided
  * @param {String} str a HTML-string where the comments need to be removed of
