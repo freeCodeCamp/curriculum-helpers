@@ -104,7 +104,7 @@ describe("removeJSComments", () => {
     expect(removeJSComments(code)).toBe("");
   });
 
-  it('should ignore comments inside multiline template strings', () => {
+  it("should ignore comments inside multiline template strings", () => {
     const expected = `const foo = \`// this is a comment
 * me too */\`;
 const bar = \`// this is a comment
@@ -113,26 +113,24 @@ const bar = \`// this is a comment
     const actual = removeJSComments(expected);
 
     expect(actual).toBe(expected);
-  })
+  });
 
-
-  it('should handle comments that end in a slash', () => {
+  it("should handle comments that end in a slash", () => {
     const expected = `const bar = \`// this is a comment \\
 \`;`;
     const actual = removeJSComments(expected);
 
     expect(actual).toBe(expected);
-  })
+  });
 
-
-  it('should strip comments with quotes', () => {
+  it("should strip comments with quotes", () => {
     const expected = '\nconst foo = "bar";\n';
     const actual = removeJSComments(`// this is a comment with "quotes"
 const foo = "bar";
 `);
 
     expect(actual).toBe(expected);
-  })
+  });
 
   it("leaves malformed JS unchanged", () => {
     const actual = "/ unclosed regex";
