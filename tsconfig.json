@@ -3,7 +3,7 @@
   "include": ["lib/", "declarations.d.ts", "dist/declarations.d.ts", "python/"],
   "compilerOptions": {
     "module": "ES6",
-    "target": "ES6",
+    "target": "ES2018",
     "outDir": "./dist",
     "sourceMap": true,
     "esModuleInterop": true,
