@@ -6,7 +6,10 @@ import { languages } from "./languages";
 
 const constants = {
   ESCAPED_CHAR_REGEX: /^\\./,
-  QUOTED_STRING_REGEX: /^(['"`])((?:\\\1|[^\1])*?)(\1)/,
+  // The QUOTED_STRING_REGEX looks for an opening quote, then any number of
+  // escaped quotes or characters that are not the opening quote. Finally, it
+  // looks for the closing quote.
+  QUOTED_STRING_REGEX: /^([`'"])((?:\\\1|(?!\1).)*)\1/s,
   NEWLINE_REGEX: /^\r*\n/,
 };
 
@@ -89,8 +92,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
    * Parse input string
    */
 
-  // TODO: This value isn't modified according to eslint
-  /* eslint-disable-next-line */
+  // eslint-disable-next-line no-unmodified-loop-condition
   while (remaining !== "") {
     // Escaped characters
     if ((token = scan(constants.ESCAPED_CHAR_REGEX, "text"))) {
