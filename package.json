@@ -51,7 +51,7 @@
     "access": "public"
   },
   "engines": {
-    "npm": ">= 4.0.0"
+    "pnpm": ">= 10"
   },
   "lint-staged": {
     "*.js": [
@@ -74,7 +74,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint lib --max-warnings 0 && prettier lib --check",
     "test": "jest",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
   },
   "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
