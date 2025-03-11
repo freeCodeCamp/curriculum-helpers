@@ -138,5 +138,5 @@ export class Tower<T extends Node> {
 }
 
 function assertIsType<T extends Node | Node[]>(
-  ast: Node | Node[]
+  ast: Node | Node[],
 ): asserts ast is T {}

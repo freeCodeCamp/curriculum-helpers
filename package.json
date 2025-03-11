@@ -74,6 +74,7 @@
     "build": "NODE_ENV=production webpack",
     "clean": "rm -rf dist",
     "lint": "eslint lib --max-warnings 0 && prettier lib --check",
+    "format": "prettier --write lib",
     "test": "jest",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"

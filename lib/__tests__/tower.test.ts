@@ -56,7 +56,7 @@ describe("tower", () => {
   console.log(a);
 }
 
-// Test`
+// Test`,
       );
     });
   });
@@ -75,7 +75,7 @@ describe("tower", () => {
 };`);
       const file = t.getFunction("doAsyncStuff").getVariable("file").generate;
       expect(file).toEqual(
-        '// Another test\nconst file = await readFile("file_loc" + num, "utf-8");'
+        '// Another test\nconst file = await readFile("file_loc" + num, "utf-8");',
       );
     });
   });
@@ -87,7 +87,7 @@ describe("tower", () => {
       // @ts-expect-error - expression does exist.
       const argumes = map?.ast.expression?.arguments;
       expect(generate(argumes.at(0), { compact: true }).code).toEqual(
-        "function(e){}"
+        "function(e){}",
       );
     });
   });
