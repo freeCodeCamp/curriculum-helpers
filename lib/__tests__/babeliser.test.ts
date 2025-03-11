@@ -128,7 +128,7 @@ describe(`getVariableDeclarations`, () => {
     expect(
       t
         .getVariableDeclarations()
-        .filter((v) => v.scope.join() === "global,complexType,e").length
+        .filter((v) => v.scope.join() === "global,complexType,e").length,
     ).toEqual(1);
   });
 
@@ -205,7 +205,7 @@ describe(`getVariableDeclarations`, () => {
     assertVariableDeclaration(innerVariableDeclaration);
     expect(innerVariableDeclaration.kind).toEqual("const");
     expect(innerVariableDeclaration.scope.join()).toEqual(
-      "global,complexType,e"
+      "global,complexType,e",
     );
     const innerNumericLiteral = innerVariableDeclaration.declarations[0].init;
     assertNumericLiteral(innerNumericLiteral);

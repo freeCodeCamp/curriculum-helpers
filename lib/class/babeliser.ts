@@ -22,7 +22,7 @@ export class Babeliser {
   public codeString: string;
   constructor(
     codeString: string,
-    options?: Partial<ParserOptions & BabeliserOptions>
+    options?: Partial<ParserOptions & BabeliserOptions>,
   ) {
     this.parsedCode = parse(codeString, {
       sourceType: "module",
@@ -38,7 +38,7 @@ export class Babeliser {
   public getArrowFunctionExpressions() {
     const arrowFunctionDeclarations =
       this._recurseBodiesForType<ArrowFunctionExpression>(
-        "ArrowFunctionExpression"
+        "ArrowFunctionExpression",
       );
     return arrowFunctionDeclarations;
   }
@@ -73,10 +73,10 @@ export class Babeliser {
 
   public getExpressionStatement(
     name: string,
-    scope: Scope = ["global"]
+    scope: Scope = ["global"],
   ): (ExpressionStatement & { scope: Scope }) | undefined {
     const expressionStatements = this.getExpressionStatements().filter((a) =>
-      this._isInScope(a.scope, scope)
+      this._isInScope(a.scope, scope),
     );
     const expressionStatement = expressionStatements.find((e) => {
       const expression = e.expression;
@@ -158,7 +158,7 @@ export class Babeliser {
     // have a scope parameter, though it's never passed in with one.
     val: Statement & { scope?: Scope },
     isTargetType: (arg: { type: string }) => boolean,
-    scope: Array<string>
+    scope: Array<string>,
   ): ScopedStatement[] {
     const matches: ScopedStatement[] = [];
     if (scope.length >= this.maxScopeDepth) {
@@ -177,7 +177,7 @@ export class Babeliser {
 
       const currentScope = [...scope];
       const nearestIdentifier: undefined | Identifier = Object.values(val).find(
-        (v) => v?.type === "Identifier"
+        (v) => v?.type === "Identifier",
       );
       if (nearestIdentifier) {
         currentScope.push(nearestIdentifier.name);
