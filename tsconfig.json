@@ -10,6 +10,7 @@
     "declaration": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true
+    "strict": true,
+    "moduleResolution": "Node10"
   }
 }

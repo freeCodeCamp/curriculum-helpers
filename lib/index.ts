@@ -1,5 +1,6 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
+export { Babeliser } from "./class/babeliser";
 
 declare global {
   // eslint-disable-next-line no-var
