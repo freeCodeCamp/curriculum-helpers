@@ -12,7 +12,12 @@ const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
 
 const { cssFullExample, cssCodeWithCommentsRemoved } = cssTestValues;
 
-const { htmlFullExample, htmlCodeWithCommentsRemoved } = htmlTestValues;
+const {
+  htmlFullExample,
+  htmlCodeWithCommentsRemoved,
+  htmlExampleHead,
+  htmlInnerExample,
+} = htmlTestValues;
 
 const {
   jsCodeWithSingleAndMultLineComments,
@@ -167,6 +172,16 @@ describe("removeHtmlComments", () => {
     expect(removeHtmlComments(htmlFullExample)).toBe(
       htmlCodeWithCommentsRemoved,
     );
+  });
+});
+
+describe("extractHTMLElement", () => {
+  const { extractHTMLElement } = helper;
+  it("returns an empty string if no head is found", () => {
+    expect(typeof extractHTMLElement("", "head")).toBe("string");
+  });
+  it("returns inner HTML string if a head is present", () => {
+    expect(extractHTMLElement(htmlExampleHead, "head")).toBe(htmlInnerExample);
   });
 });
 
