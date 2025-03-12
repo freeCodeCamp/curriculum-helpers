@@ -28,7 +28,7 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "7.26.0",
     "@types/jest": "29.5.14",
-    "@babel/types": "7.23.9",
+    "@babel/types": "7.26.10",
     "@types/babel__generator": "7.6.8",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
