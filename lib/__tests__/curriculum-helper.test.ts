@@ -27,6 +27,51 @@ const {
   jsCodeWithCommentedCall,
 } = jsTestValues;
 
+describe("RandomMocker", () => {
+  let random: () => number;
+
+  beforeEach(() => {
+    random = Math.random;
+  });
+
+  afterEach(() => {
+    Math.random = random;
+  });
+
+  describe("mock", () => {
+    it('should replace "Math.random" with a mock function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      expect(Math.random).not.toBe(random);
+    });
+
+    it('should mock "Math.random" with a pseudorandom function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      // Predictable random values:
+      expect(Math.random()).toBe(0.2523451747838408);
+      expect(Math.random()).toBe(0.08812504541128874);
+    });
+
+    it("should reset the pseudorandom function when called multiple times", () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      expect(Math.random()).toBe(0.2523451747838408);
+      mocker.mock();
+      expect(Math.random()).toBe(0.2523451747838408);
+    });
+  });
+
+  describe("restore", () => {
+    it('should restore "Math.random" to its original function', () => {
+      const mocker = new helper.RandomMocker();
+      mocker.mock();
+      mocker.restore();
+      expect(Math.random).toBe(random);
+    });
+  });
+});
+
 describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {
@@ -326,6 +371,30 @@ describe("functionRegex", () => {
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) => {");
     expect(match![1]).toBe("let myFunc = (arg1, arg2) => {");
+  });
+
+  it("can match unnamed functions with unknown parameters", () => {
+    const code = `function (manner, of, things) {}`;
+    const funcRE = functionRegex(null);
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match named functions with unknown parameters", () => {
+    const code = `function all(manner, of, things) {}`;
+    const funcRE = functionRegex("all");
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match arrow functions with unknown parameters", () => {
+    const code = `const all = (manner, of, things) => {}`;
+    const funcRE = functionRegex("all");
+    expect(funcRE.test(code)).toBe(true);
+  });
+
+  it("can match anonymous arrow functions with unknown parameters", () => {
+    const code = `(manner, of, things) => {}`;
+    const funcRE = functionRegex(null);
+    expect(funcRE.test(code)).toBe(true);
   });
 
   it("ignores the body if there are no brackets and it's asked for the closed body", () => {

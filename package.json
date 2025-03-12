@@ -1,6 +1,6 @@
 {
   "name": "@freecodecamp/curriculum-helpers",
-  "version": "3.5.0",
+  "version": "3.8.0",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
   "author": {
@@ -23,13 +23,13 @@
     ""
   ],
   "devDependencies": {
-    "@babel/core": "7.24.7",
-    "@babel/preset-env": "7.24.7",
-    "@babel/preset-typescript": "7.24.7",
+    "@babel/core": "7.26.0",
+    "@babel/preset-env": "7.26.0",
+    "@babel/preset-typescript": "7.26.0",
     "@types/jest": "27.5.2",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
-    "eslint": "8.57.0",
+    "eslint": "8.57.1",
     "eslint-config-prettier": "6.15.0",
     "eslint-config-xo": "0.27.2",
     "eslint-plugin-prettier": "3.4.1",
@@ -39,7 +39,7 @@
     "lint-staged": "9.5.0",
     "prettier": "2.8.8",
     "ts-loader": "9.5.1",
-    "webpack": "5.92.1",
+    "webpack": "5.97.1",
     "webpack-cli": "5.1.4"
   },
   "publishConfig": {
