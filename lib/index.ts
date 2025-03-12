@@ -19,7 +19,7 @@ export function removeHtmlComments(str: string): string {
 
 export function extractHTMLElement(code: string, tag: string = "head"): string {
   const expression = new RegExp(
-    "(?<=<" + tag + "\\s*>)(?:.|\\s*)*?(?=<\\/" + tag + "\\s*>)"
+    "(?<=<" + tag + "[^>]*>)(?:.|\\s*)*?(?=<\\/" + tag + "\\s*>)"
   );
   return code.match(expression)?.toString() ?? "";
 }
