@@ -2,8 +2,13 @@ import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
 
 import { getFunctionParams } from "../index";
 
-const { functionDeclaration, constFunction, letFunction, arrowFunction } =
-  jsTestValues;
+const {
+  functionDeclaration,
+  constFunction,
+  letFunction,
+  arrowFunction,
+  destructuredArgsFunctionDeclaration,
+} = jsTestValues;
 
 describe("js-help", () => {
   describe("getFunctionArgs", () => {
@@ -31,6 +36,14 @@ describe("js-help", () => {
     it("gets arguments from arrow functions", function () {
       const parameters = getFunctionParams(arrowFunction);
       expect(parameters[0].name).toBe("name");
+    });
+    it("gets arguments from a destructured function declaration", function () {
+      const parameters = getFunctionParams(destructuredArgsFunctionDeclaration);
+      expect(parameters[0].name).toBe("a");
+      expect(parameters[1].name).toBe("b");
+      expect(parameters[2].name).toBe("c");
+      expect(parameters[2].defaultValue).toBe("1");
+      expect(parameters[3].name).toBe("...rest");
     });
   });
 });

@@ -1,3 +1,6 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+
 import cssTestValues from "../__fixtures__/curriculum-helper-css";
 import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
 import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
@@ -76,13 +79,13 @@ describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {
     expect(typeof removeWhiteSpace("This should return a string")).toBe(
-      "string"
+      "string",
     );
   });
 
   it("returns a string with no white space characters", () => {
     expect(removeWhiteSpace(stringWithWhiteSpaceChars)).toBe(
-      stringWithWhiteSpaceCharsRemoved
+      stringWithWhiteSpaceCharsRemoved,
     );
   });
 });
@@ -91,14 +94,47 @@ describe("removeJSComments", () => {
   const { removeJSComments } = helper;
   it("returns a string", () => {
     expect(typeof removeJSComments('const should = "return a string"')).toBe(
-      "string"
+      "string",
     );
   });
 
   it("returns a string with no single or multi-line comments", () => {
     expect(removeJSComments(jsCodeWithSingleAndMultLineComments)).toBe(
-      jsCodeWithSingleAndMultLineCommentsRemoved
+      jsCodeWithSingleAndMultLineCommentsRemoved,
     );
+  });
+
+  it("handles nested comments", () => {
+    const code = `/* this is a comment /* nested comment */ */`;
+    expect(removeJSComments(code)).toBe("");
+  });
+
+  it("should ignore comments inside multiline template strings", () => {
+    const expected = `const foo = \`// this is a comment
+* me too */\`;
+const bar = \`// this is a comment
+/* me too */\`;
+`;
+    const actual = removeJSComments(expected);
+
+    expect(actual).toBe(expected);
+  });
+
+  it("should handle comments that end in a slash", () => {
+    const expected = `const bar = \`// this is a comment \\
+\`;`;
+    const actual = removeJSComments(expected);
+
+    expect(actual).toBe(expected);
+  });
+
+  it("should strip comments with quotes", () => {
+    const expected = '\nconst foo = "bar";\n';
+    const actual = removeJSComments(`// this is a comment with "quotes"
+const foo = "bar";
+`);
+
+    expect(actual).toBe(expected);
   });
 
   it("leaves malformed JS unchanged", () => {
@@ -127,14 +163,14 @@ describe("removeHtmlComments", () => {
   it("returns a string", () => {
     expect(
       typeof removeHtmlComments(
-        "<h1>hello world</h1><!-- a comment--><h2>h2 element</h2>"
-      )
+        "<h1>hello world</h1><!-- a comment--><h2>h2 element</h2>",
+      ),
     ).toBe("string");
   });
 
   it("returns an HTML string with no single or multi-line comments", () => {
     expect(removeHtmlComments(htmlFullExample)).toBe(
-      htmlCodeWithCommentsRemoved
+      htmlCodeWithCommentsRemoved,
     );
   });
 });
@@ -211,7 +247,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function myFunc(arg1, arg2){\n console.log()\n}")).toBe(
-      true
+      true,
     );
   });
 
@@ -260,7 +296,7 @@ describe("functionRegex", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("function \n\n myFunc \n ( arg1 , arg2 ) \n{ }")).toBe(
-      true
+      true,
     );
   });
 
@@ -270,7 +306,7 @@ describe("functionRegex", () => {
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
     const match = "var x = 'y'; function myFunc(arg1, arg2){}".match(
-      combinedRegEx
+      combinedRegEx,
     );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){}");
@@ -279,7 +315,7 @@ describe("functionRegex", () => {
     const nonCapturingRegEx = functionRegex(funcName, ["arg1", "arg2"]);
 
     const nonCapturingMatch = "function myFunc(arg1, arg2){}".match(
-      nonCapturingRegEx
+      nonCapturingRegEx,
     );
     expect(nonCapturingMatch).not.toBeNull();
     expect(nonCapturingMatch![1]).toBeUndefined();
@@ -300,13 +336,13 @@ describe("functionRegex", () => {
 
     const match =
       "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately".match(
-        regEx
+        regEx,
       );
     expect(match).not.toBeNull();
     // It's a greedy match, since it doesn't know where the function ends.
     // This should be fine for most use cases.
     expect(match![1]).toBe(
-      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately"
+      "myFunc = arg1 => arg1; console.log()\n // captured, unfortunately",
     );
   });
 
@@ -349,7 +385,7 @@ describe("functionRegex", () => {
     const combinedRegEx = helper.concatRegex(/var x = 'y'; /, regEx);
 
     const match = "var x = 'y'; function myFunc(arg1, arg2){return true}".match(
-      combinedRegEx
+      combinedRegEx,
     );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; function myFunc(arg1, arg2){");
@@ -366,7 +402,7 @@ describe("functionRegex", () => {
 
     const match =
       "var x = 'y'; let myFunc = (arg1, arg2) => {return true}".match(
-        combinedRegEx
+        combinedRegEx,
       );
     expect(match).not.toBeNull();
     expect(match![0]).toBe("var x = 'y'; let myFunc = (arg1, arg2) => {");
@@ -405,5 +441,53 @@ describe("functionRegex", () => {
 
     expect(funcRE.test(code)).toBe(true);
     expect(code.match(funcRE)![0]).toBe("const naomi = (love) => ");
+  });
+});
+
+describe("prepTestComponent", () => {
+  let MyComponent;
+  beforeEach(() => {
+    MyComponent = (props) => <main>{props.text}</main>;
+
+    globalThis.React = React;
+    globalThis.ReactDOM = ReactDOM;
+  });
+
+  afterEach(() => {
+    delete globalThis.React;
+    delete globalThis.ReactDOM;
+    jest.restoreAllMocks();
+  });
+
+  it("should return an HTML element", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent);
+
+    expect(el).toBeInstanceOf(HTMLElement);
+  });
+
+  it("should render a component", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent);
+
+    expect(el.innerHTML).toBe("<main></main>");
+  });
+
+  it("should render a component with props", async () => {
+    const { prepTestComponent } = helper;
+
+    const el = await prepTestComponent(MyComponent, { text: "Hello" });
+
+    expect(el.innerHTML).toBe("<main>Hello</main>");
+  });
+
+  it("should not log any errors to the console", async () => {
+    const { prepTestComponent } = helper;
+    const spy = jest.spyOn(console, "error").mockImplementation();
+
+    await prepTestComponent(MyComponent);
+    expect(spy).not.toHaveBeenCalled();
   });
 });
