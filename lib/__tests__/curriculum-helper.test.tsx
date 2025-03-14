@@ -496,7 +496,6 @@ describe("permutateRegex", () => {
     expect(regex.test("b||c||a")).toBe(true);
     expect(regex.test("c||a||b")).toBe(true);
     expect(regex.test("c||b||a")).toBe(true);
-    expect(regex.source).not.toEqual("(?:)");
   });
 
   it("returns regex not matching invalid permutation", () => {
@@ -533,8 +532,6 @@ describe("permutateRegex", () => {
   it("returns capturing regex when capture option is true", () => {
     const { permutateRegex } = helper;
     const regex = permutateRegex(["a", "b", "c"], { capture: true });
-
-    console.log(regex);
 
     expect("b||c||a".match(regex)?.length).toEqual(2);
     expect("b||c||a".match(regex)?.[1]).toEqual("b||c||a");

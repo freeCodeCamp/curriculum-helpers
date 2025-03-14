@@ -161,6 +161,7 @@ export function functionRegex(
 function _permutations(permutation: (string | RegExp)[]) {
   const permutations: (string | RegExp)[][] = [];
 
+  // Heap's algorithm
   function permute(array: (string | RegExp)[], length: number) {
     if (length === 1) {
       permutations.push(array.slice());

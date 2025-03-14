@@ -82,6 +82,12 @@ element.querySelector("h1").textContent === "Some Value";
 Permutates regular expressions or source strings, to create regex matching elements in any order.
 
 ```javascript
+const source1 = 'a';
+const regex1 = /b/;
+const source2 = 'c';
+
+permutateRegex([source1, regex1, source2]).source === new RegExp(/(?:a\s*\|\|\s*b\s*\|\|\s*c|b\s*\|\|\s*a\s*\|\|\s*c|c\s*\|\|\s*a\s*\|\|\s*b|a\s*\|\|\s*c\s*\|\|\s*b|b\s*\|\|\s*c\s*\|\|\s*a|c\s*\|\|\s*b\s*\|\|\s*a)/).source;
+```
 
 Inputs can have capturing groups, but both groups and backreferrences need to be named. In the resulting regex they will be renamed to avoid duplicated names, and to allow backreferrences to refer to correct group.
 
