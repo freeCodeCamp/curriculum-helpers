@@ -546,4 +546,34 @@ describe("permutateRegex", () => {
 
     expect("b||c||a".match(regex)?.length).toEqual(1);
   });
+
+  it("renames capturing named groups to avoid duplicated group names", () => {
+    const { permutateRegex } = helper;
+
+    expect(() =>
+      permutateRegex([/messageInput\.value/, /(?<ref>'|"|`)\k<ref>/], {
+        elementsSeparator: String.raw`\s*===?\s*`,
+      })
+    ).not.toThrow();
+  });
+
+  it("returns regex correctly backreferrencing the capturing named groups", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex([/a/, /(?<ref>'|"|`)b\k<ref>/], {
+      elementsSeparator: String.raw`\s*===?\s*`,
+    });
+
+    expect(regex.test("a === 'b'")).toBe(true);
+    expect(regex.test("a === `b`")).toBe(true);
+    expect(regex.test('a === "b"')).toBe(true);
+    expect(regex.test("'b' === a")).toBe(true);
+    expect(regex.test("`b` === a")).toBe(true);
+    expect(regex.test('"b" === a')).toBe(true);
+
+    expect(regex.test("a === `b'")).toBe(false);
+    expect(regex.test(`a === "b'`)).toBe(false);
+    expect(regex.test("'b` === a")).toBe(false);
+    expect(regex.test('`b" === a')).toBe(false);
+    expect(regex.test(`'b" === a`)).toBe(false);
+  });
 });

@@ -82,9 +82,39 @@ element.querySelector("h1").textContent === "Some Value";
 Permutates regular expressions or source strings, to create regex matching elements in any order.
 
 ```javascript
-const source1 = `titleInput\\.value\\s*(?:!==|!=)\\s*currentTask\\.title`;
-const regex1 = /dateInput\.value\s*(?:!==|!=)\s*currentTask\.date/;
-const source2 = `descriptionInput\\.value\\s*(?:!==|!=)\\s*currentTask\\.description`;
 
-permutateRegex([source1, regex1, source2]).source === new RegExp(/(?:titleInput\.value\s*(?:!==|!=)\s*currentTask\.title\s*\|\|\s*dateInput\.value\s*(?:!==|!=)\s*currentTask\.date\s*\|\|\s*descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description|dateInput\.value\s*(?:!==|!=)\s*currentTask\.date\s*\|\|\s*titleInput\.value\s*(?:!==|!=)\s*currentTask\.title\s*\|\|\s*descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description|descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description\s*\|\|\s*titleInput\.value\s*(?:!==|!=)\s*currentTask\.title\s*\|\|\s*dateInput\.value\s*(?:!==|!=)\s*currentTask\.date|titleInput\.value\s*(?:!==|!=)\s*currentTask\.title\s*\|\|\s*descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description\s*\|\|\s*dateInput\.value\s*(?:!==|!=)\s*currentTask\.date|dateInput\.value\s*(?:!==|!=)\s*currentTask\.date\s*\|\|\s*descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description\s*\|\|\s*titleInput\.value\s*(?:!==|!=)\s*currentTask\.title|descriptionInput\.value\s*(?:!==|!=)\s*currentTask\.description\s*\|\|\s*dateInput\.value\s*(?:!==|!=)\s*currentTask\.date\s*\|\|\s*titleInput\.value\s*(?:!==|!=)\s*currentTask\.title)/).source;
+Inputs can have capturing groups, but both groups and backreferrences need to be named. In the resulting regex they will be renamed to avoid duplicated names, and to allow backreferrences to refer to correct group.
+
+```javascript
+const regex = permutateRegex(
+    [
+        'a',
+        /(?<ref>'|"|`)b\k<ref>/
+    ],
+    { elementsSeparator: String.raw`\s*===\s*` }
+);
+
+regex.source === new RegExp(/(?:a\s*===\s*(?<ref_0>'|"|`)b\k<ref_0>|(?<ref_1>'|"|`)b\k<ref_1>\s*===\s*a)/).source;
+
+regex.test('a === "b"') // true
+regex.test("'b' === a") // true
+regex.test('a === `b`') // true
+regex.test(`a === 'b"`) // false
+```
+
+### Options
+- capture: boolean - Whole regex is wrapped in regex group. If `capture` is `true` the group will be capturing, otherwise it will be non-capturing. Defaults to `false`.
+- elementsSeparator: string - Separates permutated elements within single permutation. Defaults to `\s*\|\|\s*`.
+- permutationsSeparator: string - Separates permutations. Defaults to `|`.
+
+```js
+permutateRegex(['a', /b/, 'c'], { capture: true }).source === new RegExp(/(a\s*\|\|\s*b\s*\|\|\s*c|b\s*\|\|\s*a\s*\|\|\s*c|c\s*\|\|\s*a\s*\|\|\s*b|a\s*\|\|\s*c\s*\|\|\s*b|b\s*\|\|\s*c\s*\|\|\s*a|c\s*\|\|\s*b\s*\|\|\s*a)/).source
+```
+
+```js
+permutateRegex(['a', /b/, 'c'], { elementsSeparator: ',' }).source === new RegExp(/(?:a,b,c|b,a,c|c,a,b|a,c,b|b,c,a|c,b,a)/).source
+```
+
+```js
+permutateRegex(['a', /b/, 'c'], { permutationsSeparator: '&' }).source === new RegExp(/(?:a\s*\|\|\s*b\s*\|\|\s*c&b\s*\|\|\s*a\s*\|\|\s*c&c\s*\|\|\s*a\s*\|\|\s*b&a\s*\|\|\s*c\s*\|\|\s*b&b\s*\|\|\s*c\s*\|\|\s*a&c\s*\|\|\s*b\s*\|\|\s*a)/).source
 ```

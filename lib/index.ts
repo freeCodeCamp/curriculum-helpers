@@ -181,8 +181,14 @@ function _permutations(permutation: (string | RegExp)[]) {
   return permutations;
 }
 
+const reCaptureGroupName = /\(\?<([\w\d]+)>/g;
+const reBackreferenceGroupName = /\\k<([\w\d]+)>/g;
+
 /**
  * Creates regex matching regular expressions or source strings in any order.
+ * Both names and backreferences of the capturing named groups
+ * will be renamed, to avoid duplicated group names, and to allow
+ * backreferences to refer to correct group.
  * @param {(string | RegExp)[]} regexes
  * @param {Object} [options]
  * @param {boolean} [options.capture=false] If `true`, returned regex will be capturing. Defaults to `false`.
@@ -205,8 +211,14 @@ export function permutateRegex(
 ): RegExp {
   const permutations = _permutations(regexes.map((r) => new RegExp(r).source));
   const source = permutations
-    .map((p) => p.join(elementsSeparator))
+    .map((p, index) =>
+      p
+        .join(elementsSeparator)
+        .replace(reCaptureGroupName, String.raw`(?<$1_${index}>`)
+        .replace(reBackreferenceGroupName, String.raw`\k<$1_${index}>`)
+    )
     .join(permutationsSeparator);
+
   return new RegExp(`(${capture ? "" : "?:"}${source})`);
 }
 
