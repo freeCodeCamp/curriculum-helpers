@@ -5,6 +5,7 @@ const config = {
     // a simple script that does nothing.
     "python/(.*.py)": "<rootDir>/python/__mocks__/mock-script.ts",
   },
+  testEnvironment: "jsdom",
 };
 
 module.exports = config;

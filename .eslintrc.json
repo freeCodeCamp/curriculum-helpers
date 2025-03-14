@@ -1,16 +1,15 @@
 {
   "extends": [
     "xo",
-    "prettier",
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
   "env": {
     "jest": true,
     "node": true
   },
   "rules": {
-    "prettier/prettier": "error",
     "complexity": "off",
     "@typescript-eslint/no-namespace": "off",
     "no-warning-comments": "off",
@@ -25,6 +24,6 @@
       }
     ]
   },
-  "plugins": ["prettier", "@typescript-eslint"],
+  "plugins": ["@typescript-eslint"],
   "parser": "@typescript-eslint/parser"
 }

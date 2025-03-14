@@ -9,3 +9,7 @@ insert_final_newline = true
 
 [*.md]
 trim_trailing_whitespace = false
+
+# White space is important in code examples so we don't want to trim it
+[lib/__fixtures__/curriculum-helpers-javascript.ts]
+trim_trailing_whitespace = false
