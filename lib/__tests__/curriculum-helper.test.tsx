@@ -550,7 +550,7 @@ describe("permutateRegex", () => {
     expect(() =>
       permutateRegex([/messageInput\.value/, /(?<ref>'|"|`)\k<ref>/], {
         elementsSeparator: String.raw`\s*===?\s*`,
-      })
+      }),
     ).not.toThrow();
   });
 

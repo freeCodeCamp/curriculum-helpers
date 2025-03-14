@@ -208,7 +208,7 @@ export function permutateRegex(
     capture?: boolean;
     elementsSeparator?: string;
     permutationsSeparator?: string;
-  } = {}
+  } = {},
 ): RegExp {
   const permutations = _permutations(regexes.map((r) => new RegExp(r).source));
   const source = permutations
@@ -216,7 +216,7 @@ export function permutateRegex(
       p
         .join(elementsSeparator)
         .replace(reCaptureGroupName, String.raw`(?<$1_${index}>`)
-        .replace(reBackreferenceGroupName, String.raw`\k<$1_${index}>`)
+        .replace(reBackreferenceGroupName, String.raw`\k<$1_${index}>`),
     )
     .join(permutationsSeparator);
 
