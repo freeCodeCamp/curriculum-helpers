@@ -113,14 +113,14 @@ regex.test(`a === 'b"`) // false
 - elementsSeparator: string - Separates permutated elements within single permutation. Defaults to `\s*\|\|\s*`.
 - permutationsSeparator: string - Separates permutations. Defaults to `|`.
 
-```js
+```javascript
 permutateRegex(['a', /b/, 'c'], { capture: true }).source === new RegExp(/(a\s*\|\|\s*b\s*\|\|\s*c|b\s*\|\|\s*a\s*\|\|\s*c|c\s*\|\|\s*a\s*\|\|\s*b|a\s*\|\|\s*c\s*\|\|\s*b|b\s*\|\|\s*c\s*\|\|\s*a|c\s*\|\|\s*b\s*\|\|\s*a)/).source
 ```
 
-```js
+```javascript
 permutateRegex(['a', /b/, 'c'], { elementsSeparator: ',' }).source === new RegExp(/(?:a,b,c|b,a,c|c,a,b|a,c,b|b,c,a|c,b,a)/).source
 ```
 
-```js
+```javascript
 permutateRegex(['a', /b/, 'c'], { permutationsSeparator: '&' }).source === new RegExp(/(?:a\s*\|\|\s*b\s*\|\|\s*c&b\s*\|\|\s*a\s*\|\|\s*c&c\s*\|\|\s*a\s*\|\|\s*b&a\s*\|\|\s*c\s*\|\|\s*b&b\s*\|\|\s*c\s*\|\|\s*a&c\s*\|\|\s*b\s*\|\|\s*a)/).source
 ```
