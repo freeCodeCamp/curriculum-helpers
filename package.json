@@ -78,7 +78,10 @@
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
   },
-  "repository": "git@github.com:freeCodeCamp/curriculum-helpers.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/freeCodeCamp/curriculum-helpers.git"
+  },
   "license": "BSD-3-Clause",
   "dependencies": {
     "browserify": "^17.0.0"
