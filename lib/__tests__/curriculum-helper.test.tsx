@@ -70,6 +70,64 @@ describe("RandomMocker", () => {
   });
 });
 
+describe("spyOn", () => {
+  const obj = {
+    method(arg = "", arg2 = "") {
+      return `original${arg}${arg2}`;
+    },
+  };
+
+  it("should return a wrapped function", () => {
+    const spy = helper.spyOn(obj, "method");
+    expect(spy).toBeInstanceOf(Function);
+  });
+
+  it("should spy on the given method", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg");
+    expect(spy.calls).toEqual([["arg"]]);
+  });
+
+  it("should collect multiple calls", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1");
+    obj.method("arg2");
+    expect(spy.calls).toEqual([["arg1"], ["arg2"]]);
+  });
+
+  it("should capture all arguments", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1", "arg2");
+    expect(spy.calls).toEqual([["arg1", "arg2"]]);
+  });
+
+  it("should not modify the returned value", () => {
+    helper.spyOn(obj, "method");
+    const result = obj.method("arg");
+    expect(result).toBe("originalarg");
+  });
+
+  it("should track the return value", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg");
+    expect(spy.returns[0]).toBe("originalarg");
+  });
+
+  it("should track the return value of multiple calls", () => {
+    const spy = helper.spyOn(obj, "method");
+    obj.method("arg1");
+    obj.method("arg2");
+    expect(spy.returns).toEqual(["originalarg1", "originalarg2"]);
+  });
+
+  it("should restore the original method", () => {
+    const spy = helper.spyOn(obj, "method");
+    spy.restore();
+    obj.method("arg");
+    expect(spy.calls).toEqual([]);
+  });
+});
+
 describe("removeWhiteSpace", () => {
   const { removeWhiteSpace } = helper;
   it("returns a string", () => {
@@ -474,5 +532,103 @@ describe("prepTestComponent", () => {
 
     await prepTestComponent(MyComponent);
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe("permutateRegex", () => {
+  it("returns a Regex", () => {
+    const { permutateRegex } = helper;
+
+    expect(permutateRegex([/a/, /b/])).toBeInstanceOf(RegExp);
+    expect(permutateRegex([/a/, "b"])).toBeInstanceOf(RegExp);
+    expect(permutateRegex(["a", "b"])).toBeInstanceOf(RegExp);
+  });
+
+  it("returns regex matching all permutations", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", /c/]);
+
+    expect(regex.test("a||b||c")).toBe(true);
+    expect(regex.test("a||c||b")).toBe(true);
+    expect(regex.test("b||a||c")).toBe(true);
+    expect(regex.test("b||c||a")).toBe(true);
+    expect(regex.test("c||a||b")).toBe(true);
+    expect(regex.test("c||b||a")).toBe(true);
+  });
+
+  it("returns regex not matching invalid permutation", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"]);
+
+    expect(regex.test("")).toBe(false);
+    expect(regex.test("a")).toBe(false);
+    expect(regex.test("a||a")).toBe(false);
+    expect(regex.test("a||a||a")).toBe(false);
+    expect(regex.test("b")).toBe(false);
+    expect(regex.test("b||b")).toBe(false);
+    expect(regex.test("b||b||b")).toBe(false);
+    expect(regex.test("c")).toBe(false);
+    expect(regex.test("c||c")).toBe(false);
+    expect(regex.test("c||c||c")).toBe(false);
+    expect(regex.test("a||b")).toBe(false);
+    expect(regex.test("a||b||a")).toBe(false);
+    expect(regex.test("a||b||b")).toBe(false);
+  });
+
+  it("returns regex using custom elementsSeparator", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { elementsSeparator: "," });
+
+    expect(regex.test("a,b,c")).toBe(true);
+    expect(regex.test("a,c,b")).toBe(true);
+    expect(regex.test("b,a,c")).toBe(true);
+    expect(regex.test("b,c,a")).toBe(true);
+    expect(regex.test("c,a,b")).toBe(true);
+    expect(regex.test("c,b,a")).toBe(true);
+  });
+
+  it("returns capturing regex when capture option is true", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { capture: true });
+
+    expect("b||c||a".match(regex)?.length).toEqual(2);
+    expect("b||c||a".match(regex)?.[1]).toEqual("b||c||a");
+  });
+
+  it("returns not capturing regex when capture option is false", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex(["a", "b", "c"], { capture: false });
+
+    expect("b||c||a".match(regex)?.length).toEqual(1);
+  });
+
+  it("renames capturing named groups to avoid duplicated group names", () => {
+    const { permutateRegex } = helper;
+
+    expect(() =>
+      permutateRegex([/messageInput\.value/, /(?<ref>'|"|`)\k<ref>/], {
+        elementsSeparator: String.raw`\s*===?\s*`,
+      }),
+    ).not.toThrow();
+  });
+
+  it("returns regex correctly backreferrencing the capturing named groups", () => {
+    const { permutateRegex } = helper;
+    const regex = permutateRegex([/a/, /(?<ref>'|"|`)b\k<ref>/], {
+      elementsSeparator: String.raw`\s*===?\s*`,
+    });
+
+    expect(regex.test("a === 'b'")).toBe(true);
+    expect(regex.test("a === `b`")).toBe(true);
+    expect(regex.test('a === "b"')).toBe(true);
+    expect(regex.test("'b' === a")).toBe(true);
+    expect(regex.test("`b` === a")).toBe(true);
+    expect(regex.test('"b" === a')).toBe(true);
+
+    expect(regex.test("a === `b'")).toBe(false);
+    expect(regex.test(`a === "b'`)).toBe(false);
+    expect(regex.test("'b` === a")).toBe(false);
+    expect(regex.test('`b" === a')).toBe(false);
+    expect(regex.test(`'b" === a`)).toBe(false);
   });
 });
