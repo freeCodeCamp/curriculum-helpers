@@ -177,8 +177,8 @@ describe("removeHtmlComments", () => {
 
 describe("extractHTMLElement", () => {
   const { extractHTMLElement } = helper;
-  it("returns an empty string if no head is found", () => {
-    expect(typeof extractHTMLElement("", "head")).toBe("string");
+  it("returns null if no head is found", () => {
+    expect(typeof extractHTMLElement("", "head")).toBe(null);
   });
   it("returns inner HTML string if a head is present", () => {
     expect(extractHTMLElement(htmlExampleHead, "head")).toBe(htmlInnerExample);
