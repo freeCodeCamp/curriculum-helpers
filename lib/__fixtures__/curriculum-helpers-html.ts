@@ -22,9 +22,25 @@ not a comment
 not a comment
 `;
 
+const htmlExampleHead = `
+<link rel="stylesheet" href="styles.css">
+<head>
+  <meta charset="UTF-8" />
+  <title>Piano</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>`;
+
+const htmlInnerExample = `
+  <meta charset="UTF-8" />
+  <title>Piano</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+`;
+
 const testValues = {
   htmlFullExample,
   htmlCodeWithCommentsRemoved,
+  htmlExampleHead,
+  htmlInnerExample,
 };
 
 export default testValues;
