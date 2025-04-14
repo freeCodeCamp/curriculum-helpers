@@ -1,6 +1,5 @@
 import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
-export { Tower, generate } from "./class/tower";
 export { Babeliser } from "./class/babeliser";
 
 declare global {

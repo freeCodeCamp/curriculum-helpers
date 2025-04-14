@@ -76,7 +76,6 @@
     "build": "NODE_ENV=production webpack",
     "clean": "rm -rf dist",
     "lint": "eslint lib --max-warnings 0 && prettier lib --check && tsc --noEmit",
-    "format": "prettier --write lib",
     "test": "jest",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
@@ -87,9 +86,8 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@babel/generator": "7.27.0",
-    "@babel/parser": "7.27.0",
-    "@babel/types": "7.27.0",
+    "@babel/generator": "7.x",
+    "@babel/parser": "7.x",
     "browserify": "^17.0.0"
   }
 }
