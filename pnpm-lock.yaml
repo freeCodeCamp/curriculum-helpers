@@ -8,15 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@babel/generator':
-        specifier: 7.27.0
-        version: 7.27.0
-      '@babel/parser':
-        specifier: 7.27.0
-        version: 7.27.0
-      '@babel/types':
-        specifier: 7.27.0
-        version: 7.27.0
       browserify:
         specifier: ^17.0.0
         version: 17.0.1
@@ -33,9 +24,6 @@ importers:
       '@babel/preset-typescript':
         specifier: 7.27.0
         version: 7.27.0(@babel/core@7.26.10)
-      '@types/babel__generator':
-        specifier: 7.27.0
-        version: 7.27.0
       '@types/jest':
         specifier: 29.5.14
         version: 29.5.14
