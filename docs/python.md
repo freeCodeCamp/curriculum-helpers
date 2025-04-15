@@ -785,7 +785,7 @@ if True:
 x = 1
 """
 
-Node(stmts).get_nth_statement(1).is_equivalent("x = 1") # True
+Node(stmts)[1].is_equivalent("x = 1") # True
 ```
 
 #### `value_is_call`
