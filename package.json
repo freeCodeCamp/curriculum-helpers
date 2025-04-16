@@ -28,8 +28,6 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "7.27.0",
     "@types/jest": "29.5.14",
-    "@babel/types": "7.27.0",
-    "@types/babel__generator": "7.27.0",
     "@typescript-eslint/eslint-plugin": "^6.13.1",
     "@typescript-eslint/parser": "^6.13.1",
     "babel-jest": "^29.7.0",
@@ -76,7 +74,6 @@
     "build": "NODE_ENV=production webpack",
     "clean": "rm -rf dist",
     "lint": "eslint lib --max-warnings 0 && prettier lib --check && tsc --noEmit",
-    "format": "prettier --write lib",
     "test": "jest",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
@@ -87,9 +84,6 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@babel/generator": "7.27.0",
-    "@babel/parser": "7.27.0",
-    "@babel/types": "7.27.0",
     "browserify": "^17.0.0"
   }
 }
