@@ -72,6 +72,74 @@ export function spyOn<Args extends unknown[], Return>(
   return fn;
 }
 
+type Spy = {
+  calls?: unknown[][];
+  returns?: unknown[];
+};
+
+function spyOnFunction<Args, Result, Func extends (...args: Args[]) => Result>(
+  func: Func,
+): Func & Spy {
+  const calls: unknown[][] = [];
+  const returns: unknown[] = [];
+
+  const fn = (...args: Args[]) => {
+    calls.push(args);
+    const result = func(...args);
+    returns.push(result);
+    return result as Result;
+  };
+
+  fn.calls = calls;
+  fn.returns = returns;
+  // This doesn't need to be restored, since it's just a new function (unlike a
+  // normal spy, it's not replacing the original function)
+
+  return fn as Func & Spy;
+}
+
+/** Calling spyOnCallbacks helps with spying on methods that are called with
+ * callbacks. Instead of spying on the method itself, it spies on the callback
+ * functions that are passed to the method.
+ * @param obj - The object to spy on
+ * @param method - The method whose callbacks you want to spy on
+ * @returns A spy function that can be used to track calls to the callbacks
+ */
+export function spyOnCallbacks(
+  obj: Record<
+    string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    any
+  >,
+  method: string,
+) {
+  const original = obj[method];
+  const callbackSpies: Spy[][] = [];
+
+  const fn = (...maybeCallbacks: unknown[]) => {
+    const spies: Spy[] = [];
+    callbackSpies.push(spies);
+    maybeCallbacks.forEach((target) => {
+      if (typeof target === "function") {
+        const spy = spyOnFunction(target as (...args: unknown[]) => unknown);
+        spies.push(spy);
+      } else {
+        spies.push(target as Spy);
+      }
+    });
+    return original(...spies);
+  };
+
+  obj[method] = fn;
+
+  fn.callbackSpies = callbackSpies;
+  fn.restore = () => {
+    obj[method] = original;
+  };
+
+  return fn;
+}
+
 /**
  * Removes every HTML-comment from the string that is provided
  * @param {String} str a HTML-string where the comments need to be removed of

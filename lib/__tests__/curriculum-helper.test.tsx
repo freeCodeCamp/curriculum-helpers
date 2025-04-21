@@ -78,8 +78,12 @@ describe("spyOn", () => {
   };
 
   it("should return a wrapped function", () => {
+    const original = obj.method;
+
     const spy = helper.spyOn(obj, "method");
+
     expect(spy).toBeInstanceOf(Function);
+    expect(spy).not.toBe(original);
   });
 
   it("should spy on the given method", () => {
@@ -125,6 +129,159 @@ describe("spyOn", () => {
     spy.restore();
     obj.method("arg");
     expect(spy.calls).toEqual([]);
+  });
+});
+
+describe("spyOnCallbacks", () => {
+  let obj;
+
+  beforeEach(() => {
+    obj = {
+      method(arg1 = (x: string) => x, arg2 = "", arg3 = (y: string) => y) {
+        return (...args: string[]) => {
+          const cbArg1 = arg1(args[0]);
+          const cbArg2 = arg3(args[1]);
+          return `original${cbArg1}:${arg2}:${cbArg2}`;
+        };
+      },
+    };
+  });
+
+  it("should return a wrapped function", () => {
+    const original = obj.method;
+
+    const spy = helper.spyOnCallbacks(obj, "method");
+
+    expect(spy).toBeInstanceOf(Function);
+    expect(spy).not.toBe(original);
+  });
+
+  it("should show how many times a callback was called", () => {
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+    const cb1 = (x: string) => x;
+    const spiedOnMethod = obj.method(cb1, "arg2");
+
+    spiedOnMethod("one");
+    spiedOnMethod("two");
+    const spies = spyCollection.callbackSpies[0];
+    const firstSpy = spies[0];
+
+    expect(firstSpy.calls).toHaveLength(2);
+  });
+
+  it("should record the arguments passed to any callbacks the method is called with", () => {
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+
+    const cb1 = (x: string) => x;
+    const cb2 = (x: string) => x;
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+
+    spiedOnMethod("one", "two");
+
+    const spies = spyCollection.callbackSpies[0];
+    const firstSpy = spies[0];
+    const secondSpy = spies[1];
+    const thirdSpy = spies[2];
+
+    expect(firstSpy.calls).toEqual([["one"]]);
+    expect(secondSpy.calls).toBeUndefined();
+    expect(thirdSpy.calls).toEqual([["two"]]);
+  });
+
+  it("should track the return values of the callbacks", () => {
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+
+    const cb1 = (x: string) => "cb1: " + x;
+    const cb2 = (x: string) => "cb2: " + x;
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+    const result = spiedOnMethod("one", "two");
+
+    expect(result).toBe("originalcb1: one:arg2:cb2: two");
+    expect(spyCollection.callbackSpies[0][0].returns).toEqual(["cb1: one"]);
+    expect(spyCollection.callbackSpies[0][2].returns).toEqual(["cb2: two"]);
+  });
+
+  it("should collect multiple calls", () => {
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+
+    const cb1 = (x: string) => x;
+    const cb2 = (x: string) => x;
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+    spiedOnMethod("one", "two");
+    spiedOnMethod("three", "four");
+
+    const spies = spyCollection.callbackSpies[0];
+    const firstSpy = spies[0];
+    const secondSpy = spies[1];
+    const thirdSpy = spies[2];
+    expect(firstSpy.calls).toEqual([["one"], ["three"]]);
+    expect(secondSpy.calls).toBeUndefined();
+    expect(thirdSpy.calls).toEqual([["two"], ["four"]]);
+  });
+
+  it("should create a new collection of spies each time the method is called", () => {
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+
+    const cb1 = (x: string) => x;
+    const cb2 = (x: string) => x;
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+    spiedOnMethod("one", "two");
+    const spiedOnMethodTwo = obj.method(cb1, "arg2", cb2);
+    spiedOnMethodTwo("three", "four");
+
+    const firstSpies = spyCollection.callbackSpies[0];
+    const secondSpies = spyCollection.callbackSpies[1];
+
+    expect(firstSpies[0].calls).toEqual([["one"]]);
+    expect(firstSpies[1].calls).toBeUndefined();
+    expect(firstSpies[2].calls).toEqual([["two"]]);
+    expect(secondSpies[0].calls).toEqual([["three"]]);
+    expect(secondSpies[1].calls).toBeUndefined();
+    expect(secondSpies[2].calls).toEqual([["four"]]);
+  });
+
+  it("should call the original callbacks", () => {
+    const cb1 = jest.fn((x: string) => x);
+    const cb2 = jest.fn((x: string) => x);
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+    spiedOnMethod("one", "two");
+
+    expect(cb1).toHaveBeenCalledWith("one");
+    expect(cb2).toHaveBeenCalledWith("two");
+  });
+
+  it("should be compatible with spyOn", () => {
+    const spy = helper.spyOn(obj, "method");
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+    const cb1 = (x: string) => x;
+    const cb2 = (x: string) => x;
+    obj.method(cb1, "arg2", cb2);
+
+    // @ts-expect-error I know it's defined.
+    spy.calls[0][0]("one");
+    // @ts-expect-error I know it's defined.
+    spy.calls[0][2]("two");
+
+    // The other calls are the wrapped functions that spyOnCallbacks creates and
+    // those are indirectly checed by the final two assertions.
+    expect(spy.calls[0][1]).toEqual("arg2");
+    expect(spyCollection.callbackSpies[0][0].calls).toEqual([["one"]]);
+    expect(spyCollection.callbackSpies[0][2].calls).toEqual([["two"]]);
+  });
+
+  it("should restore the original method", () => {
+    const original = obj.method;
+    const spyCollection = helper.spyOnCallbacks(obj, "method");
+    expect(obj.method).not.toBe(original);
+
+    spyCollection.restore();
+    const cb1 = (x: string) => x;
+    const cb2 = (x: string) => x;
+    const spiedOnMethod = obj.method(cb1, "arg2", cb2);
+    spiedOnMethod("one", "two");
+
+    expect(obj.method).toBe(original);
+    expect(spyCollection.callbackSpies).toEqual([]);
   });
 });
 
