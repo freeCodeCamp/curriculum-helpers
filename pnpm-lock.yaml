@@ -55,8 +55,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       jest-ts-webcompat-resolver:
-        specifier: 1.0.0
-        version: 1.0.0(jest-resolve@29.7.0)
+        specifier: 1.0.1
+        version: 1.0.1(jest-resolve@29.7.0)
       lint-staged:
         specifier: 9.5.0
         version: 9.5.0
@@ -2342,8 +2342,8 @@ packages:
     resolution: {integrity: sha512-Rm0BMWtxBcioHr1/OX5YCP8Uov4riHvKPknOGs804Zg9JGZgmIBkbtlxJC/7Z4msKYVbIJtfU+tKb8xlYNfdkw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jest-ts-webcompat-resolver@1.0.0:
-    resolution: {integrity: sha512-BFoaU7LeYqZNnTYEr6iMRf87xdCQntNc/Wk8YpzDBcuz+CIZ0JsTtzuMAMnKiEgTRTC1wRWLUo2RlVjVijBcHQ==}
+  jest-ts-webcompat-resolver@1.0.1:
+    resolution: {integrity: sha512-6rz4gejsOd0SYq5F/DmVGvJlFPmiCqkoXhkNKhyL1Uaqz4GyFMBbGUoBK+koXHThQdq97Ev7XJiyZ8iusMpWgQ==}
     peerDependencies:
       jest-resolve: '*'
 
@@ -6404,7 +6404,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  jest-ts-webcompat-resolver@1.0.0(jest-resolve@29.7.0):
+  jest-ts-webcompat-resolver@1.0.1(jest-resolve@29.7.0):
     dependencies:
       jest-resolve: 29.7.0
 
