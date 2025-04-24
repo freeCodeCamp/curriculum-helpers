@@ -447,6 +447,7 @@ export const python = {
 
 export class CSSHelp {
   doc: Document;
+
   constructor(doc: Document) {
     this.doc = doc;
   }
@@ -469,11 +470,10 @@ export class CSSHelp {
       (ele) => ele?.selectorText === selector,
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
-    style.getPropVal = (prop: string, strip = false) => {
-      return strip
+    style.getPropVal = (prop: string, strip = false) =>
+      strip
         ? style.getPropertyValue(prop).replace(/\s+/g, "")
         : style.getPropertyValue(prop);
-    };
 
     return style;
   }
@@ -651,7 +651,7 @@ export function getFunctionParams(code: string) {
         // Return an object with the parameter name and default value
         return {
           name: parts[0].trim(),
-          defaultValue: defaultValue,
+          defaultValue,
         };
       });
     return params;
