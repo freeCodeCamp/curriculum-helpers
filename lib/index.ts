@@ -170,7 +170,7 @@ export function removeJSComments(codeStr: string): string {
   // TODO: publish type declarations and re-enable eslint
   try {
     return strip(codeStr);
-  } catch (err) {
+  } catch {
     return codeStr;
   }
 }
