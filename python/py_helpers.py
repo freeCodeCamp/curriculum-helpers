@@ -224,6 +224,19 @@ class Node:
     def has_call(self, call):
         return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
 
+    def func_has_call(self, function, name):
+        body = self.find_function(function).find_body()
+        if body:
+            for node in ast.walk(body.tree):
+                fields = node._fields
+                for n, field in enumerate(fields):
+                    if field == "attr" or field == "id" and fields[n + 1] == "ctx":
+                        if getattr(node, field, None) == name and isinstance(
+                            getattr(node, fields[n + 1], None), ast.Load
+                        ):
+                            return True
+        return False
+
     def find_call_args(self):
         if not isinstance(self.tree, ast.Call):
             return []

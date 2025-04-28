@@ -391,6 +391,25 @@ obj.foo("spam")
         self.assertTrue(node.has_call("int('1')"))
         self.assertTrue(node.has_call("obj.foo('spam')"))
 
+    def test_func_has_call(self):
+        code_str = """
+
+srt = sorted([5, 1, 9])
+        
+def spam(lst):
+  return lst.sort()
+
+def eggs(dictionary):
+  if True:
+    k = dictionary.get(key)
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.func_has_call("spam", "sort"))
+        self.assertTrue(node.func_has_call("eggs", "get"))
+        self.assertFalse(node.func_has_call("srt", "sorted"))
+        self.assertFalse(node.func_has_call("func", "sort"))
+
     def test_has_class(self):
         class_str = """
 class Foo:
