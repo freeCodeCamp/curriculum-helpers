@@ -395,6 +395,9 @@ obj.foo("spam")
         code_str = """
 
 srt = sorted([5, 1, 9])
+
+def foo(lst):
+  return sorted(lst)
         
 def spam(lst):
   return lst.sort()
@@ -405,9 +408,10 @@ def eggs(dictionary):
 """
         node = Node(code_str)
 
+        self.assertFalse(node.func_has_call("srt", "sorted"))
+        self.assertTrue(node.func_has_call("foo", "sorted"))
         self.assertTrue(node.func_has_call("spam", "sort"))
         self.assertTrue(node.func_has_call("eggs", "get"))
-        self.assertFalse(node.func_has_call("srt", "sorted"))
         self.assertFalse(node.func_has_call("func", "sort"))
 
     def test_has_class(self):
