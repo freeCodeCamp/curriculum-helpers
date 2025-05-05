@@ -391,7 +391,7 @@ obj.foo("spam")
         self.assertTrue(node.has_call("int('1')"))
         self.assertTrue(node.has_call("obj.foo('spam')"))
 
-    def test_func_has_call(self):
+    def test_block_has_call(self):
         code_str = """
 
 srt = sorted([5, 1, 9])
@@ -408,11 +408,15 @@ def eggs(dictionary):
 """
         node = Node(code_str)
 
-        self.assertFalse(node.func_has_call("srt", "sorted"))
-        self.assertTrue(node.func_has_call("foo", "sorted"))
-        self.assertTrue(node.func_has_call("spam", "sort"))
-        self.assertTrue(node.func_has_call("eggs", "get"))
-        self.assertFalse(node.func_has_call("func", "sort"))
+        self.assertFalse(node.block_has_call("sorted", "srt"))
+        self.assertTrue(node.block_has_call("sorted", "foo"))
+        self.assertTrue(node.block_has_call("sorted"))
+        self.assertTrue(node.block_has_call("sort", "spam"))
+        self.assertFalse(node.block_has_call("sort", "func"))
+        self.assertTrue(node.block_has_call("sort"))
+        self.assertTrue(node.block_has_call("get", "eggs"))
+        self.assertTrue(node.block_has_call("get"))
+        self.assertFalse(node.block_has_call("split"))
 
     def test_has_class(self):
         class_str = """

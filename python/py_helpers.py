@@ -224,8 +224,8 @@ class Node:
     def has_call(self, call):
         return any(node.is_equivalent(call) for node in self._find_all(ast.Expr))
 
-    def func_has_call(self, function, name):
-        body = self.find_function(function).find_body()
+    def block_has_call(self, name, function=None):
+        body = self if function is None else self.find_function(function).find_body()
         if body:
             for node in ast.walk(body.tree):
                 fields = node._fields
