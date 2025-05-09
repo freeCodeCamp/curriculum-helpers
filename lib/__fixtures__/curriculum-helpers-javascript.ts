@@ -67,6 +67,12 @@ const arrowFunction = `const myFunc = name => console.log("Name")`;
 
 const destructuredArgsFunctionDeclaration = `function printFruits({a, b},c = 1, ...rest) {`;
 
+// eslint-disable-next-line no-template-curly-in-string
+const jsCodeTemplateCurlyComment = "const v = /*a*/`/*b*/${/*c*/12}`";
+
+// eslint-disable-next-line no-template-curly-in-string
+const jsCodeTemplateCurlyNoComments = "const v = `/*b*/${12}`";
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -81,6 +87,8 @@ const testValues = {
   letFunction,
   arrowFunction,
   destructuredArgsFunctionDeclaration,
+  jsCodeTemplateCurlyComment, 
+  jsCodeTemplateCurlyNoComments
 };
 
 export default testValues;
