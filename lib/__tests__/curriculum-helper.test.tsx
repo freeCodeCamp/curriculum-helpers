@@ -23,6 +23,8 @@ const {
   jsCodeWithNoArgCall,
   jsCodeWithArgCall,
   jsCodeWithCommentedCall,
+  jsCodeTemplateCurlyComment,
+  jsCodeTemplateCurlyNoComments
 } = jsTestValues;
 
 describe("RandomMocker", () => {
@@ -355,6 +357,11 @@ const foo = "bar";
   it("does not remove a url found in JS code", () => {
     expect(removeJSComments(jsCodeWithUrl)).toBe(jsCodeWithUrlUnchanged);
   });
+
+  it("returns a string with no comments in template expressions", () =>
+  {
+    expect(removeJSComments(jsCodeTemplateCurlyComment)).toBe(jsCodeTemplateCurlyNoComments);
+  })
 });
 
 describe("removeCssComments", () => {
