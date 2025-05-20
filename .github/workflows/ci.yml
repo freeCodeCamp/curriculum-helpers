@@ -56,4 +56,5 @@ jobs:
           python-version: 3.x
 
       - name: Run Tests
-        run: python ./python/py_helpers.test.py
+        run: python ./packages/helpers/python/py_helpers.test.py
+
