@@ -12,8 +12,11 @@ const baseConfig = {
     rules: [
       {
         test: /\.ts$/,
-        include: path.resolve(__dirname, "packages/helpers/lib"),
+        include: path.resolve(__dirname, "packages/helpers/"),
         loader: "ts-loader",
+        options: {
+          projectReferences: true,
+        },
       },
       {
         test: /\.py/,
