@@ -4,7 +4,7 @@ console.info("Building in " + process.env.NODE_ENV + " mode.");
 const baseConfig = {
   mode: process.env.NODE_ENV,
   entry: {
-    index: "./lib/index.ts",
+    index: path.resolve(__dirname, "packages/helpers/lib/index.ts"),
   },
   devtool:
     process.env.NODE_ENV === "production" ? "source-map" : "inline-source-map",
@@ -12,7 +12,7 @@ const baseConfig = {
     rules: [
       {
         test: /\.ts$/,
-        include: path.resolve(__dirname, "lib"),
+        include: path.resolve(__dirname, "packages/helpers/lib"),
         loader: "ts-loader",
       },
       {
