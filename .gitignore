@@ -131,12 +131,12 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# build folder
+# build artifacts
 /dist
+__fixtures__/dist
 
 # mdbook (docs)
 book
 
 # python
 __pycache__
-
