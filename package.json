@@ -13,9 +13,18 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.mjs"
+      "types": "./dist/helpers/types/index.d.ts",
+      "require": "./dist/helpers/assets/index.cjs",
+      "default": "./dist/helpers/assets/index.mjs"
+    },
+    "./helpers.js": {
+      "types": "./dist/helpers/types/index.d.ts",
+      "require": "./dist/helpers/assets/index.cjs",
+      "default": "./dist/helpers/assets/index.mjs"
+    },
+    "./test-runner.js": {
+      "types": "./dist/test-runner/types/index.d.ts",
+      "default": "./dist/test-runner/assets/index.js"
     }
   },
   "types": "./dist/index.d.ts",
