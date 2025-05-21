@@ -1,0 +1,13 @@
+{
+  "extends": "../../base-tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "../../dist/test-runner/types/main",
+    "tsBuildInfoFile": ".tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
+}

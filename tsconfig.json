@@ -1,11 +1,24 @@
 {
-  // The leading / is important to ensure that only the /types folder in the
-  // root directory is included, and not any other /types folders e.g. in
-  // node_modules
-  "include": ["/types/*.d.ts"],
+  "include": [],
+  "files": [],
   "references": [
     {
       "path": "./packages/helpers"
+    },
+    {
+      "path": "./packages/main"
+    },
+    {
+      "path": "./packages/javascript-evaluator"
+    },
+    {
+      "path": "./packages/python-evaluator"
+    },
+    {
+      "path": "./packages/dom-evaluator"
+    },
+    {
+      "path": "./packages/shared"
     }
   ]
 }
