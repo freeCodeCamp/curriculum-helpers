@@ -29,6 +29,7 @@
     "@babel/preset-typescript": "7.27.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.25.1",
+    "@types/chai": "^4.3.20",
     "@types/jest": "29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
@@ -51,6 +52,11 @@
     "typescript-eslint": "^8.31.0",
     "webpack": "5.99.9",
     "webpack-cli": "5.1.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "enzyme>cheerio": "1.0.0-rc.3"
+    }
   },
   "publishConfig": {
     "access": "public"
@@ -75,7 +81,8 @@
     }
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack",
+    "build": "tsc --build --clean && webpack",
+    "build-dev": "webpack --env development",
     "clean": "rm -rf dist",
     "lint": "eslint packages/helpers/lib --max-warnings 0 && prettier packages/helpers/lib --check && tsc --noEmit",
     "test": "jest",
@@ -88,6 +95,22 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "browserify": "^17.0.0"
+    "@sinonjs/fake-timers": "^14.0.0",
+    "@types/enzyme": "^3.10.19",
+    "@types/enzyme-adapter-react-16": "^1.0.9",
+    "@types/jquery": "^3.5.32",
+    "@types/sinonjs__fake-timers": "^8.1.5",
+    "browserify": "^17.0.0",
+    "chai": "4",
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.8",
+    "expect-puppeteer": "^11.0.0",
+    "http-server": "^14.1.1",
+    "jest-environment-puppeteer": "^11.0.0",
+    "jest-puppeteer": "^11.0.0",
+    "jquery": "^3.7.1",
+    "puppeteer": "^24.9.0",
+    "pyodide": "0.23.3",
+    "util": "^0.12.5"
   }
 }
