@@ -13,21 +13,20 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/helpers/types/index.d.ts",
-      "require": "./dist/helpers/assets/index.cjs",
-      "default": "./dist/helpers/assets/index.mjs"
+      "types": "./dist/types/helpers/lib/index.d.ts",
+      "require": "./dist/curriculum-helpers/index.cjs",
+      "default": "./dist/curriculum-helpers/index.mjs"
     },
     "./helpers.js": {
-      "types": "./dist/helpers/types/index.d.ts",
-      "require": "./dist/helpers/assets/index.cjs",
-      "default": "./dist/helpers/assets/index.mjs"
+      "types": "./dist/types/helpers/lib/index.d.ts",
+      "require": "./dist/curriculum-helpers/index.cjs",
+      "default": "./dist/curriculum-helpers/index.mjs"
     },
     "./test-runner.js": {
-      "types": "./dist/test-runner/types/index.d.ts",
-      "default": "./dist/test-runner/assets/index.js"
+      "types": "./dist/types/main/index.d.ts",
+      "default": "./dist/test-runner/index.js"
     }
   },
-  "types": "./dist/index.d.ts",
   "keywords": [
     ""
   ],

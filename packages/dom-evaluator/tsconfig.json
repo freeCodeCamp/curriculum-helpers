@@ -1,9 +1,9 @@
 {
   "extends": "../../base-tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "./",
     "lib": ["dom", "ESNext"],
-    "outDir": "../../dist/test-runner/types/dom-evaluator",
+    "outDir": "../../dist/types/dom-evaluator",
     "tsBuildInfoFile": ".tsbuildinfo"
   },
   "references": [

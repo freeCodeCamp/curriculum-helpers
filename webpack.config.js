@@ -48,7 +48,7 @@ const nodeConfig = (env = {}) => {
         type: "commonjs",
       },
       filename: "index.cjs",
-      path: path.resolve(__dirname, "dist/helpers/assets"),
+      path: path.resolve(__dirname, "dist/curriculum-helpers"),
     },
   };
 };
@@ -70,7 +70,7 @@ const browserConfig = (env = {}) => {
         // type: "commonjs-static",
       },
       filename: "index.mjs",
-      path: path.resolve(__dirname, "dist/helpers/assets"),
+      path: path.resolve(__dirname, "dist/curriculum-helpers"),
     },
   };
 };
@@ -144,8 +144,8 @@ const testRunnerConfig = (env = {}) => {
       // during testing, we need the files to be available for the test server:
       path: isDev
         ? __dirname + "/__fixtures__/dist"
-        : __dirname + "/dist/test-runner/assets",
-        clean: true,
+        : __dirname + "/dist/test-runner",
+      clean: true,
     },
     module: {
       rules: [
