@@ -12,8 +12,8 @@ import {
   Pass,
   TestEvaluator,
   TestEvent,
-} from "../../shared/types/test-evaluator";
-import { ReadyEvent } from "../../shared/types/test-runner";
+} from "../../shared/src/interfaces/test-evaluator";
+import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
