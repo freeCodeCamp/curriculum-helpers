@@ -3,7 +3,8 @@
   "exclude": ["**/__tests__", "**/__fixtures__", "**/__mocks__"],
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "../../dist/types/helpers",
+    "declarationDir": "../../dist/types/helpers",
+    "outDir": "./build",
     "tsBuildInfoFile": ".tsbuildinfo"
   }
 }

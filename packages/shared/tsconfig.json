@@ -3,7 +3,8 @@
   "compilerOptions": {
     "lib": ["DOM", "ESNext"],
     "rootDir": "./",
-    "outDir": "../../dist/types/shared",
+    "declarationDir": "../../dist/types/shared",
+    "outDir": "./build",
     "tsBuildInfoFile": ".tsbuildinfo"
   }
 }

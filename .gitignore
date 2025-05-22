@@ -134,6 +134,7 @@ dist
 # build artifacts
 /dist
 __fixtures__/dist
+packages/*/build
 
 # mdbook (docs)
 book
