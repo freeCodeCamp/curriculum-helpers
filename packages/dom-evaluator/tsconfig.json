@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": "./",
     "lib": ["dom", "ESNext"],
-    "outDir": "../../dist/types/dom-evaluator",
+    "declarationDir": "../../dist/types/dom-evaluator",
+    "outDir": "./build",
     "tsBuildInfoFile": ".tsbuildinfo"
   },
   "references": [

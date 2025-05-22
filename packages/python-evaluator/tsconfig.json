@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": "./",
     "lib": ["WebWorker", "ESNext"],
-    "outDir": "../../dist/types/python-evaluator",
+    "declarationDir": "../../dist/types/python-evaluator",
+    "outDir": "./build",
     "tsBuildInfoFile": ".tsbuildinfo",
     "paths": {
       "pyodide/ffi": ["../../node_modules/pyodide/ffi.d.ts"] // Remove after updating pyodide (later versions correctly export ffi)

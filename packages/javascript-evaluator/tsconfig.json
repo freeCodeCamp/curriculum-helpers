@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": "./",
     "lib": ["WebWorker", "ESNext"],
-    "outDir": "../../dist/types/javascript-evaluator",
+    "declarationDir": "../../dist/types/javascript-evaluator",
+    "outDir": "./build",
     "tsBuildInfoFile": ".tsbuildinfo"
   },
   "references": [
