@@ -2,8 +2,8 @@
   "extends": "../../base-tsconfig.json",
   "compilerOptions": {
     "lib": ["DOM", "ESNext"],
-    "rootDir": "./src",
-    "outDir": "../../dist/test-runner/types/shared",
+    "rootDir": "./",
+    "outDir": "../../dist/types/shared",
     "tsBuildInfoFile": ".tsbuildinfo"
   }
 }

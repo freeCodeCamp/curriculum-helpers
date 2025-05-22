@@ -1,9 +1,9 @@
 {
   "extends": "../../base-tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "./",
     "lib": ["WebWorker", "ESNext"],
-    "outDir": "../../dist/test-runner/types/python-evaluator",
+    "outDir": "../../dist/types/python-evaluator",
     "tsBuildInfoFile": ".tsbuildinfo",
     "paths": {
       "pyodide/ffi": ["../../node_modules/pyodide/ffi.d.ts"] // Remove after updating pyodide (later versions correctly export ffi)
