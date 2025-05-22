@@ -93,7 +93,7 @@
     "build-dev": "webpack --env development",
     "clean": "rm -rf dist",
     "install-puppeteer-browser": "puppeteer browsers install chrome",
-    "lint": "eslint packages/helpers/lib --max-warnings 0 && prettier packages/helpers/lib --check && tsc --noEmit",
+    "lint": "eslint packages/helpers/lib --max-warnings 0 && prettier packages/helpers/lib --check && tsc --build",
     "test": "jest",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
