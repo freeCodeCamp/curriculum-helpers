@@ -8,7 +8,7 @@ const config = {
     "python/(.*.py)":
       "<rootDir>/packages/helpers/python/__mocks__/mock-script.ts",
   },
-  testPathIgnorePatterns: ["dist"],
+  testPathIgnorePatterns: ["dist", "packages\/[^/]*\/build"],
 };
 
 module.exports = config;
