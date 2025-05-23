@@ -1,0 +1,10 @@
+{
+  "extends": "../../base-tsconfig.json",
+  "compilerOptions": {
+    "lib": ["DOM", "ESNext"],
+    "rootDir": "./",
+    "declarationDir": "../../dist/types/shared",
+    "outDir": "./build",
+    "tsBuildInfoFile": ".tsbuildinfo"
+  }
+}
