@@ -545,6 +545,34 @@ ReactDOM.render(JSX, document.getElementById('root'));</script></body>`;
 				expect(result).toEqual({ pass: true });
 			});
 
+      it("should be able to use Enzyme.mount in tests", async () => {
+        const source = `<script src='https://cdnjs.cloudflare.com/ajax/libs/react/16.4.0/umd/react.production.min.js' type='text/javascript'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.4.0/umd/react-dom.production.min.js' type='text/javascript'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.4.0/umd/react-dom-test-utils.production.min.js' type='text/javascript'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.4.0/umd/react-dom-server.browser.production.min.js' type='text/javascript'></script>`;
+
+        const result = await page.evaluate(async (source) => {
+          const runner = await window.FCCSandbox.createTestRunner({
+            source,
+            type: "dom",
+            loadEnzyme: true,
+          });
+          return runner.runTest(
+            `
+const elem = React.createElement(
+  'h1',
+  { className: 'greeting' },
+  'Hello'
+);
+const mocked = Enzyme.mount(elem);
+assert(mocked.find('.greeting').length === 1);
+`,
+          );
+        }, source);
+        expect(result).toEqual({ pass: true });
+      });
+
+
 			it("should be able to use FakeTimers in tests", async () => {
 				const source = `<div id="root"></div><script>
 const waitThenUpdate = async () => {
@@ -615,7 +643,7 @@ assert.equal(clock.now, 1000);
 
 			it("should quickly resolve runAll", async () => {
 				const source = `<script>
-const countDown = () => {				
+const countDown = () => {
 	let count = 0;
 	return new Promise((resolve) => {
 		const interval = setInterval(() => {
@@ -954,7 +982,7 @@ first = input()
 second = input()
 `,
 					});
-					return runner?.runTest(`({ 
+					return runner?.runTest(`({
 	input: ["argle", "bargle"],
   test: () => assert.equal(runPython('first + second'), "arglebargle")
 })`);
@@ -971,7 +999,7 @@ second = input()
 							contents: "test = 'value'",
 						},
 					});
-					return runner?.runTest(`({ 
+					return runner?.runTest(`({
   test: () => assert.equal(runPython('_code'), "test = 'value'")
 })`);
 				});
@@ -983,7 +1011,7 @@ second = input()
 				const result = await page.evaluate(async () => {
 					const runner = window.FCCSandbox.getRunner("python");
 					await runner?.init({});
-					return runner?.runTest(`({ 
+					return runner?.runTest(`({
   test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
 })`);
 				});
@@ -1023,8 +1051,8 @@ pattern = re.compile('l+')
 					await runner?.init({
 						source,
 					});
-					return runner?.runTest(`({ 
-	test: () => assert.equal(runPython('str(pattern)'), "l+") 
+					return runner?.runTest(`({
+	test: () => assert.equal(runPython('str(pattern)'), "l+")
 })`);
 				}, source);
 				expect(result).toEqual({
