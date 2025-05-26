@@ -112,8 +112,6 @@
     "@types/sinonjs__fake-timers": "^8.1.5",
     "browserify": "^17.0.0",
     "chai": "4",
-    "enzyme": "^3.11.0",
-    "enzyme-adapter-react-16": "^1.15.8",
     "expect-puppeteer": "^11.0.0",
     "http-server": "^14.1.1",
     "jest-environment-puppeteer": "^11.0.0",
