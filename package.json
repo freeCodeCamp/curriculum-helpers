@@ -23,9 +23,10 @@
       "default": "./dist/curriculum-helpers/index.mjs"
     },
     "./test-runner.js": {
-      "types": "./dist/types/main/index.d.ts",
+      "types": "./dist/types/main/src/index.d.ts",
       "default": "./dist/test-runner/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "keywords": [
     ""
