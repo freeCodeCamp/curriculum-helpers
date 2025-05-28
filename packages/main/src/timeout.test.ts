@@ -9,7 +9,7 @@ describe("Worker Timeouts", () => {
 function run() {return 1}`;
 
 				const timeoutResult = await page.evaluate(async (source) => {
-					const runner = await window.FCCSandbox.createTestRunner({
+					const runner = await window.FCCTestRunner.createTestRunner({
 						source,
 						type: "javascript",
 						code: {
@@ -20,7 +20,7 @@ function run() {return 1}`;
 				}, source);
 
 				const result = await page.evaluate(async () => {
-					const runner = window.FCCSandbox.getRunner("javascript");
+					const runner = window.FCCTestRunner.getRunner("javascript");
 					return runner?.runTest("assert.equal(run(), 1);", 100);
 				});
 
@@ -41,7 +41,7 @@ loop();
 `;
 
 				const timeoutResult = await page.evaluate(async (source) => {
-					const runner = await window.FCCSandbox.createTestRunner({
+					const runner = await window.FCCTestRunner.createTestRunner({
 						source,
 						type: "javascript",
 						code: {
@@ -61,7 +61,7 @@ loop();
 		describe("Python", () => {
 			beforeAll(async () => {
 				await page.evaluate(async () => {
-					await window.FCCSandbox.createTestRunner({
+					await window.FCCTestRunner.createTestRunner({
 						type: "python",
 						code: {
 							contents: "",
@@ -80,7 +80,7 @@ def run():
 	return 1
 `;
 				const timeoutResult = await page.evaluate(async (source) => {
-					const runner = window.FCCSandbox.getRunner("python");
+					const runner = window.FCCTestRunner.getRunner("python");
 					await runner?.init({
 						code: {
 							contents: "",
@@ -97,7 +97,7 @@ def run():
 				}, source);
 
 				const result = await page.evaluate(async () => {
-					const runner = window.FCCSandbox.getRunner("python");
+					const runner = window.FCCTestRunner.getRunner("python");
 					return runner?.runTest(
 						`({
 						test: () => assert.equal(runPython('run()'), 1)
@@ -121,7 +121,7 @@ while True:
 	pass
 `;
 				const result = await page.evaluate(async (source) => {
-					const runner = window.FCCSandbox.getRunner("python");
+					const runner = window.FCCTestRunner.getRunner("python");
 					await runner?.init({
 						code: {
 							contents: "",

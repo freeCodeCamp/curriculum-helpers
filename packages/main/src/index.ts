@@ -2,11 +2,11 @@ import { DOMTestRunner, WorkerTestRunner } from "./test-runner";
 
 declare global {
 	interface Window {
-		FCCSandbox: FCCSandbox;
+		FCCTestRunner: FCCTestRunner;
 	}
 }
 
-class FCCSandbox {
+class FCCTestRunner {
 	#DOMRunner: DOMTestRunner | null;
 	#javascriptRunner: WorkerTestRunner | null;
 	#pythonRunner: WorkerTestRunner | null;
@@ -85,4 +85,4 @@ class FCCSandbox {
 	}
 }
 
-window.FCCSandbox = new FCCSandbox();
+window.FCCTestRunner = new FCCTestRunner();
