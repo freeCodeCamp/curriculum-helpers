@@ -6,13 +6,13 @@ describe("JavascriptTestEvaluator", () => {
 	let evaluator: JavascriptTestEvaluator;
 
 	beforeEach(() => {
-		jest.spyOn(console, "error").mockImplementation(jest.fn());
+		vi.spyOn(console, "error").mockImplementation(vi.fn());
 		evaluator = new JavascriptTestEvaluator();
 		evaluator.init({ code: {}, source: "" });
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe("runTest", () => {
@@ -136,7 +136,7 @@ const x = 1;
 
 		// This is probably behavior we want, but it's not how the client works at
 		// the moment.
-		it.failing("should NOT handle async sources (yet)", async () => {
+		it.fails("should NOT handle async sources (yet)", async () => {
 			evaluator.init({
 				code: {},
 				source: `let delay = () => new Promise((resolve) => setTimeout(resolve, 10));

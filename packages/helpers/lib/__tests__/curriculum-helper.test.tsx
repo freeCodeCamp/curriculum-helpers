@@ -245,8 +245,8 @@ describe("spyOnCallbacks", () => {
   });
 
   it("should call the original callbacks", () => {
-    const cb1 = jest.fn((x: string) => x);
-    const cb2 = jest.fn((x: string) => x);
+    const cb1 = vi.fn((x: string) => x);
+    const cb2 = vi.fn((x: string) => x);
     const spiedOnMethod = obj.method(cb1, "arg2", cb2);
     spiedOnMethod("one", "two");
 
@@ -660,7 +660,7 @@ describe("prepTestComponent", () => {
   afterEach(() => {
     delete globalThis.React;
     delete globalThis.ReactDOM;
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("should return an HTML element", async () => {
@@ -689,7 +689,7 @@ describe("prepTestComponent", () => {
 
   it("should not log any errors to the console", async () => {
     const { prepTestComponent } = helper;
-    const spy = jest.spyOn(console, "error").mockImplementation();
+    const spy = vi.spyOn(console, "error").mockImplementation();
 
     await prepTestComponent(MyComponent);
     expect(spy).not.toHaveBeenCalled();

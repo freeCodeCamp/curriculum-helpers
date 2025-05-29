@@ -12,13 +12,13 @@ describe("DOMTestEvaluator", () => {
 	let evaluator: DOMTestEvaluator;
 
 	beforeEach(async () => {
-		jest.spyOn(console, "error").mockImplementation(jest.fn());
+		vi.spyOn(console, "error").mockImplementation(vi.fn());
 		evaluator = new DOMTestEvaluator();
 		await evaluator.init({ code: {} });
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	describe("runTest", () => {

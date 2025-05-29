@@ -1,5 +1,4 @@
-import "jest-puppeteer";
-import "expect-puppeteer";
+import "vitest-environment-puppeteer";
 
 describe("Test Runner", () => {
 	beforeAll(async () => {
@@ -208,7 +207,7 @@ describe("Test Runner", () => {
 				});
 
 				it("should console.error non-chai errors thrown in the test", async () => {
-					const spy = jest.fn();
+					const spy = vi.fn();
 					page.once("console", (msg) => {
 						spy({ type: msg.type(), text: msg.text() });
 					});
@@ -762,7 +761,7 @@ const getFive = () => 5;
 				{ method: "alert" },
 				{ method: "confirm" },
 			])("should handle calls to window.$method", async ({ method }) => {
-				const consoleSpy = jest.fn();
+				const consoleSpy = vi.fn();
 
 				page.once("console", (msg) => {
 					consoleSpy(msg.text());

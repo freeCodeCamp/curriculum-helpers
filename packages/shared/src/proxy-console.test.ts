@@ -22,7 +22,7 @@ describe("proxy-console", () => {
 	});
 
 	afterEach(() => {
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it("should replace console methods when .on is called", () => {
@@ -49,7 +49,7 @@ describe("proxy-console", () => {
 	it.each(levelsForEach)(
 		"should proxy to the original console.$level",
 		({ level }) => {
-			const logSpy = jest.spyOn(window.console, level).mockImplementation();
+			const logSpy = vi.spyOn(window.console, level).mockImplementation();
 			const proxy = new ProxyConsole(window.console);
 
 			proxy.on();
@@ -70,8 +70,8 @@ describe("proxy-console", () => {
 		});
 
 		it("should return all the calls recorded while proxying", () => {
-			jest.spyOn(window.console, "log").mockImplementation();
-			jest.spyOn(window.console, "warn").mockImplementation();
+			vi.spyOn(window.console, "log").mockImplementation();
+			vi.spyOn(window.console, "warn").mockImplementation();
 			const proxy = new ProxyConsole(window.console);
 			proxy.on();
 
@@ -86,7 +86,7 @@ describe("proxy-console", () => {
 		});
 
 		it("should clear the calls after flushing", () => {
-			jest.spyOn(window.console, "log").mockImplementation();
+			vi.spyOn(window.console, "log").mockImplementation();
 			const proxy = new ProxyConsole(window.console);
 			proxy.on();
 
