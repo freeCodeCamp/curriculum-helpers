@@ -1,0 +1,32 @@
+{
+  "name": "@freecodecamp/dom-evaluator",
+  "version": "4.1.0",
+  "description": "Script to evaluate tests in HTML documents.",
+  "homepage": "https://freecodecamp.org",
+  "author": {
+    "name": "freeCodeCamp.org",
+    "email": "team@freecodecamp.org",
+    "url": "https://freecodecamp.org"
+  },
+  "keywords": [
+    ""
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "pnpm": ">= 10"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/freeCodeCamp/curriculum-helpers.git"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "enzyme": "^3.11.0",
+    "enzyme-adapter-react-16": "^1.15.8",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0"
+  }
+}
