@@ -16,4 +16,6 @@ export default async (globalConfig) => {
   }
 
   await puppeteerEnv.setup(globalConfig);
+
+  return puppeteerEnv.teardown;
 };
