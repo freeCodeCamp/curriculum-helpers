@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "target": "ES2024"
+    "target": "ES2024",
+    "types": ["vitest/globals"]
   }
 }

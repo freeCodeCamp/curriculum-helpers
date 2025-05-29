@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+// @vitest-environment jsdom
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -689,7 +687,7 @@ describe("prepTestComponent", () => {
 
   it("should not log any errors to the console", async () => {
     const { prepTestComponent } = helper;
-    const spy = vi.spyOn(console, "error").mockImplementation();
+    const spy = vi.spyOn(console, "error").mockImplementation(vi.fn());
 
     await prepTestComponent(MyComponent);
     expect(spy).not.toHaveBeenCalled();

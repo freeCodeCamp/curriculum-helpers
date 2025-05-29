@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+// @vitest-environment jsdom
 
 import { ProxyConsole } from "./proxy-console";
 
@@ -49,7 +47,7 @@ describe("proxy-console", () => {
 	it.each(levelsForEach)(
 		"should proxy to the original console.$level",
 		({ level }) => {
-			const logSpy = vi.spyOn(window.console, level).mockImplementation();
+			const logSpy = vi.spyOn(window.console, level).mockImplementation(vi.fn());
 			const proxy = new ProxyConsole(window.console);
 
 			proxy.on();
@@ -70,8 +68,8 @@ describe("proxy-console", () => {
 		});
 
 		it("should return all the calls recorded while proxying", () => {
-			vi.spyOn(window.console, "log").mockImplementation();
-			vi.spyOn(window.console, "warn").mockImplementation();
+			vi.spyOn(window.console, "log").mockImplementation(vi.fn());
+			vi.spyOn(window.console, "warn").mockImplementation(vi.fn());
 			const proxy = new ProxyConsole(window.console);
 			proxy.on();
 
@@ -86,7 +84,7 @@ describe("proxy-console", () => {
 		});
 
 		it("should clear the calls after flushing", () => {
-			vi.spyOn(window.console, "log").mockImplementation();
+			vi.spyOn(window.console, "log").mockImplementation(vi.fn());
 			const proxy = new ProxyConsole(window.console);
 			proxy.on();
 

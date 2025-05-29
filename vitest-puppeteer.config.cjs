@@ -1,4 +1,4 @@
-// this is enabled by jest-puppeteer in CI, but we're using it locally so both
+// this is enabled by vitest-puppeteer in CI, but we're using it locally so both
 // environments behave the same way
 module.exports = {
 	launch: {

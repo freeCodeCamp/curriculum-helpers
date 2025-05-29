@@ -1,6 +1,4 @@
-/**
- * @jest-environment jsdom
- */
+// @vitest-environment jsdom
 import { cssString } from "../__fixtures__/curriculum-helper-css";
 import { CSSHelp } from "../index";
 
