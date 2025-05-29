@@ -457,13 +457,15 @@ describe("Test Runner", () => {
 					return await runner.runTest(
 						"async () => await document.getElementById('audio').play()",
 					);
-				}, source);
+				}, source)
 
 				// If it were unable to play, it would throw "play() failed because the
-				// user didn't interact with the document first". The following error
-				// only happens because it does try to play.
+				// user didn't interact with the document first". The following errors
+				// only happen because it does try to play. There are two possible
+				// errors I think because it depends if the audio file has been loaded
+				// or not.
 				expect(result).toEqual({
-					err: { message: "The element has no supported sources." },
+					err: { message: expect.stringMatching(/The element has no supported sources.|Failed to load because no supported source was found./) },
 				});
 			});
 
