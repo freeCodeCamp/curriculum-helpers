@@ -6,7 +6,7 @@ declare global {
 	}
 }
 
-class FCCTestRunner {
+export class FCCTestRunner {
 	#DOMRunner: DOMTestRunner | null;
 	#javascriptRunner: WorkerTestRunner | null;
 	#pythonRunner: WorkerTestRunner | null;
