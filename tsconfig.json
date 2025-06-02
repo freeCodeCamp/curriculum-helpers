@@ -1,15 +1,24 @@
 {
-  "exclude": ["**/__tests__", "**/__fixtures__", "**/__mocks__"],
-  "include": ["packages", "declarations.d.ts"],
-  "compilerOptions": {
-    "module": "ES6",
-    "target": "ES2019",
-    "outDir": "./dist",
-    "sourceMap": true,
-    "esModuleInterop": true,
-    "declaration": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true
-  }
+  "include": [],
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/helpers"
+    },
+    {
+      "path": "./packages/main"
+    },
+    {
+      "path": "./packages/javascript-evaluator"
+    },
+    {
+      "path": "./packages/python-evaluator"
+    },
+    {
+      "path": "./packages/dom-evaluator"
+    },
+    {
+      "path": "./packages/shared"
+    }
+  ]
 }

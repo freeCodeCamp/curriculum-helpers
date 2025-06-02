@@ -1,0 +1,18 @@
+{
+  "extends": "../../base-tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "lib": ["WebWorker", "ESNext"],
+    "declarationDir": "../../dist/types/javascript-evaluator",
+    "outDir": "./build",
+    "tsBuildInfoFile": ".tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../helpers"
+    }
+  ]
+}
