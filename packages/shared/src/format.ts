@@ -30,5 +30,9 @@ export function format(x: unknown): string {
     return x.length === 0 ? "NodeList []" : `NodeList(${x.length}) [...]`;
   }
 
+  if (x instanceof Error) {
+    return `${x.name}: ${x.message}`;
+  }
+
   return inspect(x);
 }
