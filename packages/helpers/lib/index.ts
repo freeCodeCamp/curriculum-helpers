@@ -87,7 +87,7 @@ function spyOnFunction<Args, Result, Func extends (...args: Args[]) => Result>(
     calls.push(args);
     const result = func(...args);
     returns.push(result);
-    return result as Result;
+    return result;
   };
 
   fn.calls = calls;
@@ -106,11 +106,7 @@ function spyOnFunction<Args, Result, Func extends (...args: Args[]) => Result>(
  * @returns A spy function that can be used to track calls to the callbacks
  */
 export function spyOnCallbacks(
-  obj: Record<
-    string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    any
-  >,
+  obj: Record<string, (...args: unknown[]) => unknown>,
   method: string,
 ) {
   const original = obj[method];
@@ -127,6 +123,7 @@ export function spyOnCallbacks(
         spies.push(target as Spy);
       }
     });
+
     return original(...spies);
   };
 
@@ -357,11 +354,14 @@ export async function prepTestComponent(
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const testDiv = document.createElement("div");
   // @ts-expect-error the React version is determined at runtime so we can't define the types here
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const createdElement = globalThis.React?.createElement(component, props);
 
   // @ts-expect-error or here
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/require-await
   await globalThis.React?.act(async () => {
-    // @ts-expect-error Same for ReactDOM as for React
+    // @ts-expect-error or here
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     globalThis.ReactDOM?.createRoot(testDiv).render(createdElement);
   });
   return testDiv;

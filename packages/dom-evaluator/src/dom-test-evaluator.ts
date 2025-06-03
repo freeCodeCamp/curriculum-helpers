@@ -1,3 +1,4 @@
+/* eslint-disable no-eval */
 import jQuery from "jquery";
 import * as helpers from "../../helpers/lib";
 import FakeTimers from "@sinonjs/fake-timers";
@@ -46,7 +47,7 @@ window.$ = jQuery;
 window.__FakeTimers = FakeTimers;
 window.assert = chai.assert;
 
-// localStorage is not accessible in a sandboxed iframe, so we need to mock it
+// Local storage is not accessible in a sandboxed iframe, so we need to mock it
 Object.defineProperty(window, "localStorage", {
   value: new MockLocalStorage(),
 });
@@ -62,10 +63,12 @@ export class DOMTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
   #flushLogs: ReturnType<typeof createLogFlusher>;
+
   constructor(proxyConsole: ProxyConsole = new ProxyConsole(window.console)) {
     this.#proxyConsole = proxyConsole;
     this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }
+
   async init(opts: InitTestFrameOptions) {
     removeTestScripts();
     const codeObj = opts.code;
@@ -91,13 +94,14 @@ export class DOMTestEvaluator implements TestEvaluator {
     // Hardcode Deep Freeze dependency
     const DeepFreeze = (o: Record<string, unknown>) => {
       Object.freeze(o);
-      Object.getOwnPropertyNames(o).forEach(function (prop) {
+      Object.getOwnPropertyNames(o).forEach((prop) => {
         if (
-          Object.prototype.hasOwnProperty.call(o, prop) &&
+          Object.hasOwn(o, prop) &&
           o[prop] !== null &&
           (typeof o[prop] === "object" || typeof o[prop] === "function") &&
           !Object.isFrozen(o[prop])
         ) {
+          // eslint-disable-next-line new-cap
           DeepFreeze(o[prop] as Record<string, unknown>);
         }
       });
@@ -105,11 +109,9 @@ export class DOMTestEvaluator implements TestEvaluator {
     };
 
     const __helpers = helpers;
-    /* eslint-enable @typescript-eslint/no-unused-vars */
 
     let Enzyme;
     if (opts.loadEnzyme) {
-      /* eslint-disable prefer-const */
       let Adapter16;
 
       [{ default: Enzyme }, { default: Adapter16 }] = await Promise.all([
@@ -120,17 +122,12 @@ export class DOMTestEvaluator implements TestEvaluator {
       ]);
 
       Enzyme.configure({ adapter: new Adapter16() });
-      /* eslint-enable prefer-const */
     }
 
     this.#runTest = async function (testString: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
-      // uncomment the following line to inspect
-      // the frame-runner as it runs tests
-      // make sure the dev tools console is open
-      // debugger;
       try {
-        // eval test string to actual JavaScript
+        // Eval test string to actual JavaScript
         // This return can be a function
         // i.e. function() { assert(true, 'happy coding'); }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -139,13 +136,14 @@ export class DOMTestEvaluator implements TestEvaluator {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           await test();
         }
+
         return { pass: true, ...this.#flushLogs() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
 
         const error = err as Fail["err"];
-        // to provide useful debugging information when debugging the tests, we
+        // To provide useful debugging information when debugging the tests, we
         // have to extract the message, stack and, if they exist, expected and
         // actual before returning
         return {
@@ -166,7 +164,7 @@ export class DOMTestEvaluator implements TestEvaluator {
   }
 
   async runTest(test: string) {
-    return await this.#runTest!(test);
+    return this.#runTest!(test);
   }
 
   async handleMessage(
@@ -189,5 +187,6 @@ onmessage = function (e: TestEvent | InitEvent<InitTestFrameOptions>) {
   if (e.source !== self.parent) {
     return;
   }
+
   void evaluator.handleMessage(e);
 };

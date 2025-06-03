@@ -123,7 +123,7 @@ const x = 1;
     it("should be able to declare variables in the test that are already declared in the source", async () => {
       evaluator.init({ code: {}, source: "const x = 1; const y = 2;" });
 
-      // if you naively eval the source + test, that would be
+      // If you naively eval the source + test, that would be
       //
       // `const x = 1; const y = 2; const x = 2; assert.equal(y, 2)`
       //

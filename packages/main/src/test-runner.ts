@@ -32,9 +32,11 @@ const getFullAssetPath = (assetPath = "/dist/") => {
   if (!isAbsolute) {
     assetPath = "/" + assetPath;
   }
+
   if (!hasTrailingSlash) {
     assetPath += "/";
   }
+
   return assetPath;
 };
 
@@ -67,6 +69,7 @@ const hideFrame = (iframe: HTMLIFrameElement) => {
 export class DOMTestRunner implements Runner {
   #testEvaluator: HTMLIFrameElement;
   #script: string;
+
   #createTestEvaluator({ assetPath, script }: RunnerConfig) {
     const iframe = document.createElement("iframe");
     iframe.sandbox.add("allow-scripts", "allow-forms");
@@ -86,7 +89,7 @@ export class DOMTestRunner implements Runner {
     this.#script = scriptHTML;
   }
 
-  // rather than trying to create an async constructor, we'll use an init method
+  // Rather than trying to create an async constructor, we'll use an init method
   async init(opts: InitTestFrameOptions) {
     const { hooks } = opts;
     const hooksScript = hooks?.beforeAll
@@ -100,6 +103,7 @@ ${hooks.beforeAll}
         this.#testEvaluator.removeEventListener("load", listener);
         resolve(true);
       };
+
       this.#testEvaluator.addEventListener("load", listener);
     });
 
@@ -149,6 +153,7 @@ ${opts.source}`;
           resolve(event.data.value);
         }
       };
+
       window.addEventListener("message", listener);
     });
 
@@ -167,6 +172,7 @@ export class WorkerTestRunner implements Runner {
   #testEvaluator: Worker;
   #opts: InitWorkerOptions | null = null;
   #scriptUrl = "";
+
   #createTestEvaluator({ assetPath, script }: RunnerConfig) {
     this.#scriptUrl = getFullAssetPath(assetPath) + script;
     return new Worker(this.#scriptUrl);
@@ -185,6 +191,7 @@ export class WorkerTestRunner implements Runner {
           resolve(true);
         }
       };
+
       this.#testEvaluator.addEventListener("message", listener);
     });
 
@@ -204,6 +211,7 @@ export class WorkerTestRunner implements Runner {
       await this.init(this.#opts);
     }
   }
+
   async runTest(test: string, timeout = 5000) {
     let terminateTimeoutId: ReturnType<typeof setTimeout> | undefined;
     const terminate = new Promise<Fail>((resolve) => {
@@ -220,6 +228,7 @@ export class WorkerTestRunner implements Runner {
         // TODO: differentiate between messages
         resolve(event.data.value);
       };
+
       this.#testEvaluator.addEventListener("message", listener);
     });
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-eval */
 // We have to specify pyodide.js because we need to import that file (not .mjs)
 // and 'import' defaults to .mjs
 import { loadPyodide, type PyodideInterface } from "pyodide/pyodide.js";
@@ -26,7 +27,7 @@ type EvaluatedTeststring = {
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
-  return !!raw && typeof raw == "object" && "toJs" in raw;
+  return !!raw && typeof raw === "object" && "toJs" in raw;
 }
 
 const serialize = (obj: unknown) =>
@@ -38,6 +39,7 @@ class PythonTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
   #flushLogs: ReturnType<typeof createLogFlusher>;
+
   constructor(proxyConsole: ProxyConsole = new ProxyConsole(self.console)) {
     this.#proxyConsole = proxyConsole;
     this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
@@ -51,7 +53,7 @@ class PythonTestEvaluator implements TestEvaluator {
       /* eslint-disable @typescript-eslint/no-unused-vars */
       const editableContents = (opts.code?.editableContents ?? "").slice();
 
-      const assert = chai.assert;
+      const { assert } = chai;
       const __helpers = helpers;
 
       // Create fresh globals for each test
@@ -61,7 +63,7 @@ class PythonTestEvaluator implements TestEvaluator {
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
       try {
-        // eval test string to get the dummy input and actual test
+        // Eval test string to get the dummy input and actual test
         const evaluatedTestString = await new Promise<unknown>(
           (resolve, reject) => {
             try {
@@ -139,7 +141,7 @@ class PythonTestEvaluator implements TestEvaluator {
         const expected = serialize((err as { expected: unknown }).expected);
         const actual = serialize((err as { actual: unknown }).actual);
 
-        // to provide useful debugging information when debugging the tests, we
+        // To provide useful debugging information when debugging the tests, we
         // have to extract the message, stack and, if they exist, expected and
         // actual before returning
         return {
@@ -160,7 +162,7 @@ class PythonTestEvaluator implements TestEvaluator {
   }
 
   async #setupPyodide() {
-    // loading pyodide is expensive, so we use the cached version if possible.
+    // Loading pyodide is expensive, so we use the cached version if possible.
     if (this.#pyodide) return this.#pyodide;
 
     const pyodide = await loadPyodide({
@@ -187,7 +189,7 @@ class PythonTestEvaluator implements TestEvaluator {
   }
 
   async runTest(test: string) {
-    return await this.#runTest!(test);
+    return this.#runTest!(test);
   }
 
   async handleMessage(
