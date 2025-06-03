@@ -6,8 +6,8 @@ function simpleFun() {
   var x = "y";
 }
 
-/* format uses util.inspect to do almost everything, the tests are just there
-to warn us if util.inspect ever changes */
+/* The format function uses util.inspect to do almost everything, the tests are
+just there to warn us if util.inspect ever changes */
 describe("format", () => {
   beforeEach(() => {
     document.body.innerHTML = "";

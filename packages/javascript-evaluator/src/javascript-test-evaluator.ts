@@ -1,3 +1,4 @@
+/* eslint-disable no-eval */
 import { assert } from "chai";
 
 import * as curriculumHelpers from "../../helpers/lib";
@@ -95,7 +96,7 @@ ${test};`);
   }
 
   async runTest(test: string) {
-    return await this.#runTest!(test);
+    return this.#runTest!(test);
   }
 
   async handleMessage(

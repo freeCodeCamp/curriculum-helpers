@@ -11,10 +11,12 @@ export default tseslint.config(
       "docs/tools/",
       "theme/",
       "**/webpack.config.js",
+      "**/build",
       // TODO: lint fixtures and test, but make sure they don't end up in the
       // bundle
       "**/__fixtures__",
       "**/__tests__",
+      "**/__mocks__",
     ],
   },
   {
@@ -22,6 +24,7 @@ export default tseslint.config(
       xo,
       js.configs.recommended,
       tseslint.configs.recommended,
+      tseslint.configs.recommendedTypeChecked,
       prettier,
     ],
     languageOptions: {
@@ -34,6 +37,8 @@ export default tseslint.config(
       complexity: "off",
       "@typescript-eslint/no-namespace": "off",
       "no-warning-comments": "off",
+      "no-implicit-coercion": "off",
+      "no-void": ["error", { allowAsStatement: true }],
 
       camelcase: [
         "warn",

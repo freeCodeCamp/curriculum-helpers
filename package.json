@@ -95,7 +95,7 @@
     "clean": "rm -rf dist && rm -rf __fixtures__/dist && pnpm clean:ts",
     "clean:ts": "tsc --build --clean",
     "install-puppeteer-browser": "puppeteer browsers install chrome",
-    "lint": "eslint packages/helpers/lib --max-warnings 0 && prettier --check . && tsc --build",
+    "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
     "format": "prettier --write .",
     "test": "vitest",
     "prepublishOnly": "pnpm clean && pnpm build",
