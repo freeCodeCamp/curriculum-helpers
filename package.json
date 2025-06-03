@@ -60,7 +60,7 @@
   },
   "pnpm": {
     "overrides": {
-      "enzyme>cheerio": "1.0.0-rc.3"
+      "enzyme>cheerio": "1.0.0"
     },
     "onlyBuiltDependencies": [
       "esbuild",
