@@ -3,7 +3,7 @@ const __helpers = {
     getDef: (code, functionName) => {
       const regex = new RegExp(
         `^(?<function_indentation> *?)def +${functionName} *\\((?<function_parameters>[^\\)]*)\\)\\s*:\\n(?<function_body>.*?)(?=\\n\\k<function_indentation>[\\w#]|$)`,
-        "ms"
+        "ms",
       );
 
       const matchedCode = regex.exec(code);
@@ -13,7 +13,7 @@ const __helpers = {
 
         const functionIndentationSansNewLine = function_indentation.replace(
           /\n+/,
-          ""
+          "",
         );
         return {
           def: matchedCode[0],
@@ -33,7 +33,7 @@ const __helpers = {
 
       const regex = new RegExp(
         `^(?<block_indentation> *?)(?<block_condition>${escapedBlockPattern})\\s*:\\n(?<block_body>.*?)(?=\\n\\k<block_indentation>[\\w#]|$)`,
-        "ms"
+        "ms",
       );
 
       const matchedCode = regex.exec(code);
@@ -44,7 +44,7 @@ const __helpers = {
 
         const blockIndentationSansNewLine = block_indentation.replace(
           /\n+/g,
-          ""
+          "",
         );
         return {
           block_body,

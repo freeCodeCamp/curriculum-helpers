@@ -27,7 +27,7 @@ function get_playground_language(playground) {
     return Promise.race([
       fetch(url, options),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), timeout)
+        setTimeout(() => reject(new Error("timeout")), timeout),
       ),
     ]);
   }
@@ -49,7 +49,7 @@ function get_playground_language(playground) {
         // get list of crates available in the rust playground
         let playground_crates = response.crates.map((item) => item["id"]);
         playgrounds.forEach((block) =>
-          handle_crate_list_update(block, playground_crates)
+          handle_crate_list_update(block, playground_crates),
         );
       });
   }
@@ -164,7 +164,7 @@ function get_playground_language(playground) {
         .catch(
           (error) =>
             (result_block.innerText =
-              "Playground Communication: " + error.message)
+              "Playground Communication: " + error.message),
         );
     } else {
       try {
@@ -274,15 +274,15 @@ function get_playground_language(playground) {
   });
 
   // Add playground class to code block parents
-  Array.from(document.querySelectorAll("code.editable")).forEach(function (
-    editable_code
-  ) {
-    editable_code.parentNode.classList.add("playground");
-  });
+  Array.from(document.querySelectorAll("code.editable")).forEach(
+    function (editable_code) {
+      editable_code.parentNode.classList.add("playground");
+    },
+  );
   Array.from(document.querySelectorAll("code.mdbook-runnable")).forEach(
     (editable_code) => {
       editable_code.parentNode.classList.add("playground");
-    }
+    },
   );
 
   if (window.playground_copyable) {
@@ -308,57 +308,57 @@ function get_playground_language(playground) {
   }
 
   // Process playground code blocks
-  Array.from(document.querySelectorAll(".playground")).forEach(function (
-    pre_block
-  ) {
-    // Add play button
-    var buttons = pre_block.querySelector(".buttons");
-    if (!buttons) {
-      buttons = document.createElement("div");
-      buttons.className = "buttons";
-      pre_block.insertBefore(buttons, pre_block.firstChild);
-    }
+  Array.from(document.querySelectorAll(".playground")).forEach(
+    function (pre_block) {
+      // Add play button
+      var buttons = pre_block.querySelector(".buttons");
+      if (!buttons) {
+        buttons = document.createElement("div");
+        buttons.className = "buttons";
+        pre_block.insertBefore(buttons, pre_block.firstChild);
+      }
 
-    var runCodeButton = document.createElement("button");
-    runCodeButton.className = "fa fa-play play-button";
-    runCodeButton.hidden = true;
-    runCodeButton.title = "Run this code";
-    runCodeButton.setAttribute("aria-label", runCodeButton.title);
+      var runCodeButton = document.createElement("button");
+      runCodeButton.className = "fa fa-play play-button";
+      runCodeButton.hidden = true;
+      runCodeButton.title = "Run this code";
+      runCodeButton.setAttribute("aria-label", runCodeButton.title);
 
-    buttons.insertBefore(runCodeButton, buttons.firstChild);
-    runCodeButton.addEventListener("click", function (e) {
-      run_code(pre_block);
-    });
-
-    if (window.playground_copyable) {
-      var copyCodeClipboardButton = document.createElement("button");
-      copyCodeClipboardButton.className = "fa fa-copy clip-button";
-      copyCodeClipboardButton.innerHTML = '<i class="tooltiptext"></i>';
-      copyCodeClipboardButton.title = "Copy to clipboard";
-      copyCodeClipboardButton.setAttribute(
-        "aria-label",
-        copyCodeClipboardButton.title
-      );
-
-      buttons.insertBefore(copyCodeClipboardButton, buttons.firstChild);
-    }
-
-    let code_block = pre_block.querySelector("code");
-    if (window.ace && code_block.classList.contains("editable")) {
-      var undoChangesButton = document.createElement("button");
-      undoChangesButton.className = "fa fa-history reset-button";
-      undoChangesButton.title = "Undo changes";
-      undoChangesButton.setAttribute("aria-label", undoChangesButton.title);
-
-      buttons.insertBefore(undoChangesButton, buttons.firstChild);
-
-      undoChangesButton.addEventListener("click", function () {
-        let editor = window.ace.edit(code_block);
-        editor.setValue(editor.originalCode);
-        editor.clearSelection();
+      buttons.insertBefore(runCodeButton, buttons.firstChild);
+      runCodeButton.addEventListener("click", function (e) {
+        run_code(pre_block);
       });
-    }
-  });
+
+      if (window.playground_copyable) {
+        var copyCodeClipboardButton = document.createElement("button");
+        copyCodeClipboardButton.className = "fa fa-copy clip-button";
+        copyCodeClipboardButton.innerHTML = '<i class="tooltiptext"></i>';
+        copyCodeClipboardButton.title = "Copy to clipboard";
+        copyCodeClipboardButton.setAttribute(
+          "aria-label",
+          copyCodeClipboardButton.title,
+        );
+
+        buttons.insertBefore(copyCodeClipboardButton, buttons.firstChild);
+      }
+
+      let code_block = pre_block.querySelector("code");
+      if (window.ace && code_block.classList.contains("editable")) {
+        var undoChangesButton = document.createElement("button");
+        undoChangesButton.className = "fa fa-history reset-button";
+        undoChangesButton.title = "Undo changes";
+        undoChangesButton.setAttribute("aria-label", undoChangesButton.title);
+
+        buttons.insertBefore(undoChangesButton, buttons.firstChild);
+
+        undoChangesButton.addEventListener("click", function () {
+          let editor = window.ace.edit(code_block);
+          editor.setValue(editor.originalCode);
+          editor.clearSelection();
+        });
+      }
+    },
+  );
 })();
 
 (function themes() {
@@ -428,7 +428,7 @@ function get_playground_language(playground) {
 
     setTimeout(function () {
       themeColorMetaTag.content = getComputedStyle(
-        document.documentElement
+        document.documentElement,
       ).backgroundColor;
     }, 1);
 
@@ -586,7 +586,7 @@ function get_playground_language(playground) {
     if (body.classList.contains("sidebar-hidden")) {
       var current_width = parseInt(
         document.documentElement.style.getPropertyValue("--sidebar-width"),
-        10
+        10,
       );
       if (current_width < 150) {
         document.documentElement.style.setProperty("--sidebar-width", "150px");
@@ -637,7 +637,7 @@ function get_playground_language(playground) {
         time: Date.now(),
       };
     },
-    { passive: true }
+    { passive: true },
   );
 
   document.addEventListener(
@@ -660,7 +660,7 @@ function get_playground_language(playground) {
         firstContact = null;
       }
     },
-    { passive: true }
+    { passive: true },
   );
 })();
 
@@ -799,7 +799,7 @@ function get_playground_language(playground) {
         }
         prevScrollTop = scrollTop;
       },
-      { passive: true }
+      { passive: true },
     );
   })();
   (function controllBorder() {

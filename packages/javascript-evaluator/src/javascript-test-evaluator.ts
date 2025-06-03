@@ -95,7 +95,6 @@ ${test};`);
   }
 
   async runTest(test: string) {
-
     return await this.#runTest!(test);
   }
 
