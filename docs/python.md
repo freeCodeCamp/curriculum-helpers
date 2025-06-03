@@ -394,7 +394,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
@@ -412,7 +412,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
@@ -430,7 +430,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
@@ -448,7 +448,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     pass
-    
+
 for i in range(4):
     pass
 """
@@ -490,7 +490,7 @@ for x, y in enumerate(dict):
     print(x, y)
 else:
     print(x)
-    
+
 for i in range(4):
     pass
 """
@@ -701,8 +701,6 @@ Node("def foo() -> 'spam':\n  pass").find_function("foo").has_returns("spam") # 
 
 #### `has_decorators`
 
-
-
 ```python
 code_str = """
 class A:
@@ -832,7 +830,7 @@ if x:
   print("x is:")
   y = 0
   print(x)
-  return y        
+  return y
 """
 explorer = Node(code_str)
 explorer.is_ordered("x=1", "x=0") # True
