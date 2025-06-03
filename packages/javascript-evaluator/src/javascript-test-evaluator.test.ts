@@ -114,7 +114,15 @@ const x = 1;
       const test = `assert.equal(code, \`${source}\`)`;
       const result = await evaluator.runTest(test);
 
-      expect(result).toStrictEqual({ pass: true });
+      expect(result).toStrictEqual({
+        pass: true,
+        logs: [
+          {
+            level: "error",
+            msg: "Error: expected",
+          },
+        ],
+      });
     });
 
     // This may not be doable, but it's worth investigating.

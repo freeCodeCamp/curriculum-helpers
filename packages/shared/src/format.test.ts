@@ -76,4 +76,8 @@ describe("format", () => {
     const nodeList = document.querySelectorAll("h1");
     expect(format(nodeList)).toBe(`NodeList(1) [...]`);
   });
+  it("converts Errors to strings", () => {
+    const error = new Error("Test error");
+    expect(format(error)).toBe("Error: Test error");
+  });
 });

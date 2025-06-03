@@ -69,6 +69,7 @@ ${test};`);
             // Rethrow error, since test failed.
             throw err;
           } else {
+            console.error(err);
             // Otherwise run the test against the code
             await eval(test);
           }
