@@ -1,7 +1,4 @@
-import type {
-  ReadyEvent,
-  ResultEvent,
-} from "../../shared/src/interfaces/test-runner";
+import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import type {
   InitEvent,
   TestEvent,
@@ -15,6 +12,7 @@ import {
   TEST_EVALUATOR_SCRIPT_ID,
   TEST_EVALUATOR_HOOKS_ID,
 } from "../../shared/src/ids";
+import { post } from "./awaitable-post";
 
 interface Runner {
   init(opts?: InitOptions): Promise<void>;
@@ -143,22 +141,13 @@ ${opts.source}`;
   }
 
   runTest(test: string) {
-    const result = new Promise<Pass | Fail>((resolve) => {
-      const listener = (event: ResultEvent) => {
-        if (
-          event.origin === "null" &&
-          event.source === this.#testEvaluator.contentWindow
-        ) {
-          window.removeEventListener("message", listener);
-          resolve(event.data.value);
-        }
-      };
-
-      window.addEventListener("message", listener);
-    });
-
-    const msg: TestEvent["data"] = { type: "test", value: test };
-    this.#testEvaluator.contentWindow?.postMessage(msg, "*");
+    const result = post<{ value: Pass | Fail }>({
+      messenger: this.#testEvaluator.contentWindow!,
+      message: {
+        type: "test",
+        value: test,
+      } as TestEvent["data"],
+    }).then(({ value }) => value);
 
     return result;
   }
@@ -222,21 +211,16 @@ export class WorkerTestRunner implements Runner {
         });
       }, timeout);
     });
-    const result = new Promise<Pass | Fail>((resolve) => {
-      const listener = (event: ResultEvent) => {
-        this.#testEvaluator.removeEventListener("message", listener);
-        // TODO: differentiate between messages
-        resolve(event.data.value);
-      };
-
-      this.#testEvaluator.addEventListener("message", listener);
-    });
 
     const msg: TestEvent["data"] = {
       type: "test",
       value: test,
     };
-    this.#testEvaluator.postMessage(msg);
+
+    const result = post<{ value: Pass | Fail }>({
+      messenger: this.#testEvaluator,
+      message: msg,
+    }).then(({ value }) => value);
 
     try {
       return await Promise.race([result, terminate]);

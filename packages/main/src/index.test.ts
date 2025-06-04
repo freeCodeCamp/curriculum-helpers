@@ -222,6 +222,31 @@ describe("Test Runner", () => {
         text: "JSHandle@error",
       });
     });
+
+    it("should handle concurrent tests", async () => {
+      const results = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+
+        const testOne = runner.runTest("assert.equal(1, 2)");
+        const testTwo = runner.runTest("assert.equal(2, 3)");
+        return Promise.all([testOne, testTwo]);
+      }, type);
+
+      expect(results[0]).toMatchObject({
+        err: {
+          actual: 1,
+          expected: 2,
+        },
+      });
+      expect(results[1]).toMatchObject({
+        err: {
+          actual: 2,
+          expected: 3,
+        },
+      });
+    });
   });
 
   describe("DOM evaluator", () => {
