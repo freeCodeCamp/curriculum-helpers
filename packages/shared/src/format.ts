@@ -1,19 +1,20 @@
 import { inspect } from "util/util";
 
-const quoteString = (x: unknown) => (typeof x === "string" ? `'${x}'` : x);
+const quoteString = <T>(x: T): T | string =>
+  typeof x === "string" ? `'${x}'` : x;
 
 export function format(x: unknown): string {
   // We're trying to mimic console.log, so we avoid wrapping strings in quotes:
   if (typeof x === "string") return x;
   if (x instanceof Set) {
-    return `Set(${x.size}) { ${Array.from(x, quoteString).join(", ")} }`;
+    return `Set(${x.size}) {${Array.from(x, quoteString).join(", ")}}`;
   }
 
   if (x instanceof Map) {
     return `Map(${x.size}) {${Array.from(
       x.entries(),
-      ([k, v]) => ` '${k}' => ${v}`,
-    ).join(",")} }`;
+      ([k, v]) => `${quoteString(k)} => ${quoteString(v)}`,
+    ).join(", ")}}`;
   }
 
   if (typeof x === "bigint") {

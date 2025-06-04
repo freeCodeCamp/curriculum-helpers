@@ -47,15 +47,16 @@ describe("format", () => {
     expect(format(NaN)).toBe("NaN");
   });
   it("handles Maps", () => {
-    const map = new Map([
+    const map = new Map<string|number,string|number>([
       ["a", 1],
-      ["b", 2],
+      ["b", "2"],
+      [3, "three"],
     ]);
-    expect(format(map)).toBe("Map(2) { 'a' => 1, 'b' => 2 }");
+    expect(format(map)).toBe("Map(3) {'a' => 1, 'b' => '2', 3 => 'three'}");
   });
   it("handles Sets", () => {
     const set = new Set([1, "2", 3]);
-    expect(format(set)).toBe("Set(3) { 1, '2', 3 }");
+    expect(format(set)).toBe("Set(3) {1, '2', 3}");
   });
   it("handles BigInts", () => {
     expect(format(BigInt(10))).toBe("10n");
