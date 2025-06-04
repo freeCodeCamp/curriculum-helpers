@@ -47,7 +47,7 @@ describe("format", () => {
     expect(format(NaN)).toBe("NaN");
   });
   it("handles Maps", () => {
-    const map = new Map<string|number,string|number>([
+    const map = new Map<string | number, string | number>([
       ["a", 1],
       ["b", "2"],
       [3, "three"],
