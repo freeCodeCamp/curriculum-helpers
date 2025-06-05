@@ -1,5 +1,8 @@
+import { webpackCompile } from "../../shared/tooling/webpack-compile";
+
 describe("Worker Timeouts", () => {
   beforeAll(async () => {
+    webpackCompile();
     await page.goto("http://localhost:8080/");
   });
 

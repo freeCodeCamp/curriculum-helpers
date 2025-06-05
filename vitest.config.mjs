@@ -6,6 +6,6 @@ export default defineConfig({
     environment: "puppeteer",
     exclude: [...configDefaults.exclude, "packages/*/build", "dist"],
     globals: true, // TODO: remove this OR include vitest types
-    globalSetup: "./vitest-setup.mjs",
+    globalSetup: "vitest-environment-puppeteer/global-init",
   },
 });

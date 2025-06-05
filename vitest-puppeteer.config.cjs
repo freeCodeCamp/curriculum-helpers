@@ -11,7 +11,7 @@ module.exports = {
     ],
   },
   server: {
-    command: "http-server __fixtures__",
+    command: "http-server -c-1 __fixtures__",
     port: 8080,
   },
 };
