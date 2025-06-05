@@ -5,7 +5,9 @@ describe("Test Runner", () => {
   beforeAll(async () => {
     compileForTests();
     await page.goto("http://localhost:8080/");
-  });
+    // It shouldn't take this long, particularly not once cached, but just to be
+    // safe
+  }, 20000);
 
   beforeEach(async () => {
     // Clear the page
