@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process";
 
-export const webpackCompile = () => {
+export const compileForTests = () => {
   // It's necessary spawnSync the webpack process to ensure that the build is
   // complete before the tests start
   const result = spawnSync(
