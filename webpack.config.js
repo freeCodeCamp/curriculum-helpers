@@ -120,6 +120,7 @@ const tsRules = allSources.map(({ name, path }) => ({
       options: {
         projectReferences: true,
         instance: name,
+        transpileOnly: true, // we use tsc for type checking
       },
     },
   ],
