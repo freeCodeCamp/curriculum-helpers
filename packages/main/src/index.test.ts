@@ -1,9 +1,9 @@
 import "vitest-environment-puppeteer";
-import { webpackCompile } from "../../shared/tooling/webpack-compile";
+import { compileForTests } from "../../shared/tooling/webpack-compile";
 
 describe("Test Runner", () => {
   beforeAll(async () => {
-    webpackCompile();
+    compileForTests();
     await page.goto("http://localhost:8080/");
   });
 
