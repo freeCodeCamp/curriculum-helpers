@@ -1,12 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
 
-const reportMode = (isDev, bundle) => {
-  console.info(
-    `Building ${bundle} in ${isDev ? "development" : "production"} mode...`,
-  );
-};
-
 const baseConfig = {
   entry: {
     index: path.resolve(__dirname, "packages/helpers/lib/index.ts"),
@@ -37,9 +31,9 @@ const baseConfig = {
 
 const nodeConfig = (env = {}) => {
   const isDev = env.development;
-  reportMode(isDev, "commonjs bundle");
   return {
     ...baseConfig,
+    name: "helpers-commonjs",
     mode: isDev ? "development" : "production",
     devtool: !isDev ? "source-map" : "inline-source-map",
     target: "node",
@@ -55,9 +49,9 @@ const nodeConfig = (env = {}) => {
 
 const browserConfig = (env = {}) => {
   const isDev = env.development;
-  reportMode(isDev, "browser bundle");
   return {
     ...baseConfig,
+    name: "helpers-browser",
     mode: isDev ? "development" : "production",
     devtool: !isDev ? "source-map" : "inline-source-map",
     target: "web",
@@ -134,8 +128,8 @@ const tsRules = allSources.map(({ name, path }) => ({
 
 const testRunnerConfig = (env = {}) => {
   const isDev = env.development;
-  reportMode(isDev, "test runner bundle");
   return {
+    name: "test-runner",
     mode: isDev ? "development" : "production",
     cache: isDev ? { type: "filesystem" } : false,
     entry,
