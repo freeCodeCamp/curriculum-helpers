@@ -4,7 +4,9 @@ describe("Worker Timeouts", () => {
   beforeAll(async () => {
     compileForTests();
     await page.goto("http://localhost:8080/");
-  });
+    // It shouldn't take this long, particularly not once cached, but just to be
+    // safe
+  }, 20000);
 
   describe("Javascript Test Runner", () => {
     it("should return an error if the test does not terminate", async () => {
