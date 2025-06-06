@@ -126,6 +126,8 @@ class PythonTestEvaluator implements TestEvaluator {
 			_code = f.read()
 		`);
 
+        eval(opts.hooks?.beforeEach ?? "");
+
         // Evaluates the learner's code so that any variables they define are
         // available to the test.
         runPython(opts.source ?? "");
