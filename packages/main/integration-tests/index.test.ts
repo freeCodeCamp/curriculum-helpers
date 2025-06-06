@@ -253,6 +253,175 @@ describe("Test Runner", () => {
     });
   });
 
+  describe.only.each([
+    {
+      type: "dom",
+      hooks: { beforeAll: "const x = 1;" },
+      test: "assert.equal(x,1)",
+    },
+    {
+      type: "javascript",
+      hooks: {
+        beforeEach: "const x = 1;",
+      },
+      test: "assert.equal(x,1)",
+    },
+    {
+      type: "python",
+      hooks: {
+        beforeEach: "runPython('x = 1')",
+      },
+      test: "({ test: () => assert.equal(runPython('x'), 1)})",
+    },
+  ] as const)("$type test evaluator with hooks", ({ type, hooks, test }) => {
+    it("should run hooks before running tests", async () => {
+      const result = await page.evaluate(
+        async (type, hooks, test) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+            hooks,
+          });
+          return runner.runTest(test);
+        },
+        type,
+        hooks,
+        test,
+      );
+
+      expect(result).toEqual({ pass: true });
+    });
+  });
+
+  describe.only.each([
+    { type: "dom" },
+    // FakeTimers to come later
+    // {
+    //   type: "javascript",
+    // },
+  ] as const)("FakeTimers for $type test evaluator", ({ type }) => {
+    it("should be available in tests", async () => {
+      const beforeAll = `const clock = __FakeTimers.install();`;
+
+      const result = await page.evaluate(
+        async (type, beforeAll) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+            hooks: {
+              beforeAll,
+            },
+          });
+          return runner.runTest(`
+assert.equal(clock.now, 0);
+clock.tick(1000);
+assert.equal(clock.now, 1000);
+`);
+        },
+        type,
+        beforeAll,
+      );
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should be possible to unmock the timers", async () => {
+      const beforeAll = `let clock = __FakeTimers.install();`;
+
+      const result = await page.evaluate(
+        async (type, beforeAll) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+            hooks: {
+              beforeAll,
+            },
+          });
+          const testOne = await runner.runTest(`
+try {
+clock.tick(1000);
+assert.equal(clock.now, 1000);
+} finally {
+  clock.uninstall();
+}
+`);
+
+          const testTwo = await runner.runTest(
+            `assert.notEqual(Date.now(), 1000);`,
+          );
+          return [testOne, testTwo];
+        },
+        type,
+        beforeAll,
+      );
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
+
+    it("should quickly resolve runAll", async () => {
+      const source = `<script>
+const countDown = () => {
+	let count = 0;
+	return new Promise((resolve) => {
+		const interval = setInterval(() => {
+			count++;
+			if (count === 50) {
+				clearInterval(interval);
+				resolve(count);
+			}
+		}, 1000);
+	});
+}</script>
+`;
+
+      const beforeAll = `let clock = __FakeTimers.install();`;
+
+      const result = await page.evaluate(
+        async (type, source, beforeAll) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            source,
+            type,
+            hooks: {
+              beforeAll,
+            },
+          });
+          // If the timers weren't mocked this would take 50 seconds and the
+          // test would timeout
+          const result = await runner.runTest(`async() => {
+	const count = countDown();
+	clock.runAll();
+	assert.equal(await count, 50);
+}
+`);
+
+          return result;
+        },
+        type,
+        source,
+        beforeAll,
+      );
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should have access to assert in the beforeAll function", async () => {
+      const source = `<script>
+const getFive = () => 5;
+</script>`;
+      const beforeAll = `const fn = () => assert.equal(getFive(), 5);`;
+      const result = await page.evaluate(
+        async (type, source, beforeAll) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            source,
+            type,
+            hooks: {
+              beforeAll,
+            },
+          });
+          return runner.runTest("fn()");
+        },
+        type,
+        source,
+        beforeAll,
+      );
+      expect(result).toEqual({ pass: true });
+    });
+  });
+
   describe("DOM evaluator", () => {
     afterAll(async () => {
       await page.evaluate(() => {
@@ -539,21 +708,6 @@ assert.equal(clicked, true);`,
       expect(result).toEqual({ pass: true });
     });
 
-    it("should run the beforeAll function before evaluating the source", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "dom",
-          hooks: {
-            beforeAll: "window.__before = 'and so it begins'",
-          },
-        });
-        return runner.runTest(
-          "assert.equal(window.__before,'and so it begins')",
-        );
-      });
-      expect(result).toEqual({ pass: true });
-    });
-
     it("should be able to use Enzyme in tests", async () => {
       const source = `<script src='https://cdnjs.cloudflare.com/ajax/libs/react/16.4.0/umd/react.production.min.js' type='text/javascript'></script>
 <script src='https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.4.0/umd/react-dom.production.min.js' type='text/javascript'></script>
@@ -601,141 +755,6 @@ assert(mocked.find('.greeting').length === 1);
 `,
         );
       }, source);
-      expect(result).toEqual({ pass: true });
-    });
-
-    it("should be able to use FakeTimers in tests", async () => {
-      const source = `<div id="root"></div><script>
-const waitThenUpdate = async () => {
-	await new Promise(resolve => setTimeout(resolve, 1000));
-	document.getElementById('root').innerHTML = 'Updated';
-};
-</script>`;
-
-      const beforeAll = `const clock = __FakeTimers.install();`;
-
-      const result = await page.evaluate(
-        async (source, beforeAll) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            source,
-            type: "dom",
-            hooks: {
-              beforeAll,
-            },
-          });
-          return runner.runTest(`async () => {
-const update = waitThenUpdate();
-clock.tick(1000);
-assert.equal(document.getElementById('root').innerHTML, '');
-await update;
-assert.equal(document.getElementById('root').innerHTML, 'Updated');
-}
-`);
-        },
-        source,
-        beforeAll,
-      );
-      expect(result).toEqual({ pass: true });
-    });
-
-    it("should be possible to unmock the timers", async () => {
-      const source = "";
-
-      const beforeAll = `let clock = __FakeTimers.install();`;
-
-      const result = await page.evaluate(
-        async (source, beforeAll) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            source,
-            type: "dom",
-            hooks: {
-              beforeAll,
-            },
-          });
-          const testOne = await runner.runTest(`
-try {
-clock.tick(1000);
-assert.equal(clock.now, 1000);
-} finally {
-  clock.uninstall();
-}
-`);
-
-          const testTwo = await runner.runTest(
-            `assert.notEqual(Date.now(), 1000);`,
-          );
-          return [testOne, testTwo];
-        },
-        source,
-        beforeAll,
-      );
-      expect(result).toEqual([{ pass: true }, { pass: true }]);
-    });
-
-    it("should quickly resolve runAll", async () => {
-      const source = `<script>
-const countDown = () => {
-	let count = 0;
-	return new Promise((resolve) => {
-		const interval = setInterval(() => {
-			count++;
-			if (count === 50) {
-				clearInterval(interval);
-				resolve(count);
-			}
-		}, 1000);
-	});
-}</script>
-`;
-
-      const beforeAll = `let clock = __FakeTimers.install();`;
-
-      const result = await page.evaluate(
-        async (source, beforeAll) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            source,
-            type: "dom",
-            hooks: {
-              beforeAll,
-            },
-          });
-          // If the timers weren't mocked this would take 50 seconds and the
-          // test would timeout
-          const result = await runner.runTest(`async() => {
-	const count = countDown();
-	clock.runAll();
-	assert.equal(await count, 50);
-}
-`);
-
-          return result;
-        },
-        source,
-        beforeAll,
-      );
-      expect(result).toEqual({ pass: true });
-    });
-
-    // TODO: give all evaluators beforeAll and beforeEach hooks
-    it("should have access to assert in the beforeAll function", async () => {
-      const source = `<script>
-const getFive = () => 5;
-</script>`;
-      const beforeAll = `const fn = () => assert.equal(getFive(), 5);`;
-      const result = await page.evaluate(
-        async (source, beforeAll) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            source,
-            type: "dom",
-            hooks: {
-              beforeAll,
-            },
-          });
-          return runner.runTest("fn()");
-        },
-        source,
-        beforeAll,
-      );
       expect(result).toEqual({ pass: true });
     });
 

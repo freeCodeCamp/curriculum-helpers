@@ -61,7 +61,8 @@ export class JavascriptTestEvaluator implements TestEvaluator {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const editableContents = opts.code?.editableContents ?? "";
         try {
-          await eval(`${opts.source};
+          await eval(`${opts.hooks?.beforeEach ?? ""}
+${opts.source};
 __userCodeWasExecuted = true;
 ${test};`);
         } catch (err) {
