@@ -43,6 +43,9 @@ export interface InitWorkerOptions {
     editableContents?: string;
   };
   source?: string;
+  hooks?: {
+    beforeEach?: string;
+  };
 }
 
 export interface TestEvaluator {
