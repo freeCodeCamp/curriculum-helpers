@@ -253,7 +253,7 @@ describe("Test Runner", () => {
     });
   });
 
-  describe.only.each([
+  describe.each([
     {
       type: "dom",
       hooks: { beforeAll: "const x = 1;" },
@@ -292,7 +292,7 @@ describe("Test Runner", () => {
     });
   });
 
-  describe.only.each([
+  describe.each([
     { type: "dom" },
     // FakeTimers to come later
     // {
