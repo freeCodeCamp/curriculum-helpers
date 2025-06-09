@@ -1120,6 +1120,20 @@ second = input()
       expect(result).toEqual({ pass: true });
     });
 
+    it("should have access to runPython in the beforeEach hook", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = window.FCCTestRunner.getRunner("python");
+        await runner?.init({
+          hooks: {
+            beforeEach: "assert.equal(runPython('1 + 1'), 2)",
+          },
+        });
+        return runner?.runTest("");
+      });
+
+      expect(result).toEqual({ pass: true });
+    });
+
     it("should return error types if the python code raises an exception", async () => {
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
