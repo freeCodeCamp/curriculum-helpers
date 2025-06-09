@@ -47,6 +47,8 @@ class PythonTestEvaluator implements TestEvaluator {
 
   async init(opts: InitWorkerOptions) {
     const pyodide = await this.#setupPyodide();
+    eval(opts.hooks?.beforeAll ?? "");
+
     this.#runTest = async (testString): Promise<Pass | Fail> => {
       this.#proxyConsole.on();
       const code = (opts.code?.contents ?? "").slice();
@@ -60,9 +62,32 @@ class PythonTestEvaluator implements TestEvaluator {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       const __userGlobals = pyodide.globals.get("dict")() as PyProxy;
 
+      // Some tests rely on __name__ being set to __main__ and we new dicts do not
+      // have this set by default.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      __userGlobals.set("__name__", "__main__");
+
+      // The runPython helper is a shortcut for running python code with our
+      // custom globals.
+      const runPython = (pyCode: string) =>
+        pyodide.runPython(pyCode, { globals: __userGlobals }) as unknown;
+      runPython(`from ast_helpers import Node as _Node`);
+
+      // The tests need the user's code as a string, so we write it to the virtual
+      // filesystem...
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      pyodide.FS.writeFile("/user_code.py", code, { encoding: "utf8" });
+
+      // ...and then read it back into a variable so that they can evaluate it.
+      runPython(`
+		with open("/user_code.py", "r") as f:
+			_code = f.read()
+		`);
+
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
       try {
+        eval(opts.hooks?.beforeEach ?? "");
         // Eval test string to get the dummy input and actual test
         const evaluatedTestString = await new Promise<unknown>(
           (resolve, reject) => {
@@ -89,16 +114,6 @@ class PythonTestEvaluator implements TestEvaluator {
 
         const { input, test } = evaluatedTestString as EvaluatedTeststring;
 
-        // Some tests rely on __name__ being set to __main__ and we new dicts do not
-        // have this set by default.
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        __userGlobals.set("__name__", "__main__");
-
-        // The runPython helper is a shortcut for running python code with our
-        // custom globals.
-        const runPython = (pyCode: string) =>
-          pyodide.runPython(pyCode, { globals: __userGlobals }) as unknown;
-
         runPython(`
 		def __inputGen(xs):
 			def gen():
@@ -112,21 +127,6 @@ class PythonTestEvaluator implements TestEvaluator {
 
 		input = __inputGen(${JSON.stringify(input ?? [])})
 		`);
-
-        runPython(`from ast_helpers import Node as _Node`);
-
-        // The tests need the user's code as a string, so we write it to the virtual
-        // filesystem...
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        pyodide.FS.writeFile("/user_code.py", code, { encoding: "utf8" });
-
-        // ...and then read it back into a variable so that they can evaluate it.
-        runPython(`
-		with open("/user_code.py", "r") as f:
-			_code = f.read()
-		`);
-
-        eval(opts.hooks?.beforeEach ?? "");
 
         // Evaluates the learner's code so that any variables they define are
         // available to the test.
@@ -172,11 +172,6 @@ class PythonTestEvaluator implements TestEvaluator {
       indexURL: `https://cdn.jsdelivr.net/pyodide/v${pkg.version}/full/`,
     });
     this.#pyodide = pyodide;
-
-    // We freeze this to prevent learners from getting the worker into a
-    // weird state. NOTE: this has to come after pyodide is loaded, because
-    // pyodide modifies self while loading.
-    Object.freeze(self);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     pyodide.FS.writeFile(

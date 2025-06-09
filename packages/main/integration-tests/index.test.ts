@@ -254,41 +254,74 @@ describe("Test Runner", () => {
   });
 
   describe.each([
-    {
-      type: "dom",
-      hooks: { beforeAll: "const x = 1;" },
-      test: "assert.equal(x,1)",
-    },
-    {
-      type: "javascript",
-      hooks: {
-        beforeEach: "const x = 1;",
-      },
-      test: "assert.equal(x,1)",
-    },
-    {
-      type: "python",
-      hooks: {
-        beforeEach: "runPython('x = 1')",
-      },
-      test: "({ test: () => assert.equal(runPython('x'), 1)})",
-    },
-  ] as const)("$type test evaluator with hooks", ({ type, hooks, test }) => {
-    it("should run hooks before running tests", async () => {
-      const result = await page.evaluate(
-        async (type, hooks, test) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            type,
-            hooks,
-          });
-          return runner.runTest(test);
-        },
-        type,
-        hooks,
-        test,
-      );
+    { type: "dom" },
+    { type: "javascript" },
+    { type: "python" },
+  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
+    it("should evaluate the beforeEach hook before each test", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeEach: "globalThis.x = 1;",
+          },
+        });
+        const one = await runner.runTest("x += 1; assert.equal(x, 2);");
+        const two = await runner.runTest("x += 1; assert.equal(x, 2);");
+        return [one, two];
+      }, type);
 
-      expect(result).toEqual({ pass: true });
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
+  });
+
+  describe.each([
+    { type: "dom" },
+    { type: "javascript" },
+    { type: "python" },
+  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
+    it("should evaluate the beforeEach hook before each test", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeEach: "globalThis.x = 1;",
+          },
+        });
+        const one = await runner.runTest("x += 1; assert.equal(x, 2);");
+        const two = await runner.runTest("x += 1; assert.equal(x, 2);");
+
+        // Clean up the global variable
+        await runner.runTest("delete globalThis.x;");
+        return [one, two];
+      }, type);
+
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
+  });
+
+  describe.each([
+    { type: "dom" },
+    { type: "javascript" },
+    { type: "python" },
+  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
+    it("should evaluate the beforeAll hook once before all tests", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeAll: "globalThis.x = 1;",
+          },
+        });
+        const one = await runner.runTest("x += 1; assert.equal(x, 2);");
+        const two = await runner.runTest("x += 1; assert.equal(x, 3);");
+        // Clean up the global variable
+        await runner.runTest("delete globalThis.x;");
+
+        return [one, two];
+      }, type);
+
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
     });
   });
 
@@ -1062,6 +1095,25 @@ second = input()
         await runner?.init({});
         return runner?.runTest(`({
   test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
+})`);
+      });
+
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should have access to _code in the beforeEach hook", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = window.FCCTestRunner.getRunner("python");
+        await runner?.init({
+          code: {
+            contents: "test = 'value'",
+          },
+          hooks: {
+            beforeEach: "assert.equal(runPython('_code'), \"test = 'value'\")",
+          },
+        });
+        return runner?.runTest(`({
+  test: () => {}
 })`);
       });
 

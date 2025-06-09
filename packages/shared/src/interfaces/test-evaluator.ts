@@ -45,6 +45,7 @@ export interface InitWorkerOptions {
   source?: string;
   hooks?: {
     beforeEach?: string;
+    beforeAll?: string;
   };
 }
 

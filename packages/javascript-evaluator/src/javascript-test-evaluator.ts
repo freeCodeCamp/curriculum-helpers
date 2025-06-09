@@ -49,6 +49,8 @@ export class JavascriptTestEvaluator implements TestEvaluator {
   }
 
   init(opts: InitWorkerOptions) {
+    eval(opts.hooks?.beforeAll ?? "");
+
     this.#runTest = async (rawTest) => {
       this.#proxyConsole.on();
       const test = wrapCode(rawTest);

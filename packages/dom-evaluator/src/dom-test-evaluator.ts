@@ -31,7 +31,7 @@ export interface InitTestFrameOptions {
   };
   loadEnzyme?: boolean;
   hooks?: {
-    beforeAll?: string;
+    beforeEach?: string;
   };
 }
 
@@ -131,7 +131,8 @@ export class DOMTestEvaluator implements TestEvaluator {
         // This return can be a function
         // i.e. function() { assert(true, 'happy coding'); }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const test = await eval(testString);
+        const test = await eval(`${opts.hooks?.beforeEach ?? ""}
+${testString}`);
         if (typeof test === "function") {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           await test();
