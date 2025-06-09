@@ -48,6 +48,7 @@ export class FCCTestRunner {
     code?: { contents?: string; editableContents?: string };
     hooks?: {
       beforeAll?: string;
+      beforeEach?: string;
     };
     loadEnzyme?: boolean;
   }) {
