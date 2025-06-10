@@ -137,7 +137,6 @@ class PythonTestEvaluator implements TestEvaluator {
 
         await test();
 
-        // Execute afterEach hook if it exists
         if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
         return { pass: true, ...this.#flushLogs() };
@@ -145,14 +144,12 @@ class PythonTestEvaluator implements TestEvaluator {
         this.#proxyConsole.off();
         console.error(err);
 
-        // Execute afterEach hook even if test failed
-        if (opts.hooks?.afterEach) {
-          try {
-            eval(opts.hooks.afterEach);
-          } catch (afterEachErr) {
-            // Log afterEach errors but don't override the original test error
-            console.error("Error in afterEach hook:", afterEachErr);
-          }
+        try {
+          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
+        } catch (afterEachErr) {
+          // Even though we're returning the original test error, we still
+          // want to log for debugging purposes.
+          console.error("Error in afterEach hook:", afterEachErr);
         }
 
         const error = err as PythonError;
