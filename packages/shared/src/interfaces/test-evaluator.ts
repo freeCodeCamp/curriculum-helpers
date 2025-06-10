@@ -34,6 +34,8 @@ export interface InitTestFrameOptions {
   source?: string;
   hooks?: {
     beforeAll?: string;
+    beforeEach?: string;
+    afterEach?: string;
   };
 }
 
@@ -46,6 +48,7 @@ export interface InitWorkerOptions {
   hooks?: {
     beforeEach?: string;
     beforeAll?: string;
+    afterEach?: string;
   };
 }
 

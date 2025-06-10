@@ -78,10 +78,26 @@ ${test};`);
           }
         }
 
+        // Execute afterEach hook if it exists
+        if (opts.hooks?.afterEach) {
+          await eval(opts.hooks.afterEach);
+        }
+
         return { pass: true, ...this.#flushLogs() };
       } catch (err: unknown) {
         this.#proxyConsole.off();
         console.error(err);
+
+        // Execute afterEach hook even if test failed
+        try {
+          if (opts.hooks?.afterEach) {
+            await eval(opts.hooks.afterEach);
+          }
+        } catch (afterEachErr) {
+          // Log afterEach errors but don't override the original test error
+          console.error("Error in afterEach hook:", afterEachErr);
+        }
+
         const error = err as Fail["err"];
 
         return {

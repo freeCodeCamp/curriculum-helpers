@@ -55,6 +55,7 @@ type InitOptions = {
   hooks?: {
     beforeAll?: string;
     beforeEach?: string;
+    afterEach?: string;
   };
 };
 

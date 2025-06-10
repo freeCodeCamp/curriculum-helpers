@@ -327,6 +327,67 @@ describe("Test Runner", () => {
 
   describe.each([
     { type: "dom" },
+    { type: "javascript" },
+    { type: "python" },
+  ] as const)("$type test evaluator", ({ type }) => {
+    it("should evaluate the afterEach hook after each test", async () => {
+      const afterEachResult = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            afterEach: "delete globalThis.x",
+          },
+        });
+
+        await runner.runTest("globalThis.x = 1;");
+
+        // Check that afterEach cleared the global variable
+        const afterFirst = await runner.runTest(
+          "assert.equal(globalThis.x, undefined);",
+        );
+
+        return afterFirst;
+      }, type);
+
+      expect(afterEachResult).toEqual({ pass: true });
+
+      const afterSecondResult = await page.evaluate(async (type) => {
+        const runner = window.FCCTestRunner.getRunner(type);
+        await runner?.runTest("globalThis.x = 1;");
+
+        // Check again that afterEach cleared the global variable
+        return runner?.runTest("assert.equal(globalThis.x, undefined);");
+      }, type);
+
+      expect(afterSecondResult).toEqual({ pass: true });
+    });
+
+    it("should evaluate the afterEach hook even when tests fail", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            afterEach: "delete globalThis.x",
+          },
+        });
+
+        // Run a failing test
+        await runner.runTest("globalThis.x = 1; assert.equal(1, 2);");
+
+        // Check that afterEach still ran
+        const afterFailed = await runner.runTest(
+          "assert.equal(globalThis.x, undefined);",
+        );
+
+        return afterFailed;
+      }, type);
+
+      expect(result).toEqual({ pass: true });
+    });
+  });
+
+  describe.each([
+    { type: "dom" },
     // FakeTimers to come later
     // {
     //   type: "javascript",
