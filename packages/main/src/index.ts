@@ -49,6 +49,7 @@ export class FCCTestRunner {
     hooks?: {
       beforeAll?: string;
       beforeEach?: string;
+      afterEach?: string;
     };
     loadEnzyme?: boolean;
   }) {

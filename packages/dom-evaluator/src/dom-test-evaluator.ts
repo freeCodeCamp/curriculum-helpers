@@ -10,6 +10,7 @@ import type {
   TestEvent,
   InitEvent,
   Pass,
+  InitTestFrameOptions,
 } from "../../shared/src/interfaces/test-evaluator";
 import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 
@@ -23,17 +24,6 @@ import { createLogFlusher, ProxyConsole } from "../../shared/src/proxy-console";
 import { format } from "../../shared/src/format";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
-
-export interface InitTestFrameOptions {
-  code: {
-    contents?: string;
-    editableContents?: string;
-  };
-  loadEnzyme?: boolean;
-  hooks?: {
-    beforeEach?: string;
-  };
-}
 
 declare global {
   interface Window {
@@ -138,10 +128,25 @@ ${testString}`);
           await test();
         }
 
+        // Execute afterEach hook if it exists
+        if (opts.hooks?.afterEach) {
+          await eval(opts.hooks.afterEach);
+        }
+
         return { pass: true, ...this.#flushLogs() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
+
+        // Execute afterEach hook even if test failed
+        try {
+          if (opts.hooks?.afterEach) {
+            await eval(opts.hooks.afterEach);
+          }
+        } catch (afterEachErr) {
+          // Log afterEach errors but don't override the original test error
+          console.error("Error in afterEach hook:", afterEachErr);
+        }
 
         const error = err as Fail["err"];
         // To provide useful debugging information when debugging the tests, we
