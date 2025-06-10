@@ -128,23 +128,18 @@ ${testString}`);
           await test();
         }
 
-        // Execute afterEach hook if it exists
-        if (opts.hooks?.afterEach) {
-          await eval(opts.hooks.afterEach);
-        }
+        if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
         return { pass: true, ...this.#flushLogs() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
 
-        // Execute afterEach hook even if test failed
         try {
-          if (opts.hooks?.afterEach) {
-            await eval(opts.hooks.afterEach);
-          }
+          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
         } catch (afterEachErr) {
-          // Log afterEach errors but don't override the original test error
+          // Even though we're returning the original test error, we still
+          // want to log for debugging purposes.
           console.error("Error in afterEach hook:", afterEachErr);
         }
 
