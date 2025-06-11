@@ -144,7 +144,7 @@ const x = 1;
 
     // This is probably behavior we want, but it's not how the client works at
     // the moment.
-    it.fails("should NOT handle async sources (yet)", async () => {
+    it("should handle async sources", async () => {
       evaluator.init({
         code: {},
         source: `let delay = () => new Promise((resolve) => setTimeout(resolve, 10));

@@ -14,26 +14,29 @@ import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
+import { evalWithScope } from "../../shared/src/test-with-scope";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
-  interface WorkerGlobalScope {
-    assert: typeof assert;
-    __helpers: typeof curriculumHelpers;
-  }
+  // eslint-disable-next-line no-var
+  var __userCodeWasExecuted: boolean;
 }
 
-// These have to be added to the global scope or they will get eliminated as dead
-// code.
-self.assert = assert;
-self.__helpers = curriculumHelpers;
+function createTestScope(opts: InitWorkerOptions) {
+  return {
+    code: opts.code?.contents ?? "",
+    editableContents: opts.code?.editableContents ?? "",
+    __helpers: curriculumHelpers,
+    assert,
+  };
+}
 
-Object.freeze(self.__helpers);
-Object.freeze(self.assert);
+Object.freeze(curriculumHelpers);
+Object.freeze(assert);
 
 // The newline is important, because otherwise comments will cause the trailing
 // `}` to be ignored, breaking the tests.
-const wrapCode = (code: string) => `(async () => {${code};
+const wrapCode = (code: string) => `await (async () => {${code};
 })();`;
 
 // TODO: currently this is almost identical to DOMTestEvaluator, can we make
@@ -51,30 +54,28 @@ export class JavascriptTestEvaluator implements TestEvaluator {
   init(opts: InitWorkerOptions) {
     eval(opts.hooks?.beforeAll ?? "");
 
+    const testScope = createTestScope(opts);
+
     this.#runTest = async (rawTest) => {
       this.#proxyConsole.on();
+      globalThis.__userCodeWasExecuted = false;
       const test = wrapCode(rawTest);
-      // This can be reassigned by the eval inside the try block, so it should be declared as a let
-      // eslint-disable-next-line prefer-const
-      let __userCodeWasExecuted = false;
+
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const code = opts.code?.contents ?? "";
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const editableContents = opts.code?.editableContents ?? "";
         try {
-          await eval(`${opts.hooks?.beforeEach ?? ""}
+          const toEval = `${opts.hooks?.beforeEach ?? ""}
 ${opts.source};
-__userCodeWasExecuted = true;
-${test};`);
+globalThis.__userCodeWasExecuted = true;
+${test};`;
+          await evalWithScope(toEval, testScope);
         } catch (err) {
-          if (__userCodeWasExecuted) {
+          if (globalThis.__userCodeWasExecuted) {
             // Rethrow error, since test failed.
             throw err;
           } else {
             console.error(err);
             // Otherwise run the test against the code
-            await eval(test);
+            await evalWithScope(test, testScope);
           }
         }
 
