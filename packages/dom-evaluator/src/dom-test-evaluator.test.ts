@@ -85,7 +85,7 @@ describe("DOMTestEvaluator", () => {
     });
 
     it("should await tests that return promises", async () => {
-      const test = `new Promise((resolve) => setTimeout(resolve, 1))
+      const test = `await new Promise((resolve) => setTimeout(resolve, 1))
 			  .then(() => { assert.equal(1,2)});`;
 
       const result = await evaluator.runTest(test);

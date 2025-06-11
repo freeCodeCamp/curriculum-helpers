@@ -1,4 +1,3 @@
-/* eslint-disable no-eval */
 import jQuery from "jquery";
 import * as helpers from "../../helpers/lib";
 import FakeTimers from "@sinonjs/fake-timers";
@@ -21,6 +20,7 @@ import {
 import { MockLocalStorage } from "./mock-local-storage";
 import { createLogFlusher, ProxyConsole } from "../../shared/src/proxy-console";
 import { format } from "../../shared/src/format";
+import { evalWithScope } from "../../shared/src/test-with-scope";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
@@ -59,6 +59,66 @@ const removeTestScripts = () => {
   hooksScript?.remove();
 };
 
+async function createTestScope(opts: InitTestFrameOptions) {
+  const codeObj = opts.code;
+  const code = (codeObj?.contents ?? "").slice();
+
+  const editableContents = (codeObj?.editableContents ?? "").slice();
+  // __testEditable allows test authors to run tests against a transitory dom
+  // element built using only the code in the editable region.
+  const __testEditable = (cb: () => () => unknown) => {
+    const div = document.createElement("div");
+    div.id = "editable-only";
+    div.innerHTML = editableContents;
+    document.body.appendChild(div);
+    const out = cb();
+    document.body.removeChild(div);
+    return out;
+  };
+
+  // Hardcode Deep Freeze dependency
+  const DeepFreeze = (o: Record<string, unknown>) => {
+    Object.freeze(o);
+    Object.getOwnPropertyNames(o).forEach((prop) => {
+      if (
+        Object.hasOwn(o, prop) &&
+        o[prop] !== null &&
+        (typeof o[prop] === "object" || typeof o[prop] === "function") &&
+        !Object.isFrozen(o[prop])
+      ) {
+        // eslint-disable-next-line new-cap
+        DeepFreeze(o[prop] as Record<string, unknown>);
+      }
+    });
+    return o;
+  };
+
+  const __helpers = helpers;
+
+  let Enzyme: typeof import("enzyme") | undefined;
+  if (opts.loadEnzyme) {
+    let Adapter16;
+
+    [{ default: Enzyme }, { default: Adapter16 }] = await Promise.all([
+      import(/* webpackChunkName: "enzyme" */ "enzyme"),
+      import(
+        /* webpackChunkName: "enzyme-adapter" */ "enzyme-adapter-react-16"
+      ),
+    ]);
+
+    Enzyme.configure({ adapter: new Adapter16() });
+  }
+
+  return {
+    code,
+    editableContents,
+    __helpers,
+    __testEditable,
+    DeepFreeze,
+    Enzyme,
+  };
+}
+
 export class DOMTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
@@ -71,72 +131,15 @@ export class DOMTestEvaluator implements TestEvaluator {
 
   async init(opts: InitTestFrameOptions) {
     removeTestScripts();
-    const codeObj = opts.code;
 
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    const code = (codeObj?.contents ?? "").slice();
-
-    const editableContents = (codeObj?.editableContents ?? "").slice();
-    // __testEditable allows test authors to run tests against a transitory dom
-    // element built using only the code in the editable region.
-    const __testEditable = (cb: () => () => unknown) => {
-      const div = document.createElement("div");
-      div.id = "editable-only";
-      div.innerHTML = editableContents;
-      document.body.appendChild(div);
-      const out = cb();
-      document.body.removeChild(div);
-      return out;
-    };
-
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-
-    // Hardcode Deep Freeze dependency
-    const DeepFreeze = (o: Record<string, unknown>) => {
-      Object.freeze(o);
-      Object.getOwnPropertyNames(o).forEach((prop) => {
-        if (
-          Object.hasOwn(o, prop) &&
-          o[prop] !== null &&
-          (typeof o[prop] === "object" || typeof o[prop] === "function") &&
-          !Object.isFrozen(o[prop])
-        ) {
-          // eslint-disable-next-line new-cap
-          DeepFreeze(o[prop] as Record<string, unknown>);
-        }
-      });
-      return o;
-    };
-
-    const __helpers = helpers;
-
-    let Enzyme;
-    if (opts.loadEnzyme) {
-      let Adapter16;
-
-      [{ default: Enzyme }, { default: Adapter16 }] = await Promise.all([
-        import(/* webpackChunkName: "enzyme" */ "enzyme"),
-        import(
-          /* webpackChunkName: "enzyme-adapter" */ "enzyme-adapter-react-16"
-        ),
-      ]);
-
-      Enzyme.configure({ adapter: new Adapter16() });
-    }
+    const testScope = await createTestScope(opts);
 
     this.#runTest = async function (testString: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
       try {
-        // Eval test string to actual JavaScript
-        // This return can be a function
-        // i.e. function() { assert(true, 'happy coding'); }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const test = await eval(`${opts.hooks?.beforeEach ?? ""}
-${testString}`);
-        if (typeof test === "function") {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          await test();
-        }
+        const toEval = `${opts.hooks?.beforeEach ?? ""}
+${testString};`;
+        await evalWithScope(toEval, testScope);
 
         return { pass: true, ...this.#flushLogs() };
       } catch (err) {

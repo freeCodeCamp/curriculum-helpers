@@ -683,7 +683,7 @@ const getFive = () => 5;
           type: "dom",
         });
         return runner.runTest(
-          "async () => await document.getElementById('audio').play()",
+          "await document.getElementById('audio').play()",
         );
       }, source);
 
