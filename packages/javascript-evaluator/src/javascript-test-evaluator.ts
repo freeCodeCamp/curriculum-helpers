@@ -1,5 +1,5 @@
 /* eslint-disable no-eval */
-import { assert } from "chai";
+import { assert as chaiAssert } from "chai";
 
 import * as curriculumHelpers from "../../helpers/lib";
 
@@ -17,19 +17,19 @@ import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
-  interface WorkerGlobalScope {
-    assert: typeof assert;
-    __helpers: typeof curriculumHelpers;
-  }
+  // @ts-expect-error chai is not accessible in the global scope
+  // eslint-disable-next-line no-var
+  var assert: typeof chaiAssert;
+  // eslint-disable-next-line no-var
+  var __helpers: typeof curriculumHelpers;
 }
-
 // These have to be added to the global scope or they will get eliminated as dead
 // code.
-self.assert = assert;
-self.__helpers = curriculumHelpers;
+globalThis.assert = chaiAssert;
+globalThis.__helpers = curriculumHelpers;
 
-Object.freeze(self.__helpers);
-Object.freeze(self.assert);
+Object.freeze(globalThis.__helpers);
+Object.freeze(globalThis.assert);
 
 // The newline is important, because otherwise comments will cause the trailing
 // `}` to be ignored, breaking the tests.
@@ -43,7 +43,9 @@ export class JavascriptTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
   #flushLogs: ReturnType<typeof createLogFlusher>;
 
-  constructor(proxyConsole: ProxyConsole = new ProxyConsole(self.console)) {
+  constructor(
+    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console),
+  ) {
     this.#proxyConsole = proxyConsole;
     this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }

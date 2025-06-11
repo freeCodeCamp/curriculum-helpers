@@ -2,7 +2,7 @@
 import jQuery from "jquery";
 import * as helpers from "../../helpers/lib";
 import FakeTimers from "@sinonjs/fake-timers";
-import chai from "chai";
+import { assert as chaiAssert } from "chai";
 
 import type {
   TestEvaluator,
@@ -25,20 +25,21 @@ import { format } from "../../shared/src/format";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
+/* eslint-disable no-var */
 declare global {
-  interface Window {
-    $: typeof jQuery;
-    __FakeTimers: typeof FakeTimers;
-    assert: typeof chai.assert;
-  }
+  var __FakeTimers: typeof FakeTimers;
+  // @ts-expect-error chai is not accessible in the global scope
+  var assert: typeof chaiAssert;
 }
+/* eslint-enable no-var */
 
-window.$ = jQuery;
-window.__FakeTimers = FakeTimers;
-window.assert = chai.assert;
+// @ts-expect-error jQuery cannot be declared.
+globalThis.$ = jQuery;
+globalThis.__FakeTimers = FakeTimers;
+globalThis.assert = chaiAssert;
 
 // Local storage is not accessible in a sandboxed iframe, so we need to mock it
-Object.defineProperty(window, "localStorage", {
+Object.defineProperty(globalThis, "localStorage", {
   value: new MockLocalStorage(),
 });
 
@@ -54,7 +55,9 @@ export class DOMTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
   #flushLogs: ReturnType<typeof createLogFlusher>;
 
-  constructor(proxyConsole: ProxyConsole = new ProxyConsole(window.console)) {
+  constructor(
+    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console),
+  ) {
     this.#proxyConsole = proxyConsole;
     this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }

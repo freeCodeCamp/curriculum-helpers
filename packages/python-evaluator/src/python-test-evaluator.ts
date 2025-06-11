@@ -40,7 +40,9 @@ class PythonTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
   #flushLogs: ReturnType<typeof createLogFlusher>;
 
-  constructor(proxyConsole: ProxyConsole = new ProxyConsole(self.console)) {
+  constructor(
+    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console),
+  ) {
     this.#proxyConsole = proxyConsole;
     this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }
@@ -219,6 +221,6 @@ class PythonTestEvaluator implements TestEvaluator {
 
 const worker = new PythonTestEvaluator();
 
-onmessage = function (e: TestEvent | InitEvent<InitWorkerOptions>) {
+globalThis.onmessage = function (e: TestEvent | InitEvent<InitWorkerOptions>) {
   void worker.handleMessage(e);
 };
