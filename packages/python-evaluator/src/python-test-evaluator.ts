@@ -19,11 +19,6 @@ import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
 
-type EvaluatedTeststring = {
-  input?: string[];
-  test: () => Promise<unknown>;
-};
-
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -49,7 +44,7 @@ class PythonTestEvaluator implements TestEvaluator {
     const pyodide = await this.#setupPyodide();
     eval(opts.hooks?.beforeAll ?? "");
 
-    this.#runTest = async (testString): Promise<Pass | Fail> => {
+    this.#runTest = async (test): Promise<Pass | Fail> => {
       this.#proxyConsole.on();
       const code = (opts.code?.contents ?? "").slice();
       /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -86,56 +81,27 @@ class PythonTestEvaluator implements TestEvaluator {
 
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
+      let __userCodeWasExecuted = false;
       try {
-        eval(opts.hooks?.beforeEach ?? "");
-        // Eval test string to get the dummy input and actual test
-        const evaluatedTestString = await new Promise<unknown>(
-          (resolve, reject) => {
-            try {
-              const test: unknown = eval(testString);
-              resolve(test);
-            } catch (err) {
-              reject(err as Error);
-            }
-          },
-        );
-
-        // If the test string does not evaluate to an object, then we assume that
-        // it's a standard JS test and any assertions have already passed.
-        if (typeof evaluatedTestString !== "object") {
-          // Execute afterEach hook if it exists
-          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-
-          return { pass: true, ...this.#flushLogs() };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const code = opts.code?.contents ?? "";
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const editableContents = opts.code?.editableContents ?? "";
+        try {
+          await eval(`${opts.hooks?.beforeEach ?? ""}`);
+          runPython(opts.source ?? "");
+          __userCodeWasExecuted = true;
+          await eval(test);
+        } catch (err) {
+          if (__userCodeWasExecuted) {
+            // Rethrow error, since test failed.
+            throw err;
+          } else {
+            console.error(err);
+            // Otherwise run the test against the code
+            await eval(test);
+          }
         }
-
-        if (!evaluatedTestString || !("test" in evaluatedTestString)) {
-          throw Error(
-            "Test string did not evaluate to an object with the 'test' property",
-          );
-        }
-
-        const { input, test } = evaluatedTestString as EvaluatedTeststring;
-
-        runPython(`
-		def __inputGen(xs):
-			def gen():
-				for x in xs:
-					yield x
-			iter = gen()
-			def input(arg=None):
-				return next(iter)
-
-			return input
-
-		input = __inputGen(${JSON.stringify(input ?? [])})
-		`);
-
-        // Evaluates the learner's code so that any variables they define are
-        // available to the test.
-        runPython(opts.source ?? "");
-
-        await test();
 
         if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 

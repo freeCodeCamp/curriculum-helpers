@@ -1019,11 +1019,7 @@ assert(mocked.find('.greeting').length === 1);
         await runner?.init({
           source,
         });
-        return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('get_five()'), 5),
-						})`,
-        );
+        return runner?.runTest(`assert.equal(runPython('get_five()'), 5)`);
       }, source);
 
       expect(result).toEqual({ pass: true });
@@ -1042,11 +1038,7 @@ test: () => assert.equal(runPython('get_five()'), 5),
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({});
-        return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('get_five()'), 5),
-						})`,
-        );
+        return runner?.runTest(`assert.equal(runPython('get_five()'), 5)`);
       });
 
       expect(result).toMatchObject({
@@ -1064,9 +1056,7 @@ test: () => assert.equal(runPython('get_five()'), 5),
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({});
         return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('__name__'), '__main__'),
-						})`,
+          `assert.equal(runPython('__name__'), '__main__')`,
         );
       });
 
@@ -1097,38 +1087,21 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
       });
     });
 
-    it("should reject testStrings that evaluate to an invalid object", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
-        return runner?.runTest(`({ invalid: 'test' })`);
-      });
-
-      expect(result).toEqual({
-        err: {
-          message:
-            "Test string did not evaluate to an object with the 'test' property",
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          stack: expect.stringContaining(
-            "Error: Test string did not evaluate to an object with the 'test' property",
-          ),
-        },
-      });
-    });
-
-    it("should be able to test with mock input", async () => {
+    it("should be able to test source code which uses `input`", async () => {
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({
           source: `
 first = input()
-second = input()
+second = ' input'
 `,
+          hooks: {
+            beforeEach: "runPython('def input(): return \"test\"')",
+          },
         });
-        return runner?.runTest(`({
-	input: ["argle", "bargle"],
-  test: () => assert.equal(runPython('first + second'), "arglebargle")
-})`);
+        return runner?.runTest(
+          "assert.equal(runPython('first + second'), 'test input')",
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1142,9 +1115,9 @@ second = input()
             contents: "test = 'value'",
           },
         });
-        return runner?.runTest(`({
-  test: () => assert.equal(runPython('_code'), "test = 'value'")
-})`);
+        return runner?.runTest(
+          `assert.equal(runPython('_code'), "test = 'value'")`,
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1154,9 +1127,9 @@ second = input()
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({});
-        return runner?.runTest(`({
-  test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
-})`);
+        return runner?.runTest(
+          `assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)`,
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1173,9 +1146,7 @@ second = input()
             beforeEach: "assert.equal(runPython('_code'), \"test = 'value'\")",
           },
         });
-        return runner?.runTest(`({
-  test: () => {}
-})`);
+        return runner?.runTest("");
       });
 
       expect(result).toEqual({ pass: true });
@@ -1199,9 +1170,7 @@ second = input()
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({});
-        return runner?.runTest(`({
-	test: () => assert.equal(runPython('1 + "1"'), 2)
-})`);
+        return runner?.runTest(`assert.equal(runPython('1 + "1"'), 2)`);
       });
       expect(result).toEqual({
         err: {
@@ -1227,9 +1196,7 @@ pattern = re.compile('l+')
         await runner?.init({
           source,
         });
-        return runner?.runTest(`({
-	test: () => assert.equal(runPython('str(pattern)'), "l+")
-})`);
+        return runner?.runTest(`assert.equal(runPython('str(pattern)'), "l+")`);
       }, source);
       expect(result).toEqual({
         err: {
@@ -1257,7 +1224,7 @@ pattern = re.compile('l+')`;
         // Since the comparison includes a PyProxy object, that will be
         // posted back to the caller and cause a DataCloneError
         return runner?.runTest(`
-  ({ test: () => assert.equal(__userGlobals.get("pattern"), "l+") })
+  assert.equal(__userGlobals.get("pattern"), "l+")
 `);
       }, source);
 
