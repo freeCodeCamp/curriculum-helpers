@@ -74,20 +74,13 @@
     "pnpm": ">= 10"
   },
   "lint-staged": {
-    "*.js": [
+    "*.{ts,js,mjs,cjs,jsx,tsx}": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
-    "*.json": [
-      "prettier --write",
-      "git add"
+    "!(*.{ts,js,mjs,cjs,jsx,tsx})": [
+      "prettier --ignore-unknown --write"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "scripts": {
     "build": "tsc --build --clean && webpack",
@@ -98,6 +91,7 @@
     "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
     "format": "prettier --write .",
     "test": "vitest",
+    "prepare": "husky install",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
   },
