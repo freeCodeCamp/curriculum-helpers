@@ -46,7 +46,7 @@
     "eslint-config-xo": "0.46.0",
     "globals": "^16.0.0",
     "husky": "8.0.3",
-    "lint-staged": "9.5.0",
+    "lint-staged": "16.1.2",
     "prettier": "3.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -74,20 +74,13 @@
     "pnpm": ">= 10"
   },
   "lint-staged": {
-    "*.js": [
+    "*.{ts,js,mjs,cjs,jsx,tsx}": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
-    "*.json": [
-      "prettier --write",
-      "git add"
+    "!(*.{ts,js,mjs,cjs,jsx,tsx})": [
+      "prettier --ignore-unknown --write"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   },
   "scripts": {
     "build": "tsc --build --clean && webpack",
@@ -98,6 +91,7 @@
     "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
     "format": "prettier --write .",
     "test": "vitest",
+    "prepare": "husky install",
     "prepublishOnly": "pnpm clean && pnpm build",
     "webpack": "webpack"
   },
