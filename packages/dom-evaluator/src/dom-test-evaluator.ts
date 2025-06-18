@@ -25,13 +25,11 @@ import { format } from "../../shared/src/format";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
-/* eslint-disable no-var */
 declare global {
   var __FakeTimers: typeof FakeTimers;
   // @ts-expect-error chai is not accessible in the global scope
   var assert: typeof chaiAssert;
 }
-/* eslint-enable no-var */
 
 // @ts-expect-error jQuery cannot be declared.
 globalThis.$ = jQuery;
