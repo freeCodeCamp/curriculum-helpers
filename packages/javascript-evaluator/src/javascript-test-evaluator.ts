@@ -17,10 +17,8 @@ import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
-  // @ts-expect-error chai is not accessible in the global scope
-  // eslint-disable-next-line no-var
+  // @ts-expect-error chai is not accessible in the global scope, but TS thinks it is
   var assert: typeof chaiAssert;
-  // eslint-disable-next-line no-var
   var __helpers: typeof curriculumHelpers;
 }
 // These have to be added to the global scope or they will get eliminated as dead
