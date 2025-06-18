@@ -111,21 +111,22 @@ const entry = entrypointSources.reduce(
   {},
 );
 
-const tsRules = allSources.map(({ name, path }) => ({
-  test: /\.ts$/,
-  include: path,
-  use: [
-    {
-      loader: "ts-loader",
-      options: {
-        projectReferences: true,
-        instance: name,
-        transpileOnly: true, // we use tsc for type checking
+const getTSRules = (isDev) =>
+  allSources.map(({ name, path }) => ({
+    test: /\.ts$/,
+    include: path,
+    use: [
+      {
+        loader: "ts-loader",
+        options: {
+          projectReferences: true,
+          instance: name,
+          transpileOnly: isDev, // we use tsc for type checking, but we need the declaration files to be generated in production
+        },
       },
-    },
-  ],
-  exclude: /node_modules/,
-}));
+    ],
+    exclude: /node_modules/,
+  }));
 
 const testRunnerConfig = (env = {}) => {
   const isDev = env.development;
@@ -148,7 +149,7 @@ const testRunnerConfig = (env = {}) => {
           test: /\.py/,
           type: "asset/source",
         },
-        ...tsRules,
+        ...getTSRules(isDev),
       ],
     },
     resolve: {
