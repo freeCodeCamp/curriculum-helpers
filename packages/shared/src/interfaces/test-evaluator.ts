@@ -8,15 +8,17 @@ export interface Pass extends Logged {
   pass: true;
 }
 
+export interface TestError {
+  message: string;
+  stack?: string;
+  // TODO: enforce string for expected and actual?
+  expected?: unknown;
+  actual?: unknown;
+  type?: string;
+}
+
 export interface Fail extends Logged {
-  err: {
-    message: string;
-    stack?: string;
-    // TODO: enforce string for expected and actual?
-    expected?: unknown;
-    actual?: unknown;
-    type?: string;
-  };
+  err: TestError;
 }
 
 export type TestEvent = MessageEvent<{ type: "test"; value: string }>;

@@ -556,6 +556,27 @@ for(let i = 0; i < 3; i++) {
         expect(result).toMatchObject({ err: { actual: 1 } });
       },
     );
+
+    it("should fail the test if the afterEach hook throws an error", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            afterEach: "throw new Error('afterEach error')",
+          },
+        });
+
+        return runner.runTest("");
+      }, type);
+
+      expect(result).toEqual({
+        err: {
+          message: "afterEach error",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          stack: expect.stringMatching("Error: afterEach error"),
+        },
+      });
+    });
   });
 
   describe.each([
