@@ -5,6 +5,7 @@ import * as curriculumHelpers from "../../helpers/lib";
 
 import type {
   TestEvaluator,
+  TestError,
   Fail,
   InitEvent,
   TestEvent,
@@ -34,6 +35,17 @@ Object.freeze(globalThis.assert);
 export class JavascriptTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
+
+  #createErrorResponse(error: TestError) {
+    return {
+      err: {
+        message: error.message,
+        stack: error.stack,
+        ...(!!error.expected && { expected: error.expected }),
+        ...(!!error.actual && { actual: error.actual }),
+      },
+    };
+  }
 
   constructor(
     proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console, format),
@@ -79,12 +91,7 @@ ${test};`);
         const error = err as Fail["err"];
 
         return {
-          err: {
-            message: error.message,
-            stack: error.stack,
-            ...(!!error.expected && { expected: error.expected }),
-            ...(!!error.actual && { actual: error.actual }),
-          },
+          ...this.#createErrorResponse(error),
           ...this.#proxyConsole.flush(),
         };
       } finally {
@@ -93,9 +100,8 @@ ${test};`);
         try {
           if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
         } catch (afterEachErr) {
-          // Even though we're returning the original test error, we still
-          // want to log for debugging purposes.
-          console.error("Error in afterEach hook:", afterEachErr);
+          // eslint-disable-next-line no-unsafe-finally
+          return this.#createErrorResponse(afterEachErr as TestError);
         }
       }
     };

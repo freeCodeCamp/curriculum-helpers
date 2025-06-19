@@ -13,6 +13,7 @@ import {
   Pass,
   TestEvaluator,
   TestEvent,
+  TestError,
 } from "../../shared/src/interfaces/test-evaluator";
 import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
@@ -39,6 +40,20 @@ class PythonTestEvaluator implements TestEvaluator {
   #pyodide?: PyodideInterface;
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
+
+  #createErrorResponse(error: TestError) {
+    const expected = serialize((error as { expected: unknown }).expected);
+    const actual = serialize((error as { actual: unknown }).actual);
+    return {
+      err: {
+        message: error.message,
+        stack: error.stack,
+        ...(!!expected && { expected }),
+        ...(!!actual && { actual }),
+        type: error.type,
+      },
+    };
+  }
 
   constructor(
     proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console, format),
@@ -154,20 +169,11 @@ class PythonTestEvaluator implements TestEvaluator {
 
         const error = err as PythonError;
 
-        const expected = serialize((err as { expected: unknown }).expected);
-        const actual = serialize((err as { actual: unknown }).actual);
-
         // To provide useful debugging information when debugging the tests, we
         // have to extract the message, stack and, if they exist, expected and
         // actual before returning
         return {
-          err: {
-            message: error.message,
-            stack: error.stack,
-            ...(!!expected && { expected }),
-            ...(!!actual && { actual }),
-            type: error.type,
-          },
+          ...this.#createErrorResponse(error),
           ...this.#proxyConsole.flush(),
         };
       } finally {
@@ -176,9 +182,10 @@ class PythonTestEvaluator implements TestEvaluator {
         try {
           if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
         } catch (afterEachErr) {
-          // Even though we're returning the original test error, we still
-          // want to log for debugging purposes.
-          console.error("Error in afterEach hook:", afterEachErr);
+          // eslint-disable-next-line no-unsafe-finally
+          return {
+            ...this.#createErrorResponse(afterEachErr as TestError),
+          };
         }
 
         __userGlobals.destroy();
