@@ -116,9 +116,6 @@ class PythonTestEvaluator implements TestEvaluator {
         // If the test string does not evaluate to an object, then we assume that
         // it's a standard JS test and any assertions have already passed.
         if (typeof evaluatedTestString !== "object") {
-          // Execute afterEach hook if it exists
-          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-
           return { pass: true, ...this.#proxyConsole.flush() };
         }
 
@@ -150,20 +147,10 @@ class PythonTestEvaluator implements TestEvaluator {
 
         await test();
 
-        if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
-
-        try {
-          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-        } catch (afterEachErr) {
-          // Even though we're returning the original test error, we still
-          // want to log for debugging purposes.
-          console.error("Error in afterEach hook:", afterEachErr);
-        }
 
         const error = err as PythonError;
 
@@ -185,6 +172,15 @@ class PythonTestEvaluator implements TestEvaluator {
         };
       } finally {
         this.#proxyConsole.off();
+
+        try {
+          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
+        } catch (afterEachErr) {
+          // Even though we're returning the original test error, we still
+          // want to log for debugging purposes.
+          console.error("Error in afterEach hook:", afterEachErr);
+        }
+
         __userGlobals.destroy();
       }
     };
