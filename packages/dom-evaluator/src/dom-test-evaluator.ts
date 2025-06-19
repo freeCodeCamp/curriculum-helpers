@@ -143,20 +143,10 @@ ${rawTest}`);
           await test();
         }
 
-        if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
-
-        try {
-          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
-        } catch (afterEachErr) {
-          // Even though we're returning the original test error, we still
-          // want to log for debugging purposes.
-          console.error("Error in afterEach hook:", afterEachErr);
-        }
 
         const error = err as Fail["err"];
         // To provide useful debugging information when debugging the tests, we
@@ -173,6 +163,14 @@ ${rawTest}`);
         };
       } finally {
         this.#proxyConsole.off();
+
+        try {
+          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
+        } catch (afterEachErr) {
+          // Even though we're returning the original test error, we still
+          // want to log for debugging purposes.
+          console.error("Error in afterEach hook:", afterEachErr);
+        }
       }
     };
 
