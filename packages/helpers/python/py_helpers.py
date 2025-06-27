@@ -493,11 +493,6 @@ class Node:
             return Node(guard)
         return Node()
 
-    def find_case_body(self):
-        if not isinstance(self.tree, ast.match_case):
-            return Node()
-        return Node(ast.Module(self.tree.body, []))
-
     def find_trys(self):
         return self._find_all(ast.Try)
 
