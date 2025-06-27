@@ -392,6 +392,8 @@ class Node:
         id_list = [node.id for node in self.tree.bases]
         return all(arg in id_list for arg in args)
 
+    # Find an array of if statements
+
     def find_ifs(self):
         return self._find_all(ast.If)
 
