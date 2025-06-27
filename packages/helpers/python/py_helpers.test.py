@@ -1103,19 +1103,19 @@ match x:
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[0]
-            .find_case_body()
+            .find_body()
             .is_equivalent("print(0)\nprint('spam')")
         )
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[1]
-            .find_case_body()
+            .find_body()
             .is_equivalent("print(a, b)")
         )
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[2]
-            .find_case_body()
+            .find_body()
             .is_equivalent("pass")
         )
 
