@@ -1103,21 +1103,238 @@ match x:
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[0]
-            .find_case_body()
+            .find_body()
             .is_equivalent("print(0)\nprint('spam')")
         )
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[1]
-            .find_case_body()
+            .find_body()
             .is_equivalent("print(a, b)")
         )
         self.assertTrue(
             node.find_matches()[0]
             .find_match_cases()[2]
-            .find_case_body()
+            .find_body()
             .is_equivalent("pass")
         )
+
+
+class TestTryExceptHelpers(unittest.TestCase):
+    def test_find_trys(self):
+        self.maxDiff = None
+        code_str = """
+try:
+    x = 1 / 0
+except ZeroDivisionError:
+    print("division by zero")
+except ValueError as e:
+    print(f"value error: {e}")
+else:
+    print("no error")
+finally:
+    print("cleanup")
+
+try:
+    y = int("abc")
+except:
+    pass
+"""
+        node = Node(code_str)
+
+        self.assertEqual(len(node.find_trys()), 2)
+        self.assertTrue(
+            node.find_trys()[0].is_equivalent(
+                "try:\n  x = 1 / 0\nexcept ZeroDivisionError:\n  print('division by zero')\nexcept ValueError as e:\n  print(f'value error: {e}')\nelse:\n  print('no error')\nfinally:\n  print('cleanup')"
+            )
+        )
+        self.assertTrue(
+            node.find_trys()[1].is_equivalent("try:\n  y = int('abc')\nexcept:\n  pass")
+        )
+        self.assertTrue(node.find_trys()[0].find_body().is_equivalent("x = 1 / 0"))
+
+    def test_find_excepts(self):
+        code_str = """
+try:
+    x = 1 / 0
+except ZeroDivisionError:
+    print("division by zero")
+except ValueError as e:
+    print(f"value error: {e}")
+except:
+    print("other error")
+finally:
+    print("cleanup")
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+        excepts = try_stmt.find_excepts()
+
+        self.assertEqual(len(excepts), 3)
+
+    def test_find_excepts_no_try(self):
+        code_str = """
+x = 1
+print(x)
+"""
+        node = Node(code_str)
+
+        self.assertEqual(node.find_excepts(), [])
+
+    def test_find_except(self):
+        code_str = """
+try:
+    x = 1 / 0
+except ZeroDivisionError:
+    print("division by zero")
+except ValueError as e:
+    print(f"value error: {e}")
+except Exception as ex:
+    print(f"exception: {ex}")
+except:
+    print("other error")
+"""
+        node = Node(code_str)
+        try_stmt = node.find_trys()[0]
+        self.assertTrue(
+            try_stmt.find_except("ZeroDivisionError")
+            .find_body()
+            .is_equivalent("print('division by zero')")
+        )
+        self.assertTrue(
+            try_stmt.find_except("ValueError", "e")
+            .find_body()
+            .is_equivalent("print(f'value error: {e}')")
+        )
+        self.assertTrue(
+            try_stmt.find_except("Exception", "ex")
+            .find_body()
+            .is_equivalent("print(f'exception: {ex}')")
+        )
+        self.assertTrue(
+            try_stmt.find_except().find_body().is_equivalent("print('other error')")
+        )
+
+    def test_has_except(self):
+        code_str = """
+try:
+    x = 1 / 0
+except ZeroDivisionError:
+    print("division by zero")
+except ValueError as e:
+    print(f"value error: {e}")
+except Exception as ex:
+    print(f"exception: {ex}")
+except:
+    print("other error")
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+
+        self.assertTrue(try_stmt.has_except("ZeroDivisionError"))
+        self.assertTrue(try_stmt.has_except("ValueError", "e"))
+        self.assertTrue(try_stmt.has_except("Exception", "ex"))
+        self.assertFalse(try_stmt.has_except("FileNotFoundError"))
+        self.assertFalse(try_stmt.has_except("ValueError", "ex"))
+
+    def test_has_except_no_try(self):
+        code_str = """
+x = 1
+print(x)
+"""
+        node = Node(code_str)
+
+        self.assertFalse(node.has_except("ValueError"))
+
+    def test_find_try_else(self):
+        code_str = """
+try:
+    x = 1
+except ValueError:
+    print("error")
+else:
+    print("success")
+    x = 2
+finally:
+    print("cleanup")
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+        else_block = try_stmt.find_try_else()
+
+        self.assertTrue(else_block.is_equivalent("print('success')\nx = 2"))
+
+    def test_find_try_else_no_else(self):
+        code_str = """
+try:
+    x = 1
+except ValueError:
+    print("error")
+finally:
+    print("cleanup")
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+        else_block = try_stmt.find_try_else()
+
+        self.assertTrue(else_block.is_empty())
+
+    def test_find_try_else_no_try(self):
+        code_str = """
+x = 1
+print(x)
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_try_else().is_empty())
+
+    def test_find_finally(self):
+        code_str = """
+try:
+    x = 1
+except ValueError:
+    print("error")
+else:
+    print("success")
+finally:
+    print("cleanup")
+    x = None
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+        finally_block = try_stmt.find_finally()
+
+        self.assertTrue(finally_block.is_equivalent("print('cleanup')\nx = None"))
+
+    def test_find_finally_no_finally(self):
+        code_str = """
+try:
+    x = 1
+except ValueError:
+    print("error")
+else:
+    print("success")
+"""
+        node = Node(code_str)
+
+        try_stmt = node.find_trys()[0]
+        finally_block = try_stmt.find_finally()
+
+        self.assertTrue(finally_block.is_empty())
+
+    def test_find_finally_no_try(self):
+        code_str = """
+x = 1
+print(x)
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_finally().is_empty())
 
 
 class TestForLoopsHelpers(unittest.TestCase):

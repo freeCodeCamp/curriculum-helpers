@@ -392,7 +392,7 @@ class Node:
         id_list = [node.id for node in self.tree.bases]
         return all(arg in id_list for arg in args)
 
-    # Find an array of conditions in an if statement
+    # Find an array of if statements
 
     def find_ifs(self):
         return self._find_all(ast.If)
@@ -495,10 +495,44 @@ class Node:
             return Node(guard)
         return Node()
 
-    def find_case_body(self):
-        if not isinstance(self.tree, ast.match_case):
+    def find_trys(self):
+        return self._find_all(ast.Try)
+
+    def find_excepts(self):
+        if not isinstance(self.tree, ast.Try):
+            return []
+        return [Node(handler) for handler in self.tree.handlers]
+
+    def find_except(self, except_type=None, name=None):
+        if not isinstance(self.tree, ast.Try):
             return Node()
-        return Node(ast.Module(self.tree.body, []))
+        for handler in self.tree.handlers:
+            if except_type is None and handler.type is None:
+                return Node(handler)
+            if isinstance(handler.type, ast.Name):
+                if handler.type.id == except_type:
+                    if (name is None and handler.name is None) or handler.name == name:
+                        return Node(handler)
+        return Node()
+
+    def has_except(self, except_type=None, name=None):
+        if self.find_except(except_type, name) == Node():
+            return False
+        return True
+
+    def find_try_else(self):
+        if not isinstance(self.tree, ast.Try):
+            return Node()
+        if not self.tree.orelse:
+            return Node()
+        return Node(ast.Module(self.tree.orelse, []))
+
+    def find_finally(self):
+        if not isinstance(self.tree, ast.Try):
+            return Node()
+        if not self.tree.finalbody:
+            return Node()
+        return Node(ast.Module(self.tree.finalbody, []))
 
     # Returs a Boolean indicating if the statements passed as arguments
     # are found in the same order in the tree (statements can be non-consecutive)
