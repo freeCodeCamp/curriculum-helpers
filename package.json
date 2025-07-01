@@ -83,7 +83,8 @@
     ]
   },
   "scripts": {
-    "build": "tsc --build --clean && webpack",
+    "build": "tsc --build --clean && webpack && pnpm build:version",
+    "build:version": "node ./packages/shared/tooling/output-version.mjs",
     "build-dev": "webpack --env development",
     "clean": "rm -rf dist && rm -rf __fixtures__/dist && pnpm clean:ts && pnpm clean:packages",
     "clean:packages": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
