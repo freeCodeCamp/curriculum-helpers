@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cssString } from "../__fixtures__/curriculum-helper-css";
-import { CSSHelp } from "../index";
+import { cssString } from "./__fixtures__/curriculum-helper-css";
+import { CSSHelp } from "./../helpers/lib/index";
 
 describe("css-help", () => {
   const doc = document;
@@ -15,7 +15,10 @@ describe("css-help", () => {
     // REF: https://github.com/freeCodeCamp/freeCodeCamp/pull/42148#issuecomment-847291137
     const mediaRule = t.getCSSRules("media")?.[0] as CSSMediaRule;
     const conditionText = mediaRule.media[0];
-    mediaRule.conditionText = conditionText;
+    Object.defineProperty(mediaRule, "conditionText", {
+      value: conditionText,
+      configurable: true,
+    });
   });
   describe("getStyle", () => {
     it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {

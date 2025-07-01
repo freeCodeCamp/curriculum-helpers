@@ -1,0 +1,23 @@
+{
+  "extends": "../../base-tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "lib": ["dom", "ESNext"],
+    "types": ["vitest/globals", "react"],
+    "jsx": "preserve",
+    "strict": false,
+    "noEmit": true,
+    "tsBuildInfoFile": ".tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../dom-evaluator"
+    },
+    {
+      "path": "../javascript-evaluator"
+    },
+    {
+      "path": "../main"
+    }
+  ]
+}

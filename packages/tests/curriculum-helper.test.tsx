@@ -3,11 +3,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import cssTestValues from "../__fixtures__/curriculum-helper-css";
-import htmlTestValues from "../__fixtures__/curriculum-helpers-html";
-import jsTestValues from "../__fixtures__/curriculum-helpers-javascript";
-import whiteSpaceTestValues from "../__fixtures__/curriculum-helpers-remove-white-space";
-import * as helper from "../index";
+import cssTestValues from "./__fixtures__/curriculum-helper-css";
+import htmlTestValues from "./__fixtures__/curriculum-helpers-html";
+import jsTestValues from "./__fixtures__/curriculum-helpers-javascript";
+import whiteSpaceTestValues from "./__fixtures__/curriculum-helpers-remove-white-space";
+import * as helper from "./../helpers/lib/index";
 
 const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
   whiteSpaceTestValues;

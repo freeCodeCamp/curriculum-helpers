@@ -102,9 +102,9 @@
   "license": "BSD-3-Clause",
   "dependencies": {
     "@sinonjs/fake-timers": "^14.0.0",
-    "@types/enzyme": "^3.10.19",
-    "@types/enzyme-adapter-react-16": "^1.0.9",
     "@types/jquery": "^3.5.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
     "@types/sinonjs__fake-timers": "^8.1.5",
     "browserify": "^17.0.0",
     "chai": "4",
