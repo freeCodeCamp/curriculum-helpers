@@ -85,7 +85,8 @@
   "scripts": {
     "build": "tsc --build --clean && webpack",
     "build-dev": "webpack --env development",
-    "clean": "rm -rf dist && rm -rf __fixtures__/dist && pnpm clean:ts",
+    "clean": "rm -rf dist && rm -rf __fixtures__/dist && pnpm clean:ts && pnpm clean:packages",
+    "clean:packages": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "clean:ts": "tsc --build --clean",
     "install-puppeteer-browser": "puppeteer browsers install chrome",
     "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
