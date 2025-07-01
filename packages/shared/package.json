@@ -1,0 +1,17 @@
+{
+  "name": "@freecodecamp/shared",
+  "description": "Shared modules.",
+  "private": true,
+  "engines": {
+    "pnpm": ">= 10"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/freeCodeCamp/curriculum-helpers.git"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "@types/node": "^22.15.34"
+  }
+}

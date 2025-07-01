@@ -1,5 +1,13 @@
 import "vitest-environment-puppeteer";
 import { compileForTests } from "../../shared/tooling/webpack-compile";
+import type { FCCTestRunner } from "../../main/src/index";
+import { Fail, Pass } from "../../shared/src/interfaces/test-evaluator";
+
+declare global {
+  interface Window {
+    FCCTestRunner: FCCTestRunner;
+  }
+}
 
 describe("Test Runner", () => {
   beforeAll(async () => {
@@ -147,7 +155,7 @@ describe("Test Runner", () => {
             type,
           });
 
-          const logs = [];
+          const logs: (Pass | Fail)[] = [];
 
           for (const level of levels) {
             logs.push(

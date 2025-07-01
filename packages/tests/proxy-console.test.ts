@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ProxyConsole } from "./proxy-console";
+import { ProxyConsole } from "../shared/src/proxy-console";
 
 const LEVELS = ["trace", "debug", "info", "log", "warn", "error"] as const;
 

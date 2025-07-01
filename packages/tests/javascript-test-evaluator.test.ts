@@ -1,6 +1,6 @@
 /* @jest-environment jsdom */
 
-import { JavascriptTestEvaluator } from "./javascript-test-evaluator";
+import { JavascriptTestEvaluator } from "../javascript-evaluator/src/javascript-test-evaluator";
 
 describe("JavascriptTestEvaluator", () => {
   let evaluator: JavascriptTestEvaluator;

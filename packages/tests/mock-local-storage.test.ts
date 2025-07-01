@@ -1,4 +1,4 @@
-import { MockLocalStorage } from "./mock-local-storage";
+import { MockLocalStorage } from "../dom-evaluator/src/mock-local-storage";
 
 describe("MockLocalStorage", () => {
   describe("length", () => {

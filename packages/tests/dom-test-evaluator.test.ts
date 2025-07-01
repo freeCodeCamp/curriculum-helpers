@@ -1,6 +1,6 @@
 /* @jest-environment jsdom */
 
-import { DOMTestEvaluator } from "./dom-test-evaluator";
+import { DOMTestEvaluator } from "../dom-evaluator/src/dom-test-evaluator";
 
 // This is a limited reset, but should be enough if we only add or remove
 // elements.

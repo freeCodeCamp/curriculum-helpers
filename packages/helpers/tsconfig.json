@@ -1,6 +1,5 @@
 {
   "extends": "../../base-tsconfig.json",
-  "exclude": ["**/__tests__", "**/__fixtures__", "**/__mocks__"],
   "compilerOptions": {
     "rootDir": "./",
     "declarationDir": "../../dist/types/helpers",

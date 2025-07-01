@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { format } from "./format";
+import { format } from "../shared/src/format";
 
 function simpleFun() {
   // eslint-disable-next-line no-var, @typescript-eslint/no-unused-vars

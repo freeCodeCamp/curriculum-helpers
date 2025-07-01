@@ -27,15 +27,12 @@ const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 declare global {
   var __FakeTimers: typeof FakeTimers;
-  // @ts-expect-error chai is not accessible in the global scope
   var assert: typeof chaiAssert;
 }
 
 // @ts-expect-error jQuery cannot be declared.
 globalThis.$ = jQuery;
-// @ts-expect-error somehow importing Enzyme makes TS think you cannot modify globalThis
 globalThis.__FakeTimers = FakeTimers;
-// @ts-expect-error somehow importing Enzyme makes TS think you cannot modify globalThis
 globalThis.assert = chaiAssert;
 
 // Local storage is not accessible in a sandboxed iframe, so we need to mock it

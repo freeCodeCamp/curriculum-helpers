@@ -18,6 +18,9 @@
       "path": "./packages/dom-evaluator"
     },
     {
+      "path": "./packages/tests"
+    },
+    {
       "path": "./packages/shared"
     }
   ]

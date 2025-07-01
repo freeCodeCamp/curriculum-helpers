@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import * as helper from "../index";
+import * as helper from "./../helpers/lib/index";
 
 type FunctionMatch = {
   def: string;
@@ -43,7 +43,7 @@ def c():
     it("handles indentation", () => {
       const code = `
     a = 1
-      
+
     def b(d, e):
       a = 2
     `;
@@ -211,7 +211,7 @@ def vigenere(message, key):
 `;
 
       const commentless_code = python.removeComments(el);
-      const { block_body } = python.getBlock(commentless_code, "else")!;
+      const { block_body } = python.getBlock(commentless_code, "else");
       expect(block_body).toEqual(
         "\n            key_char = key[key_index % len(key)]",
       );
