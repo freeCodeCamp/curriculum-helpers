@@ -12,6 +12,6 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@types/node": "^20.19.2"
+    "@types/node": "^22.15.34"
   }
 }
