@@ -976,7 +976,7 @@ explorer.find_ifs()[0].find_bodies()[0].has_call("spam()")
 
 #### `block_has_call`
 
-Checks if a function/method call exists within a specific function or the entire code.
+Checks if a function/method call exists within a specific function (specified as the second argument) or the entire code (if the second argument is not provided).
 
 ```python
 code_str = """
