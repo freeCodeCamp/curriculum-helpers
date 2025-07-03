@@ -84,6 +84,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.31.0
         version: 8.35.1(eslint@9.30.1)(typescript@5.8.3)
+      concurrently:
+        specifier: ^9.2.0
+        version: 9.2.0
       eslint:
         specifier: 9.30.1
         version: 9.30.1
@@ -124,7 +127,7 @@ importers:
         specifier: ^8.31.0
         version: 8.35.1(eslint@9.30.1)(typescript@5.8.3)
       vitest:
-        specifier: ^3.1.4
+        specifier: ^3.2.4
         version: 3.2.4(@types/node@24.0.10)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.0)
       webpack:
         specifier: 5.99.9
@@ -1756,6 +1759,11 @@ packages:
   concat-stream@1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
     engines: {'0': node >= 0.8}
+
+  concurrently@9.2.0:
+    resolution: {integrity: sha512-IsB/fiXTupmagMW4MNp2lx2cdSN2FfZq78vF90LBB+zZHArbIQZjQtzXCiXnvTxCZSvXanTqFLWBjw2UkLx1SQ==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   confusing-browser-globals@1.0.11:
     resolution: {integrity: sha512-JsPKdmh8ZkmnHxDk55FZ1TqVLvEQTvoByJZRN9jzI0UjxK/QgAmsphz7PGtqgPieQZ/CQcHWXCR7ATDNhGe+YA==}
@@ -6029,6 +6037,16 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 2.3.8
       typedarray: 0.0.6
+
+  concurrently@9.2.0:
+    dependencies:
+      chalk: 4.1.2
+      lodash: 4.17.21
+      rxjs: 7.8.2
+      shell-quote: 1.8.2
+      supports-color: 8.1.1
+      tree-kill: 1.2.2
+      yargs: 17.7.2
 
   confusing-browser-globals@1.0.11: {}
 
