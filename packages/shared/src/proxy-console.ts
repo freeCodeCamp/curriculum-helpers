@@ -13,11 +13,13 @@ export class ProxyConsole {
   #originalConsole: Console;
   #proxyConsole: Console;
   #isOn: boolean = false;
-  #calls: { level: Level; args: unknown[] }[] = [];
+  #calls: { level: Level; msg: string }[] = [];
+  #format: (x: unknown) => string;
 
-  constructor(originalConsole: Console) {
+  constructor(originalConsole: Console, format: (x: unknown) => string) {
     this.#originalConsole = { ...originalConsole };
     this.#proxyConsole = originalConsole;
+    this.#format = format;
   }
 
   on() {
@@ -30,7 +32,8 @@ export class ProxyConsole {
     for (const level of LEVELS) {
       this.#proxyConsole[level] = (...args: unknown[]) => {
         this.#originalConsole[level](...args);
-        this.#calls.push({ level, args });
+        const msg = args.map((arg) => this.#format(arg)).join(" ");
+        this.#calls.push({ level, msg });
       };
     }
   }
@@ -45,18 +48,8 @@ export class ProxyConsole {
   }
 
   flush() {
-    const out = this.#calls;
+    const logs = this.#calls;
     this.#calls = [];
-    return out;
+    return logs.length ? { logs } : {};
   }
 }
-
-export const createLogFlusher =
-  (proxy: ProxyConsole, format: (x: unknown) => string) => () => {
-    const rawLogs = proxy.flush();
-    const logs = rawLogs.map(({ level, args }) => ({
-      level,
-      msg: args.map((arg) => format(arg)).join(" "),
-    }));
-    return logs.length ? { logs } : {};
-  };

@@ -13,7 +13,7 @@ import type {
 import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
-import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
+import { ProxyConsole } from "../../shared/src/proxy-console";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
@@ -38,13 +38,11 @@ const wrapCode = (code: string) => `(async () => {${code};
 export class JavascriptTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
-  #flushLogs: ReturnType<typeof createLogFlusher>;
 
   constructor(
-    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console),
+    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console, format),
   ) {
     this.#proxyConsole = proxyConsole;
-    this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }
 
   init(opts: InitWorkerOptions) {
@@ -79,7 +77,7 @@ ${test};`);
 
         if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
-        return { pass: true, ...this.#flushLogs() };
+        return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err: unknown) {
         this.#proxyConsole.off();
         console.error(err);
@@ -101,7 +99,7 @@ ${test};`);
             ...(!!error.expected && { expected: error.expected }),
             ...(!!error.actual && { actual: error.actual }),
           },
-          ...this.#flushLogs(),
+          ...this.#proxyConsole.flush(),
         };
       } finally {
         this.#proxyConsole.off();
