@@ -41,6 +41,7 @@
     "@types/chai": "^4.3.20",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
+    "concurrently": "^9.2.0",
     "eslint": "9.30.1",
     "eslint-config-prettier": "10.1.5",
     "eslint-config-xo": "0.46.0",
@@ -54,7 +55,7 @@
     "ts-loader": "9.5.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.31.0",
-    "vitest": "^3.1.4",
+    "vitest": "^3.2.4",
     "webpack": "5.99.9",
     "webpack-cli": "5.1.4"
   },
@@ -93,6 +94,9 @@
     "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
     "format": "prettier --write .",
     "test": "vitest",
+    "test:watch": "concurrently --prefix none \"pnpm test:unit --watch\" \"pnpm test:integration --watch\"",
+    "test:unit": "vitest --config vitest.unit.config.mjs",
+    "test:integration": "vitest --config vitest.integration.config.mjs",
     "prepare": "husky install",
     "prepublishOnly": "pnpm clean:build && pnpm build",
     "webpack": "webpack"
