@@ -216,6 +216,30 @@ describe("Test Runner", () => {
       });
     });
 
+    it("should evaluate the logged value at the time it was logged", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+        return runner.runTest(`
+const arr = [];
+for(let i = 0; i < 3; i++) {
+  console.log(arr);
+  arr.push(i);
+}
+`);
+      }, type);
+
+      expect(result).toEqual({
+        pass: true,
+        logs: [
+          { level: "log", msg: "[]" },
+          { level: "log", msg: "[ 0 ]" },
+          { level: "log", msg: "[ 0, 1 ]" },
+        ],
+      });
+    });
+
     it("should console.error non-chai errors thrown in the test", async () => {
       const spy = vi.fn();
       page.once("console", (msg) => {

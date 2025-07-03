@@ -17,7 +17,7 @@ import {
 import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
-import { ProxyConsole, createLogFlusher } from "../../shared/src/proxy-console";
+import { ProxyConsole } from "../../shared/src/proxy-console";
 
 type EvaluatedTeststring = {
   input?: string[];
@@ -38,13 +38,11 @@ class PythonTestEvaluator implements TestEvaluator {
   #pyodide?: PyodideInterface;
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
-  #flushLogs: ReturnType<typeof createLogFlusher>;
 
   constructor(
-    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console),
+    proxyConsole: ProxyConsole = new ProxyConsole(globalThis.console, format),
   ) {
     this.#proxyConsole = proxyConsole;
-    this.#flushLogs = createLogFlusher(this.#proxyConsole, format);
   }
 
   async init(opts: InitWorkerOptions) {
@@ -108,7 +106,7 @@ class PythonTestEvaluator implements TestEvaluator {
           // Execute afterEach hook if it exists
           if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
-          return { pass: true, ...this.#flushLogs() };
+          return { pass: true, ...this.#proxyConsole.flush() };
         }
 
         if (!evaluatedTestString || !("test" in evaluatedTestString)) {
@@ -141,7 +139,7 @@ class PythonTestEvaluator implements TestEvaluator {
 
         if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
-        return { pass: true, ...this.#flushLogs() };
+        return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
@@ -170,7 +168,7 @@ class PythonTestEvaluator implements TestEvaluator {
             ...(!!actual && { actual }),
             type: error.type,
           },
-          ...this.#flushLogs(),
+          ...this.#proxyConsole.flush(),
         };
       } finally {
         this.#proxyConsole.off();
