@@ -427,6 +427,41 @@ for(let i = 0; i < 3; i++) {
 
       expect(result).toEqual([]);
     });
+
+    it("should support top-level await in tests", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+
+        return runner.runTest(`
+          const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+          await delay(10);
+          assert.equal(1, 2);`);
+      }, type);
+      expect(result).toMatchObject({ err: { actual: 1 } });
+    });
+
+    // The old api wasn't consistent: only DOM tests supported async tests, but
+    // this needs to be maintained while it's deprecated.
+    it.runIf(type === "dom")(
+      "should support `async () => {}` style tests",
+      async () => {
+        const result = await page.evaluate(async (type) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+          });
+
+          return runner.runTest(`
+          async () => {
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            await delay(10);
+            assert.equal(1, 2);
+          }`);
+        }, type);
+        expect(result).toMatchObject({ err: { actual: 1 } });
+      },
+    );
   });
 
   describe.each([
