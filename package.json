@@ -94,7 +94,7 @@
     "lint": "eslint . --max-warnings 0 && prettier --check . && tsc --build",
     "format": "prettier --write .",
     "test": "vitest",
-    "test:watch": "concurrently --prefix none \"pnpm test:unit --watch\" \"pnpm test:integration --watch\"",
+    "test:watch": "concurrently -i --raw --prefix none 'pnpm test:unit --watch' --raw 'pnpm test:integration --watch'",
     "test:unit": "vitest --config vitest.unit.config.mjs",
     "test:integration": "vitest --config vitest.integration.config.mjs",
     "prepare": "husky install",
