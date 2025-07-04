@@ -283,13 +283,7 @@ for(let i = 0; i < 3; i++) {
         },
       });
     });
-  });
 
-  describe.each([
-    { type: "dom" },
-    { type: "javascript" },
-    { type: "python" },
-  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
     it("should evaluate the beforeEach hook before each test", async () => {
       const result = await page.evaluate(async (type) => {
         const runner = await window.FCCTestRunner.createTestRunner({
@@ -305,38 +299,7 @@ for(let i = 0; i < 3; i++) {
 
       expect(result).toEqual([{ pass: true }, { pass: true }]);
     });
-  });
 
-  describe.each([
-    { type: "dom" },
-    { type: "javascript" },
-    { type: "python" },
-  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
-    it("should evaluate the beforeEach hook before each test", async () => {
-      const result = await page.evaluate(async (type) => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type,
-          hooks: {
-            beforeEach: "globalThis.x = 1;",
-          },
-        });
-        const one = await runner.runTest("x += 1; assert.equal(x, 2);");
-        const two = await runner.runTest("x += 1; assert.equal(x, 2);");
-
-        // Clean up the global variable
-        await runner.runTest("delete globalThis.x;");
-        return [one, two];
-      }, type);
-
-      expect(result).toEqual([{ pass: true }, { pass: true }]);
-    });
-  });
-
-  describe.each([
-    { type: "dom" },
-    { type: "javascript" },
-    { type: "python" },
-  ] as const)("$type test evaluator with beforeEach", ({ type }) => {
     it("should evaluate the beforeAll hook once before all tests", async () => {
       const result = await page.evaluate(async (type) => {
         const runner = await window.FCCTestRunner.createTestRunner({
@@ -355,13 +318,7 @@ for(let i = 0; i < 3; i++) {
 
       expect(result).toEqual([{ pass: true }, { pass: true }]);
     });
-  });
 
-  describe.each([
-    { type: "dom" },
-    { type: "javascript" },
-    { type: "python" },
-  ] as const)("$type test evaluator", ({ type }) => {
     it("should evaluate the afterEach hook after each test", async () => {
       const afterEachResult = await page.evaluate(async (type) => {
         const runner = await window.FCCTestRunner.createTestRunner({
