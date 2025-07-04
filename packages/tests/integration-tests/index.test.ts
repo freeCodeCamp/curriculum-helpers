@@ -373,6 +373,60 @@ for(let i = 0; i < 3; i++) {
 
       expect(result).toEqual({ pass: true });
     });
+
+    it("should handle running multiple tests with runAllTests", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+
+        const tests = [
+          "assert.equal(1, 1)",
+          "assert.equal(2, 2)",
+          "assert.equal(1, 2)", // This should fail
+          "console.log('test message'); assert.equal(3, 3)",
+        ];
+
+        return runner.runAllTests(tests);
+      }, type);
+
+      expect(result).toEqual([
+        { pass: true },
+        { pass: true },
+        {
+          err: {
+            actual: 1,
+            expected: 2,
+            message: "expected 1 to equal 2",
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            stack: expect.stringMatching(
+              "AssertionError: expected 1 to equal 2",
+            ),
+          },
+        },
+        {
+          pass: true,
+          logs: [
+            {
+              level: "log",
+              msg: "test message",
+            },
+          ],
+        },
+      ]);
+    });
+
+    it("should handle empty array in runAllTests", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+
+        return runner.runAllTests([]);
+      }, type);
+
+      expect(result).toEqual([]);
+    });
   });
 
   describe.each([

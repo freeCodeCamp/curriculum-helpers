@@ -21,6 +21,7 @@ interface Runner {
   // mechanism (e.g. Promise.race or AbortController) would not get called in
   // that case.
   runTest(test: string, timeout?: number): Promise<Pass | Fail>;
+  runAllTests(tests: string[], timeout?: number): Promise<(Pass | Fail)[]>;
   dispose(): void;
 }
 
@@ -154,6 +155,18 @@ ${opts.source}`;
     return result;
   }
 
+  async runAllTests(tests: string[]): Promise<(Pass | Fail)[]> {
+    const results: (Pass | Fail)[] = [];
+
+    for (const test of tests) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.runTest(test);
+      results.push(result);
+    }
+
+    return results;
+  }
+
   dispose() {
     this.#testEvaluator.remove();
   }
@@ -229,6 +242,18 @@ export class WorkerTestRunner implements Runner {
     } finally {
       clearTimeout(terminateTimeoutId);
     }
+  }
+
+  async runAllTests(tests: string[], timeout = 5000): Promise<(Pass | Fail)[]> {
+    const results: (Pass | Fail)[] = [];
+
+    for (const test of tests) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.runTest(test, timeout);
+      results.push(result);
+    }
+
+    return results;
   }
 
   dispose() {
