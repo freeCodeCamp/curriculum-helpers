@@ -22,6 +22,7 @@ import {
 import { MockLocalStorage } from "./mock-local-storage";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { format } from "../../shared/src/format";
+import { createAsyncIife } from "../../shared/src/async-iife";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
@@ -112,15 +113,30 @@ export class DOMTestEvaluator implements TestEvaluator {
       Enzyme.configure({ adapter: new Adapter16() });
     }
 
-    this.#runTest = async function (testString: string): Promise<Fail | Pass> {
+    this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
       try {
-        // Eval test string to actual JavaScript
-        // This return can be a function
-        // i.e. function() { assert(true, 'happy coding'); }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const test = await eval(`${opts.hooks?.beforeEach ?? ""}
-${testString}`);
+        let test;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          test = await eval(`${opts.hooks?.beforeEach ?? ""}
+${rawTest}`);
+        } catch (err) {
+          if (
+            err instanceof SyntaxError &&
+            err.message.includes(
+              "await is only valid in async functions and the top level bodies of modules",
+            )
+          ) {
+            const iifeTest = createAsyncIife(rawTest);
+            // There's no need to assign this to 'test', since it replaces that
+            // functionality.
+            await eval(iifeTest);
+          } else {
+            throw err;
+          }
+        }
+
         if (typeof test === "function") {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call
           await test();

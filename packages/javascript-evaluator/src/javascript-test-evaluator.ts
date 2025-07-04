@@ -13,6 +13,7 @@ import type {
 import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
+import { createAsyncIife } from "../../shared/src/async-iife";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
@@ -27,11 +28,6 @@ globalThis.__helpers = curriculumHelpers;
 
 Object.freeze(globalThis.__helpers);
 Object.freeze(globalThis.assert);
-
-// The newline is important, because otherwise comments will cause the trailing
-// `}` to be ignored, breaking the tests.
-const wrapCode = (code: string) => `(async () => {${code};
-})();`;
 
 // TODO: currently this is almost identical to DOMTestEvaluator, can we make
 // it more DRY? Don't attempt until they're both more fleshed out.
@@ -50,7 +46,7 @@ export class JavascriptTestEvaluator implements TestEvaluator {
 
     this.#runTest = async (rawTest) => {
       this.#proxyConsole.on();
-      const test = wrapCode(rawTest);
+      const test = createAsyncIife(rawTest);
       // This can be reassigned by the eval inside the try block, so it should be declared as a let
       // eslint-disable-next-line prefer-const
       let __userCodeWasExecuted = false;

@@ -18,6 +18,7 @@ import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
+import { createAsyncIife } from "../../shared/src/async-iife";
 
 type EvaluatedTeststring = {
   input?: string[];
@@ -95,7 +96,19 @@ class PythonTestEvaluator implements TestEvaluator {
               const test: unknown = eval(testString);
               resolve(test);
             } catch (err) {
-              reject(err as Error);
+              if (
+                err instanceof SyntaxError &&
+                err.message.includes(
+                  "await is only valid in async functions and the top level bodies of modules",
+                )
+              ) {
+                const iifeTest = createAsyncIife(testString);
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                eval(iifeTest).then(resolve).catch(reject);
+              } else {
+                reject(err as Error);
+              }
             }
           },
         );
