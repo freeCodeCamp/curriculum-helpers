@@ -50,6 +50,7 @@ export class FCCTestRunner {
       beforeAll?: string;
       beforeEach?: string;
       afterEach?: string;
+      afterAll?: string;
     };
     loadEnzyme?: boolean;
   }) {

@@ -13,6 +13,7 @@ import {
   Pass,
   TestEvaluator,
   TestEvent,
+  CodeEvent,
 } from "../../shared/src/interfaces/test-evaluator";
 import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
@@ -216,8 +217,18 @@ class PythonTestEvaluator implements TestEvaluator {
     return this.#runTest!(test);
   }
 
+  async runCode(code: string) {
+    try {
+      await eval(code);
+    } catch (err) {
+      // If the code throws an error, we want to log it to the console
+      // so that it can be debugged.
+      console.error("Error evaluating code:", code, err);
+    }
+  }
+
   async handleMessage(
-    e: TestEvent | InitEvent<InitWorkerOptions>,
+    e: TestEvent | InitEvent<InitWorkerOptions> | CodeEvent,
   ): Promise<void> {
     if (e.data.type === "test") {
       const result = await this.#runTest!(e.data.value);
@@ -226,12 +237,18 @@ class PythonTestEvaluator implements TestEvaluator {
     } else if (e.data.type === "init") {
       await this.init(e.data.value);
       postMessage(READY_MESSAGE);
+    } else if (e.data.type === "code") {
+      // This is used to run arbitrary non-test code, such as the afterAll hook.
+      await this.runCode(e.data.value);
+      e.ports[0].postMessage({ type: "code" });
     }
   }
 }
 
 const worker = new PythonTestEvaluator();
 
-globalThis.onmessage = function (e: TestEvent | InitEvent<InitWorkerOptions>) {
+globalThis.onmessage = function (
+  e: TestEvent | InitEvent<InitWorkerOptions> | CodeEvent,
+) {
   void worker.handleMessage(e);
 };

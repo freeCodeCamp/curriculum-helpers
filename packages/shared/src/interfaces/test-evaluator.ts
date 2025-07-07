@@ -20,6 +20,7 @@ export interface Fail extends Logged {
 }
 
 export type TestEvent = MessageEvent<{ type: "test"; value: string }>;
+export type CodeEvent = MessageEvent<{ type: "code"; value: string }>;
 export type InitEvent<Data> = MessageEvent<{
   type: "init";
   value: Data;
@@ -36,6 +37,7 @@ export interface InitTestFrameOptions {
     beforeAll?: string;
     beforeEach?: string;
     afterEach?: string;
+    afterAll?: string;
   };
 }
 
@@ -49,6 +51,7 @@ export interface InitWorkerOptions {
     beforeEach?: string;
     beforeAll?: string;
     afterEach?: string;
+    afterAll?: string;
   };
 }
 

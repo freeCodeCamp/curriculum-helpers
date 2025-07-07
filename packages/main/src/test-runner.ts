@@ -6,6 +6,7 @@ import type {
   InitTestFrameOptions,
   Pass,
   Fail,
+  CodeEvent,
 } from "../../shared/src/interfaces/test-evaluator";
 
 import {
@@ -70,6 +71,7 @@ const hideFrame = (iframe: HTMLIFrameElement) => {
 export class DOMTestRunner implements Runner {
   #testEvaluator: HTMLIFrameElement;
   #script: string;
+  #afterAll?: string;
 
   #createTestEvaluator({ assetPath, script }: RunnerConfig) {
     const iframe = document.createElement("iframe");
@@ -98,6 +100,8 @@ export class DOMTestRunner implements Runner {
 ${hooks.beforeAll}
 </script>`
       : "";
+
+    this.#afterAll = hooks?.afterAll;
 
     const isReady = new Promise((resolve) => {
       const listener = () => {
@@ -155,6 +159,18 @@ ${opts.source}`;
     return result;
   }
 
+  async #runCode(code: string) {
+    const msg: CodeEvent["data"] = {
+      type: "code",
+      value: code,
+    };
+
+    return post({
+      messenger: this.#testEvaluator.contentWindow!,
+      message: msg,
+    });
+  }
+
   async runAllTests(tests: string[]): Promise<(Pass | Fail)[]> {
     const results: (Pass | Fail)[] = [];
 
@@ -162,6 +178,10 @@ ${opts.source}`;
       // eslint-disable-next-line no-await-in-loop
       const result = await this.runTest(test);
       results.push(result);
+    }
+
+    if (this.#afterAll) {
+      await this.#runCode(this.#afterAll);
     }
 
     return results;
@@ -216,6 +236,18 @@ export class WorkerTestRunner implements Runner {
     }
   }
 
+  async #runCode(code: string) {
+    const msg: CodeEvent["data"] = {
+      type: "code",
+      value: code,
+    };
+
+    return post({
+      messenger: this.#testEvaluator,
+      message: msg,
+    });
+  }
+
   async runTest(test: string, timeout = 5000) {
     let terminateTimeoutId: ReturnType<typeof setTimeout> | undefined;
     const terminate = new Promise<Fail>((resolve) => {
@@ -251,6 +283,10 @@ export class WorkerTestRunner implements Runner {
       // eslint-disable-next-line no-await-in-loop
       const result = await this.runTest(test, timeout);
       results.push(result);
+    }
+
+    if (this.#opts?.hooks?.afterAll) {
+      await this.#runCode(this.#opts.hooks.afterAll);
     }
 
     return results;

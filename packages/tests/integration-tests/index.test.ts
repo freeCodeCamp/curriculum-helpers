@@ -416,7 +416,7 @@ for(let i = 0; i < 3; i++) {
       ]);
     });
 
-    it("should handle empty array in runAllTests", async () => {
+    it("should be able to handle empty arrays passed to runAllTests", async () => {
       const result = await page.evaluate(async (type) => {
         const runner = await window.FCCTestRunner.createTestRunner({
           type,
@@ -426,6 +426,72 @@ for(let i = 0; i < 3; i++) {
       }, type);
 
       expect(result).toEqual([]);
+    });
+
+    it("should run the afterAll hook after running all tests", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeAll: "globalThis.x = 0;",
+            afterAll: "globalThis.x = 1;",
+          },
+        });
+
+        // Individual tests do not trigger the afterAll hook, but runAllTests
+        // does.
+        const initial = await runner.runAllTests(["assert.equal(x, 0);"]);
+
+        // Check that afterAll ran
+        const after = await runner.runTest("assert.equal(x, 1);");
+
+        return [initial, after];
+      }, type);
+
+      expect(result).toEqual([[{ pass: true }], { pass: true }]);
+    });
+
+    it("should run the afterAll hook even if a test fails", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeAll: "globalThis.x = 0;",
+            afterAll: "globalThis.x = 1;",
+          },
+        });
+
+        // Run a failing test
+        await runner.runAllTests([
+          "assert.equal(x, 0);",
+          "assert.equal(1, 2);", // This should fail
+        ]);
+
+        // Check that afterAll ran
+        return runner.runTest("assert.equal(x, 1);");
+      }, type);
+
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should console.error the error if the afterAll hook fails", async () => {
+      expect.assertions(2);
+      page.once("console", (msg) => {
+        expect(msg.type()).toBe("error");
+      });
+
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            afterAll: "throw new Error('afterAll error');",
+          },
+        });
+
+        return runner.runAllTests(["assert.equal(1, 1);"]);
+      }, type);
+
+      expect(result).toEqual([{ pass: true }]);
     });
 
     it("should support top-level await in tests", async () => {
