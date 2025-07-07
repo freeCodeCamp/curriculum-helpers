@@ -7,6 +7,7 @@ import { assert as chaiAssert } from "chai";
 import type {
   TestEvaluator,
   Fail,
+  CodeEvent,
   TestEvent,
   InitEvent,
   Pass,
@@ -182,8 +183,18 @@ ${rawTest}`);
     return this.#runTest!(test);
   }
 
+  async runCode(code: string) {
+    try {
+      await eval(code);
+    } catch (err) {
+      // If the code throws an error, we want to log it to the console
+      // so that it can be debugged.
+      console.error("Error evaluating code:", code, err);
+    }
+  }
+
   async handleMessage(
-    e: TestEvent | InitEvent<InitTestFrameOptions>,
+    e: CodeEvent | TestEvent | InitEvent<InitTestFrameOptions>,
   ): Promise<void> {
     if (e.data.type === "test") {
       const result = await this.#runTest!(e.data.value);
@@ -192,6 +203,10 @@ ${rawTest}`);
     } else if (e.data.type === "init") {
       await this.init(e.data.value);
       self.parent.postMessage(READY_MESSAGE, "*");
+    } else if (e.data.type === "code") {
+      // This is used to run arbitrary non-test code, such as the afterAll hook.
+      await this.runCode(e.data.value);
+      e.ports[0].postMessage({ type: "code" });
     }
   }
 }
