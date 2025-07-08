@@ -24,7 +24,6 @@ interface EvaluatorConfig {
 }
 
 interface RunnerConfig {
-  // This only applies to DOM tests for now.
   timeout?: number;
 }
 

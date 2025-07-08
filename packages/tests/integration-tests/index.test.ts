@@ -24,7 +24,7 @@ describe("Test Runner", () => {
     });
   });
 
-  it("should throw if createTestRunner times out while create a DOM runner", async () => {
+  it("should throw if createTestRunner times out while creating a DOM runner", async () => {
     await expect(() =>
       page.evaluate(async () => {
         await window.FCCTestRunner.createTestRunner(
@@ -33,6 +33,17 @@ describe("Test Runner", () => {
         );
       }),
     ).rejects.toThrow("Timed out waiting for the test frame to load");
+  });
+
+  it("should throw if createTestRunner times out while creating a Worker runner", async () => {
+    await expect(() =>
+      page.evaluate(async () => {
+        await window.FCCTestRunner.createTestRunner(
+          { type: "javascript" },
+          { timeout: 0 },
+        );
+      }),
+    ).rejects.toThrow("Timed out waiting for the test worker to initialize");
   });
 
   // Worker runners are not timing out yet, but if they start to we'll need this
@@ -1165,19 +1176,12 @@ assert(mocked.find('.greeting').length === 1);
   });
 
   describe("Python evaluator", () => {
-    beforeAll(async () => {
-      await page.evaluate(async () => {
-        await window.FCCTestRunner.createTestRunner({
-          type: "python",
-        });
-      });
-    });
     it("should run tests after evaluating the source supplied to the runner", async () => {
       const source = `def get_five():
   return 5`;
       const result = await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           source,
         });
         return runner?.runTest(
@@ -1194,15 +1198,15 @@ test: () => assert.equal(runPython('get_five()'), 5),
       const source = `def get_five():
   return 5`;
       await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        await window.FCCTestRunner.createTestRunner({
+          type: "python",
           source,
         });
       }, source);
 
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
+        await runner?.init({}, 1000);
         return runner?.runTest(
           `({
 test: () => assert.equal(runPython('get_five()'), 5),
@@ -1222,8 +1226,9 @@ test: () => assert.equal(runPython('get_five()'), 5),
 
     it("should set __name__ to __main__ when running tests", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
         return runner?.runTest(
           `({
 test: () => assert.equal(runPython('__name__'), '__main__'),
@@ -1236,8 +1241,8 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
 
     it("should handle js-only tests", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           code: {
             contents: "# wrong comment for test",
           },
@@ -1260,8 +1265,9 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
 
     it("should reject testStrings that evaluate to an invalid object", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
         return runner?.runTest(`({ invalid: 'test' })`);
       });
 
@@ -1279,13 +1285,14 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
 
     it("should be able to test with mock input", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           source: `
 first = input()
 second = input()
 `,
         });
+
         return runner?.runTest(`({
 	input: ["argle", "bargle"],
   test: () => assert.equal(runPython('first + second'), "arglebargle")
@@ -1297,12 +1304,13 @@ second = input()
 
     it("should make user code available to the python code as the _code variable", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           code: {
             contents: "test = 'value'",
           },
         });
+
         return runner?.runTest(`({
   test: () => assert.equal(runPython('_code'), "test = 'value'")
 })`);
@@ -1313,8 +1321,9 @@ second = input()
 
     it("should make the AST helper available to the python code as _Node", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
         return runner?.runTest(`({
   test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
 })`);
@@ -1325,8 +1334,8 @@ second = input()
 
     it("should have access to _code in the beforeEach hook", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           code: {
             contents: "test = 'value'",
           },
@@ -1334,6 +1343,7 @@ second = input()
             beforeEach: "assert.equal(runPython('_code'), \"test = 'value'\")",
           },
         });
+
         return runner?.runTest(`({
   test: () => {}
 })`);
@@ -1344,12 +1354,13 @@ second = input()
 
     it("should have access to runPython in the beforeEach hook", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           hooks: {
             beforeEach: "assert.equal(runPython('1 + 1'), 2)",
           },
         });
+
         return runner?.runTest("");
       });
 
@@ -1358,8 +1369,9 @@ second = input()
 
     it("should return error types if the python code raises an exception", async () => {
       const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({});
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
         return runner?.runTest(`({
 	test: () => assert.equal(runPython('1 + "1"'), 2)
 })`);
@@ -1384,8 +1396,8 @@ second = input()
 pattern = re.compile('l+')
 `;
       const result = await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           source,
         });
         return runner?.runTest(`({
@@ -1411,8 +1423,8 @@ import re
 
 pattern = re.compile('l+')`;
       const result = await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           source,
         });
         // Since the comparison includes a PyProxy object, that will be

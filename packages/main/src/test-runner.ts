@@ -186,6 +186,7 @@ ${opts.source}`;
 export class WorkerTestRunner implements Runner {
   #testEvaluator: Worker;
   #opts: InitWorkerOptions | null = null;
+  #timeout?: number;
   #scriptUrl = "";
 
   #createTestEvaluator({ assetPath, script }: RunnerConfig) {
@@ -197,16 +198,33 @@ export class WorkerTestRunner implements Runner {
     this.#testEvaluator = this.#createTestEvaluator(config);
   }
 
-  async init(opts: InitWorkerOptions) {
+  async init(opts: InitWorkerOptions, timeout?: number) {
     this.#opts = opts;
+    this.#timeout = timeout;
     const msg: InitEvent<InitWorkerOptions>["data"] = {
       type: "init",
       value: opts,
     };
-    await post({
+
+    let timerId;
+    const isFrozen = new Promise<void>((_resolve, reject) => {
+      timerId = setTimeout(
+        () =>
+          reject(
+            new Error("Timed out waiting for the test worker to initialize"),
+          ),
+        timeout,
+      );
+    });
+
+    const response = post({
       messenger: this.#testEvaluator,
       message: msg,
     });
+
+    await Promise.race([response, isFrozen]);
+
+    clearTimeout(timerId);
   }
 
   async #recreateRunner() {
@@ -214,7 +232,7 @@ export class WorkerTestRunner implements Runner {
       throw new Error("WorkerTestRunner not initialized");
     } else {
       this.#testEvaluator = new Worker(this.#scriptUrl);
-      await this.init(this.#opts);
+      await this.init(this.#opts, this.#timeout);
     }
   }
 
