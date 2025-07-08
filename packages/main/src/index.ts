@@ -6,6 +6,28 @@ declare global {
   }
 }
 
+interface EvaluatorConfig {
+  // The compiled user code, evaluated before the tests.
+  source?: string;
+  type: "dom" | "javascript" | "python";
+  // TODO: move assetPath to RunnerConfig when making a major version bump.
+  assetPath?: string;
+  // The original user code, available for the tests to use.
+  code?: { contents?: string; editableContents?: string };
+  hooks?: {
+    beforeAll?: string;
+    beforeEach?: string;
+    afterEach?: string;
+    afterAll?: string;
+  };
+  loadEnzyme?: boolean;
+}
+
+interface RunnerConfig {
+  // This only applies to DOM tests for now.
+  timeout?: number;
+}
+
 export class FCCTestRunner {
   #DOMRunner: DOMTestRunner | null;
   #javascriptRunner: WorkerTestRunner | null;
@@ -31,29 +53,10 @@ export class FCCTestRunner {
     }
   }
 
-  async createTestRunner({
-    source,
-    type,
-    code,
-    assetPath,
-    hooks,
-    loadEnzyme,
-  }: {
-    // The compiled user code, evaluated before the tests.
-    source?: string;
-    type: "dom" | "javascript" | "python";
-    // TODO: can we avoid using `assetPath` and use `import.meta.url` instead?
-    assetPath?: string;
-    // The original user code, available for the tests to use.
-    code?: { contents?: string; editableContents?: string };
-    hooks?: {
-      beforeAll?: string;
-      beforeEach?: string;
-      afterEach?: string;
-      afterAll?: string;
-    };
-    loadEnzyme?: boolean;
-  }) {
+  async createTestRunner(
+    { source, type, code, assetPath, hooks, loadEnzyme }: EvaluatorConfig,
+    { timeout }: RunnerConfig = { timeout: 20000 },
+  ) {
     let testRunner: DOMTestRunner | WorkerTestRunner | null = null;
     // eslint-disable-next-line default-case
     switch (type) {
@@ -80,7 +83,7 @@ export class FCCTestRunner {
         break;
     }
 
-    await testRunner.init({ code, source, loadEnzyme, hooks });
+    await testRunner.init({ code, source, loadEnzyme, hooks }, timeout);
 
     return testRunner;
   }

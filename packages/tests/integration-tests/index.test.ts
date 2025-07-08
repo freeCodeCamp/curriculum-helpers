@@ -24,6 +24,23 @@ describe("Test Runner", () => {
     });
   });
 
+  it("should throw if createTestRunner times out while create a DOM runner", async () => {
+    await expect(() =>
+      page.evaluate(async () => {
+        await window.FCCTestRunner.createTestRunner(
+          { type: "dom" },
+          { timeout: 0 },
+        );
+      }),
+    ).rejects.toThrow("Timed out waiting for the test frame to load");
+  });
+
+  // Worker runners are not timing out yet, but if they start to we'll need this
+  // test to help debug
+  it.todo(
+    "should throw if createTestRunner times out while creating a worker runner",
+  );
+
   it("should add a FCCTestRunner to the window object", async () => {
     const sandbox = await page.evaluate(() => window.FCCTestRunner);
 
