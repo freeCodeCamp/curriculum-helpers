@@ -8,6 +8,10 @@ describe("Worker Timeouts", () => {
     // safe
   }, 20000);
 
+  page.on("console", (msg) => {
+    console.log("PAGE LOG:", msg.text());
+  });
+
   describe("Javascript Test Runner", () => {
     it("should return an error if the test does not terminate", async () => {
       const source = `function loop() {while(true) {}; return 1};
@@ -17,17 +21,17 @@ function run() {return 1}`;
         const runner = await window.FCCTestRunner.createTestRunner({
           source,
           type: "javascript",
-          code: {
-            contents: "// some code",
-          },
         });
         return runner.runTest("assert.equal(loop(), 1);", 100);
       }, source);
 
-      const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("javascript");
-        return runner?.runTest("assert.equal(run(), 1);", 100);
-      });
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          source,
+          type: "javascript",
+        });
+        return runner.runTest("assert.equal(run(), 1);", 100);
+      }, source);
 
       expect(timeoutResult).toEqual({
         err: {
@@ -64,17 +68,6 @@ loop();
     });
   });
   describe("Python Test Runner", () => {
-    beforeAll(async () => {
-      await page.evaluate(async () => {
-        await window.FCCTestRunner.createTestRunner({
-          type: "python",
-          code: {
-            contents: "",
-          },
-          source: "",
-        });
-      });
-    });
     it("should return errors if the test does not terminate", async () => {
       const source = `
 def loop():
@@ -85,8 +78,8 @@ def run():
 	return 1
 `;
       const timeoutResult = await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           code: {
             contents: "",
           },
@@ -101,14 +94,20 @@ def run():
         return result;
       }, source);
 
-      const result = await page.evaluate(async () => {
-        const runner = window.FCCTestRunner.getRunner("python");
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          code: {
+            contents: "",
+          },
+          source,
+        });
         return runner?.runTest(
           `({
 						test: () => assert.equal(runPython('run()'), 1)
 				})`,
         );
-      });
+      }, source);
 
       expect(timeoutResult).toEqual({
         err: {
@@ -126,8 +125,8 @@ while True:
 	pass
 `;
       const result = await page.evaluate(async (source) => {
-        const runner = window.FCCTestRunner.getRunner("python");
-        await runner?.init({
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
           code: {
             contents: "",
           },

@@ -15,7 +15,7 @@ import {
 import { post } from "./awaitable-post";
 
 interface Runner {
-  init(opts?: InitOptions): Promise<void>;
+  init(opts?: InitOptions, timeout?: number): Promise<void>;
   // Note: timeouts are currently ignored in the FrameRunner, since the purpose
   // is to stop evaluation if it is looping indefinitely, but any abort
   // mechanism (e.g. Promise.race or AbortController) would not get called in
@@ -92,7 +92,7 @@ export class DOMTestRunner implements Runner {
   }
 
   // Rather than trying to create an async constructor, we'll use an init method
-  async init(opts: InitTestFrameOptions) {
+  async init(opts: InitTestFrameOptions, timeout?: number) {
     const { hooks } = opts;
     const hooksScript = hooks?.beforeAll
       ? `<script id='${TEST_EVALUATOR_HOOKS_ID}'>
@@ -102,9 +102,14 @@ ${hooks.beforeAll}
 
     this.#afterAll = hooks?.afterAll;
 
-    const isReady = new Promise((resolve) => {
+    const isReady = new Promise((resolve, reject) => {
+      const timerId = setTimeout(
+        () => reject(Error("Timed out waiting for the test frame to load")),
+        timeout,
+      );
       const listener = () => {
         this.#testEvaluator.removeEventListener("load", listener);
+        clearTimeout(timerId);
         resolve(true);
       };
 
@@ -181,6 +186,7 @@ ${opts.source}`;
 export class WorkerTestRunner implements Runner {
   #testEvaluator: Worker;
   #opts: InitWorkerOptions | null = null;
+  #timeout?: number;
   #scriptUrl = "";
 
   #createTestEvaluator({ assetPath, script }: RunnerConfig) {
@@ -192,16 +198,33 @@ export class WorkerTestRunner implements Runner {
     this.#testEvaluator = this.#createTestEvaluator(config);
   }
 
-  async init(opts: InitWorkerOptions) {
+  async init(opts: InitWorkerOptions, timeout?: number) {
     this.#opts = opts;
+    this.#timeout = timeout;
     const msg: InitEvent<InitWorkerOptions>["data"] = {
       type: "init",
       value: opts,
     };
-    await post({
+
+    let timerId;
+    const isFrozen = new Promise<void>((_resolve, reject) => {
+      timerId = setTimeout(
+        () =>
+          reject(
+            new Error("Timed out waiting for the test worker to initialize"),
+          ),
+        timeout,
+      );
+    });
+
+    const response = post({
       messenger: this.#testEvaluator,
       message: msg,
     });
+
+    await Promise.race([response, isFrozen]);
+
+    clearTimeout(timerId);
   }
 
   async #recreateRunner() {
@@ -209,7 +232,7 @@ export class WorkerTestRunner implements Runner {
       throw new Error("WorkerTestRunner not initialized");
     } else {
       this.#testEvaluator = new Worker(this.#scriptUrl);
-      await this.init(this.#opts);
+      await this.init(this.#opts, this.#timeout);
     }
   }
 
