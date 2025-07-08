@@ -196,17 +196,18 @@ ${rawTest}`);
   async handleMessage(
     e: CodeEvent | TestEvent | InitEvent<InitTestFrameOptions>,
   ): Promise<void> {
+    const respond = (msg: unknown) => e.ports[0].postMessage(msg);
     if (e.data.type === "test") {
       const result = await this.#runTest!(e.data.value);
       const msg = { type: "result" as const, value: result };
-      postCloneableMessage((msg) => e.ports[0].postMessage(msg), msg);
+      postCloneableMessage(respond, msg);
     } else if (e.data.type === "init") {
       await this.init(e.data.value);
-      self.parent.postMessage(READY_MESSAGE, "*");
+      respond(READY_MESSAGE);
     } else if (e.data.type === "code") {
       // This is used to run arbitrary non-test code, such as the afterAll hook.
       await this.runCode(e.data.value);
-      e.ports[0].postMessage({ type: "code" });
+      respond({ type: "code" });
     }
   }
 }

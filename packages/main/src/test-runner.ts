@@ -1,4 +1,3 @@
-import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import type {
   InitEvent,
   TestEvent,
@@ -123,28 +122,15 @@ ${opts.source}`;
     document.body.appendChild(this.#testEvaluator);
     await isReady;
 
-    const isInitialized = new Promise((resolve) => {
-      const listener = (event: ReadyEvent) => {
-        if (
-          event.origin === "null" &&
-          event.source === this.#testEvaluator.contentWindow &&
-          event.data.type === "ready"
-        ) {
-          window.removeEventListener("message", listener);
-          resolve(true);
-        }
-      };
-
-      window.addEventListener("message", listener);
-    });
-
     const msg: InitEvent<InitTestFrameOptions>["data"] = {
       type: "init",
       value: opts,
     };
-    this.#testEvaluator.contentWindow?.postMessage(msg, "*");
 
-    await isInitialized;
+    await post({
+      messenger: this.#testEvaluator.contentWindow!,
+      message: msg,
+    });
   }
 
   runTest(test: string) {
@@ -208,23 +194,14 @@ export class WorkerTestRunner implements Runner {
 
   async init(opts: InitWorkerOptions) {
     this.#opts = opts;
-    const isInitialized = new Promise((resolve) => {
-      const listener = (event: ReadyEvent) => {
-        if (event.data.type === "ready") {
-          this.#testEvaluator.removeEventListener("message", listener);
-          resolve(true);
-        }
-      };
-
-      this.#testEvaluator.addEventListener("message", listener);
-    });
-
     const msg: InitEvent<InitWorkerOptions>["data"] = {
       type: "init",
       value: opts,
     };
-    this.#testEvaluator.postMessage(msg);
-    await isInitialized;
+    await post({
+      messenger: this.#testEvaluator,
+      message: msg,
+    });
   }
 
   async #recreateRunner() {
