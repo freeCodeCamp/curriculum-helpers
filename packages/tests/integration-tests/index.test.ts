@@ -1448,5 +1448,43 @@ pattern = re.compile('l+')`;
         },
       });
     });
+
+    it("should support runPython in simple tests", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner?.runTest(`assert.equal(runPython('1 + 1'), 2)`);
+      });
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should evaluate user code before running tests", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          source: "x = 3",
+        });
+        return runner?.runTest(`assert.equal(runPython('x + 1'), 5)`);
+      });
+
+      expect(result).toMatchObject({
+        err: {
+          actual: 4,
+          expected: 5,
+        },
+      });
+    });
+
+    it("should use a fake input function in simple tests", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner?.runTest(`assert.equal(runPython('input("test")'), "")`);
+      });
+
+      expect(result).toEqual({ pass: true });
+    });
   });
 });
