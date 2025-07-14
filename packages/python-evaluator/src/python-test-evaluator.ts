@@ -97,18 +97,54 @@ class PythonTestEvaluator implements TestEvaluator {
               const test: unknown = eval(testString);
               resolve(test);
             } catch (err) {
-              if (
+              const isUsingTopLevelAwait =
                 err instanceof SyntaxError &&
                 err.message.includes(
                   "await is only valid in async functions and the top level bodies of modules",
-                )
-              ) {
+                );
+
+              if (isUsingTopLevelAwait) {
                 const iifeTest = createAsyncIife(testString);
 
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 eval(iifeTest).then(resolve).catch(reject);
               } else {
-                reject(err as Error);
+                // The assumption is that if we're in this block, then the test
+                // is EITHER a standard JS test (in which case it should reject)
+                // OR a Python test that uses the `input()` function (in which case
+                // we need to fake the input function).
+
+                // While supporting both `{ test: () => { // test code } }` and
+                // `// test code /` we have to fake input before running the
+                // test. Otherwise any user code that uses `input()` will throw
+                // an error.
+                runPython(`
+def __fake_input(arg=None):
+  return ""
+
+input = __fake_input
+  `);
+
+                // Evaluates the learner's code so that any variables they
+                // define are available to the test.
+                try {
+                  // It looks the source might be evaluated twice, but they're
+                  // on separate branches.
+                  runPython(opts.source ?? "");
+                } catch (sourceErr) {
+                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                  reject(sourceErr);
+                  return;
+                }
+
+                try {
+                  eval(testString);
+                } catch (testErr) {
+                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                  reject(testErr);
+                }
+
+                resolve(undefined);
               }
             }
           },
