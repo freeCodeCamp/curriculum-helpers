@@ -86,9 +86,7 @@ def run():
           source,
         });
         const result = await runner?.runTest(
-          `({
-						test: () => assert.equal(runPython('loop()'), 1)
-				})`,
+          `assert.equal(runPython('loop()'), 1)`,
           10,
         );
         return result;
@@ -102,11 +100,7 @@ def run():
           },
           source,
         });
-        return runner?.runTest(
-          `({
-						test: () => assert.equal(runPython('run()'), 1)
-				})`,
-        );
+        return runner?.runTest(`assert.equal(runPython('run()'), 1)`);
       }, source);
 
       expect(timeoutResult).toEqual({
@@ -132,12 +126,7 @@ while True:
           },
           source,
         });
-        return runner?.runTest(
-          `({
-						test: () => assert.equal(runPython('1'), 1)
-				})`,
-          10,
-        );
+        return runner?.runTest(`assert.equal(runPython('1'), 1)`, 10);
       }, source);
 
       expect(result).toEqual({
