@@ -1184,11 +1184,7 @@ assert(mocked.find('.greeting').length === 1);
           type: "python",
           source,
         });
-        return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('get_five()'), 5),
-						})`,
-        );
+        return runner?.runTest(`assert.equal(runPython('get_five()'), 5)`);
       }, source);
 
       expect(result).toEqual({ pass: true });
@@ -1207,11 +1203,7 @@ test: () => assert.equal(runPython('get_five()'), 5),
       const result = await page.evaluate(async () => {
         const runner = window.FCCTestRunner.getRunner("python");
         await runner?.init({}, 1000);
-        return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('get_five()'), 5),
-						})`,
-        );
+        return runner?.runTest(`assert.equal(runPython('get_five()'), 5)`);
       });
 
       expect(result).toMatchObject({
@@ -1230,9 +1222,7 @@ test: () => assert.equal(runPython('get_five()'), 5),
           type: "python",
         });
         return runner?.runTest(
-          `({
-test: () => assert.equal(runPython('__name__'), '__main__'),
-						})`,
+          `assert.equal(runPython('__name__'), '__main__')`,
         );
       });
 
@@ -1263,45 +1253,6 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
       });
     });
 
-    it("should reject testStrings that evaluate to an invalid object", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "python",
-        });
-        return runner?.runTest(`({ invalid: 'test' })`);
-      });
-
-      expect(result).toEqual({
-        err: {
-          message:
-            "Test string did not evaluate to an object with the 'test' property",
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          stack: expect.stringContaining(
-            "Error: Test string did not evaluate to an object with the 'test' property",
-          ),
-        },
-      });
-    });
-
-    it("should be able to test with mock input", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "python",
-          source: `
-first = input()
-second = input()
-`,
-        });
-
-        return runner?.runTest(`({
-	input: ["argle", "bargle"],
-  test: () => assert.equal(runPython('first + second'), "arglebargle")
-})`);
-      });
-
-      expect(result).toEqual({ pass: true });
-    });
-
     it("should make user code available to the python code as the _code variable", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
@@ -1311,9 +1262,9 @@ second = input()
           },
         });
 
-        return runner?.runTest(`({
-  test: () => assert.equal(runPython('_code'), "test = 'value'")
-})`);
+        return runner?.runTest(
+          `assert.equal(runPython('_code'), "test = 'value'")`,
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1324,9 +1275,9 @@ second = input()
         const runner = await window.FCCTestRunner.createTestRunner({
           type: "python",
         });
-        return runner?.runTest(`({
-  test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
-})`);
+        return runner?.runTest(
+          `assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)`,
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1344,9 +1295,7 @@ second = input()
           },
         });
 
-        return runner?.runTest(`({
-  test: () => {}
-})`);
+        return runner?.runTest("");
       });
 
       expect(result).toEqual({ pass: true });
@@ -1372,9 +1321,7 @@ second = input()
         const runner = await window.FCCTestRunner.createTestRunner({
           type: "python",
         });
-        return runner?.runTest(`({
-	test: () => assert.equal(runPython('1 + "1"'), 2)
-})`);
+        return runner?.runTest(`assert.equal(runPython('1 + "1"'), 2)`);
       });
       expect(result).toEqual({
         err: {
@@ -1400,9 +1347,7 @@ pattern = re.compile('l+')
           type: "python",
           source,
         });
-        return runner?.runTest(`({
-	test: () => assert.equal(runPython('str(pattern)'), "l+")
-})`);
+        return runner?.runTest(`assert.equal(runPython('str(pattern)'), "l+")`);
       }, source);
       expect(result).toEqual({
         err: {
@@ -1429,9 +1374,9 @@ pattern = re.compile('l+')`;
         });
         // Since the comparison includes a PyProxy object, that will be
         // posted back to the caller and cause a DataCloneError
-        return runner?.runTest(`
-  ({ test: () => assert.equal(__userGlobals.get("pattern"), "l+") })
-`);
+        return runner?.runTest(
+          `assert.equal(__userGlobals.get("pattern"), "l+")`,
+        );
       }, source);
 
       expect(result).toEqual({
@@ -1476,7 +1421,7 @@ pattern = re.compile('l+')`;
       });
     });
 
-    it("should use a fake input function in simple tests", async () => {
+    it("should not throw when input is called during a test", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
           type: "python",
