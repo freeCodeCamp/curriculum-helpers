@@ -1431,5 +1431,45 @@ pattern = re.compile('l+')`;
 
       expect(result).toEqual({ pass: true });
     });
+
+    it("should supporting input mocking", async () => {
+      const beforeEach = `runPython('input = lambda: "test input"')`;
+      const result = await page.evaluate(async (beforeEach) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          hooks: {
+            beforeEach,
+          },
+        });
+        return runner?.runTest(
+          `assert.equal(runPython('input()'), "test input")`,
+        );
+      }, beforeEach);
+
+      expect(result).toEqual({ pass: true });
+    });
+
+    it("should support input mocking in user code", async () => {
+      const source = `name = input()`;
+      const beforeEach = `runPython('input = lambda: "mocked input"')`;
+      const result = await page.evaluate(
+        async (source, beforeEach) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type: "python",
+            source,
+            hooks: {
+              beforeEach,
+            },
+          });
+          return runner?.runTest(
+            `assert.equal(runPython('name'), "mocked input")`,
+          );
+        },
+        source,
+        beforeEach,
+      );
+
+      expect(result).toEqual({ pass: true });
+    });
   });
 });

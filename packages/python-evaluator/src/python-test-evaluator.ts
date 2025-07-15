@@ -84,10 +84,6 @@ class PythonTestEvaluator implements TestEvaluator {
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
       try {
-        eval(opts.hooks?.beforeEach ?? "");
-
-        const iifeTest = createAsyncIife(testString);
-
         // If input isn't reassigned, it will throw when called during testing.
         runPython(`
 def __fake_input(arg=None):
@@ -95,6 +91,9 @@ def __fake_input(arg=None):
 
 input = __fake_input
 `);
+        eval(opts.hooks?.beforeEach ?? "");
+
+        const iifeTest = createAsyncIife(testString);
 
         // Evaluates the learner's code so that any variables they
         // define are available to the test.
