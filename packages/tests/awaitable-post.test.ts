@@ -1,4 +1,4 @@
-import { post } from "../main/src/awaitable-post";
+import { post } from "../shared/src/awaitable-post";
 
 // Echos the post data back
 class MockWorker {

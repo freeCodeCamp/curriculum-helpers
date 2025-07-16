@@ -12,7 +12,7 @@ import {
   TEST_EVALUATOR_SCRIPT_ID,
   TEST_EVALUATOR_HOOKS_ID,
 } from "../../shared/src/ids";
-import { post } from "./awaitable-post";
+import { post } from "../../shared/src/awaitable-post";
 
 interface Runner {
   init(opts?: InitOptions, timeout?: number): Promise<void>;
