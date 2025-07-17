@@ -21,11 +21,13 @@ import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
+import { createFetchProxy } from "../../shared/src/proxy-fetch";
 
 type EvaluatedTeststring = {
   test: () => Promise<unknown>;
 };
 
+const originalFetch = globalThis.fetch;
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -110,6 +112,10 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
+
+        // @ts-expect-error I'm prototyping here, so I don't care about types.
+        globalThis.fetch = createFetchProxy(globalThis);
+
       try {
         eval(opts.hooks?.beforeEach ?? "");
         // Eval test string to get the test property
@@ -160,7 +166,7 @@ input = __fake_input
         // available to the test.
         runPython(opts.source ?? "");
 
-        await test();
+        await test()
 
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
@@ -189,6 +195,8 @@ input = __fake_input
         }
 
         __userGlobals.destroy();
+        // Reset fetch to the original implementation
+        globalThis.fetch = originalFetch;
       }
     };
   }

@@ -575,6 +575,31 @@ new Promise((resolve) => {
         },
       });
     });
+
+    it("should send messages when a fetch request is made", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
+
+        const messageReceivedPromise = new Promise((resolve) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, max-nested-callbacks
+          runner.addEventListener("message", (event: MessageEvent) => {
+            console.log("Received message:", JSON.stringify(event.data));
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            if (event.data.type === "fetch") {
+              resolve(event.data);
+            }
+          });
+        });
+
+        await runner.runTest(`fetch('https://doesnot.exist');`);
+
+        return messageReceivedPromise;
+      }, type);
+
+      expect(result).toEqual({ url: "https://doesnot.exist", type: "fetch" });
+    });
   });
 
   describe.each([
@@ -783,9 +808,7 @@ const getFive = () => 5;
 
           // Wait for a message from otherFrame
           const awaitMessage = new Promise((resolve, reject) => {
-            // eslint-disable-next-line max-nested-callbacks
             setTimeout(() => resolve("done"), 100);
-            // eslint-disable-next-line max-nested-callbacks
             window.addEventListener("message", () =>
               reject(Error("Should not have received a message")),
             );

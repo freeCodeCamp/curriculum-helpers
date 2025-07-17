@@ -23,6 +23,7 @@ interface Runner {
   runTest(test: string, timeout?: number): Promise<Pass | Fail>;
   runAllTests(tests: string[], timeout?: number): Promise<(Pass | Fail)[]>;
   dispose(): void;
+  addEventListener(type: "message", listener: EventListener): void;
 }
 
 const getFullAssetPath = (assetPath = "/dist/") => {
@@ -89,6 +90,19 @@ export class DOMTestRunner implements Runner {
     const { scriptHTML, iframe } = this.#createTestEvaluator(config);
     this.#testEvaluator = iframe;
     this.#script = scriptHTML;
+  }
+
+  addEventListener(type: "message", listener: EventListener): void {
+    const safeListener = (event: MessageEvent) => {
+      if (
+        event.origin === "null" &&
+        event.source === this.#testEvaluator.contentWindow
+      ) {
+        listener(event);
+      }
+    };
+
+    window.addEventListener("message", safeListener);
   }
 
   // Rather than trying to create an async constructor, we'll use an init method
@@ -196,6 +210,10 @@ export class WorkerTestRunner implements Runner {
 
   constructor(config: RunnerConfig) {
     this.#testEvaluator = this.#createTestEvaluator(config);
+  }
+
+  addEventListener(type: "message", listener: EventListener): void {
+    this.#testEvaluator.addEventListener("message", listener);
   }
 
   async init(opts: InitWorkerOptions, timeout?: number) {
