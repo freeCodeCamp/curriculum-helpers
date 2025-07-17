@@ -129,31 +129,10 @@ export class DOMTestEvaluator implements TestEvaluator {
     this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
       try {
-        let test;
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          test = await eval(`${opts.hooks?.beforeEach ?? ""}
-${rawTest}`);
-        } catch (err) {
-          if (
-            err instanceof SyntaxError &&
-            err.message.includes(
-              "await is only valid in async functions and the top level bodies of modules",
-            )
-          ) {
-            const iifeTest = createAsyncIife(rawTest);
-            // There's no need to assign this to 'test', since it replaces that
-            // functionality.
-            await eval(iifeTest);
-          } else {
-            throw err;
-          }
-        }
+        const test = createAsyncIife(rawTest);
 
-        if (typeof test === "function") {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          await test();
-        }
+        await eval(`${opts.hooks?.beforeEach ?? ""}
+${test}`);
 
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {

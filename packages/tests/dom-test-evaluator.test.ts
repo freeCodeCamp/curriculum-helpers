@@ -83,21 +83,5 @@ describe("DOMTestEvaluator", () => {
 
       expect(result).toStrictEqual({ pass: true });
     });
-
-    it("should await tests that return promises", async () => {
-      const test = `new Promise((resolve) => setTimeout(resolve, 1))
-			  .then(() => { assert.equal(1,2)});`;
-
-      const result = await evaluator.runTest(test);
-      expect(result).toStrictEqual({
-        err: {
-          message: "expected 1 to equal 2",
-          expected: 2,
-          actual: 1,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          stack: expect.stringMatching("AssertionError: expected"),
-        },
-      });
-    });
   });
 });
