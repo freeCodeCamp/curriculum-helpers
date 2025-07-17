@@ -1492,5 +1492,50 @@ pattern = re.compile('l+')`;
 
       expect(result).toEqual({ pass: true });
     });
+
+    it("should not automatically fail tests if the source raises an error", async () => {
+      const source = `
+def func():
+pass
+      `;
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          source,
+        });
+        return runner?.runTest(`assert.equal(1, 2)`);
+      }, source);
+
+      expect(result).toMatchObject({
+        err: {
+          expected: 2,
+          actual: 1,
+        },
+      });
+    });
+
+    it("should be possible to re-run user code inside a test to detect errors", async () => {
+      const source = `
+def func():
+pass
+      `;
+
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          source,
+          code: {
+            contents: source,
+          },
+        });
+        return runner?.runTest(`runPython(code)`);
+      }, source);
+
+      expect(result).toMatchObject({
+        err: {
+          type: "IndentationError",
+        },
+      });
+    });
   });
 });

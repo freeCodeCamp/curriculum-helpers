@@ -113,7 +113,13 @@ input = __fake_input
         // Evaluates the learner's code so that any variables they
         // define are available to the test.
 
-        runPython(opts.source ?? "");
+        try {
+          runPython(opts.source ?? "");
+        } catch {
+          // Tests should not automatically fail if there's an error in the
+          // source. Various tests are only interested in using regexes on the
+          // code.
+        }
 
         await eval(iifeTest);
 
