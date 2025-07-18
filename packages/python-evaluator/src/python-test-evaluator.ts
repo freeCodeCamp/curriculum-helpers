@@ -112,35 +112,36 @@ input = __fake_input
 
       try {
         eval(opts.hooks?.beforeEach ?? "");
-        // Eval test string to get the dummy input and actual test
-        const evaluatedTestString = await new Promise<unknown>(
-          (resolve, reject) => {
-            try {
-              const test: unknown = eval(testString);
-              resolve(test);
-            } catch (err) {
-              const isUsingTopLevelAwait =
-                err instanceof SyntaxError &&
-                err.message.includes(
-                  "await is only valid in async functions and the top level bodies of modules",
-                );
+        // Eval test string to get the test property
 
-              if (isUsingTopLevelAwait) {
-                const iifeTest = createAsyncIife(testString);
+        let evaluatedTestString;
 
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-                eval(iifeTest).then(resolve).catch(reject);
-              } else {
-                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                reject(err);
-              }
-            }
-          },
-        );
+        try {
+          evaluatedTestString = eval(testString) as EvaluatedTeststring;
+        } catch (err) {
+          const isUsingTopLevelAwait =
+            err instanceof SyntaxError &&
+            err.message.includes(
+              "await is only valid in async functions and the top level bodies of modules",
+            );
 
-        // If the test string does not evaluate to an object, then we assume that
-        // it's a standard JS test and any assertions have already passed.
-        if (typeof evaluatedTestString !== "object") {
+          if (isUsingTopLevelAwait) {
+            const iifeTest = createAsyncIife(testString);
+
+            await eval(iifeTest);
+          } else {
+            throw err;
+          }
+        }
+
+        // If the test string does not evaluate to an object, then we assume
+        // that it's a standard JS test and any assertions have already passed.
+        // Finally, if it is a Promise, that should have been awaited so we
+        // ignore it.
+        if (
+          typeof evaluatedTestString !== "object" ||
+          evaluatedTestString instanceof Promise
+        ) {
           // Execute afterEach hook if it exists
           if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
 
@@ -153,7 +154,7 @@ input = __fake_input
           );
         }
 
-        const { test } = evaluatedTestString as EvaluatedTeststring;
+        const { test } = evaluatedTestString;
 
         // Evaluates the learner's code so that any variables they define are
         // available to the test.
