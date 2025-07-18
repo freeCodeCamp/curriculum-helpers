@@ -1,3 +1,4 @@
+/* eslint-disable max-nested-callbacks */
 import "vitest-environment-puppeteer";
 import { compileForTests } from "../../shared/tooling/webpack-compile";
 import type { FCCTestRunner } from "../../main/src/index";
@@ -576,29 +577,49 @@ new Promise((resolve) => {
       });
     });
 
-    it("should send messages when a fetch request is made", async () => {
+    it("should handle fetch via a proxy", async () => {
       const result = await page.evaluate(async (type) => {
         const runner = await window.FCCTestRunner.createTestRunner({
           type,
         });
 
-        const messageReceivedPromise = new Promise((resolve) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, max-nested-callbacks
+        const messagePromise = new Promise((resolve) => {
           runner.addEventListener("message", (event: MessageEvent) => {
-            console.log("Received message:", JSON.stringify(event.data));
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            if (event.data.type === "fetch") {
-              resolve(event.data);
+            const { data } = event as { data: Record<string, unknown> };
+            if (data.type === "fetch") {
+              event.ports[0].postMessage({
+                status: 200,
+                statusText: "OK",
+                url: data.url,
+                text: JSON.stringify({ message: "Hello, world!" }),
+              });
+              resolve(data);
             }
           });
         });
 
-        await runner.runTest(`fetch('https://doesnot.exist');`);
-
-        return messageReceivedPromise;
+        return [
+          await runner.runTest(`
+          const response = await fetch('https://doesnot.exist', { method: 'GET' });
+          const data = await response.json();
+          assert.deepEqual(data, { message: 'Hello, world!' });
+          assert.equal(response.status, 200);
+          assert.equal(response.statusText, 'OK');
+          assert.equal(response.url, 'https://doesnot.exist');
+          assert.equal(response.ok, true);
+        `),
+          await messagePromise,
+        ];
       }, type);
 
-      expect(result).toEqual({ url: "https://doesnot.exist", type: "fetch" });
+      expect(result).toEqual([
+        { pass: true },
+        {
+          type: "fetch",
+          url: "https://doesnot.exist",
+          options: { method: "GET" },
+        },
+      ]);
     });
   });
 

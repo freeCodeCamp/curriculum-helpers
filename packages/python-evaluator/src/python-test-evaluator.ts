@@ -112,9 +112,8 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
-
-        // @ts-expect-error I'm prototyping here, so I don't care about types.
-        globalThis.fetch = createFetchProxy(globalThis);
+      // @ts-expect-error The proxy doesn't not fully implement the fetch API
+      globalThis.fetch = createFetchProxy(globalThis);
 
       try {
         eval(opts.hooks?.beforeEach ?? "");
@@ -166,7 +165,7 @@ input = __fake_input
         // available to the test.
         runPython(opts.source ?? "");
 
-        await test()
+        await test();
 
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
@@ -195,7 +194,6 @@ input = __fake_input
         }
 
         __userGlobals.destroy();
-        // Reset fetch to the original implementation
         globalThis.fetch = originalFetch;
       }
     };
