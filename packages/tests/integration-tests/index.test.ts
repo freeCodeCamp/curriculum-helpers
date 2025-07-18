@@ -536,26 +536,24 @@ for(let i = 0; i < 3; i++) {
       expect(result).toMatchObject({ err: { actual: 1 } });
     });
 
-    // The old api wasn't consistent: only DOM tests supported async tests, but
-    // this needs to be maintained while it's deprecated.
-    it.runIf(type === "dom")(
-      "should support `async () => {}` style tests",
-      async () => {
-        const result = await page.evaluate(async (type) => {
-          const runner = await window.FCCTestRunner.createTestRunner({
-            type,
-          });
+    it("should not await tests that return promises", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+        });
 
-          return runner.runTest(`
-          async () => {
-            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-            await delay(10);
-            assert.equal(1, 2);
-          }`);
-        }, type);
-        expect(result).toMatchObject({ err: { actual: 1 } });
-      },
-    );
+        return runner.runTest(`
+new Promise((resolve) => {
+  setTimeout(() => {
+    console.log("This should not be awaited");
+    resolve();
+  }, 10);
+});
+`);
+      }, type);
+      // No logs should be returned, as the test should not be awaited
+      expect(result).toEqual({ pass: true });
+    });
 
     it("should fail the test if the afterEach hook throws an error", async () => {
       const result = await page.evaluate(async (type) => {
@@ -936,9 +934,7 @@ const getFive = () => 5;
           source,
           type: "dom",
         });
-        return runner.runTest(
-          "async () => await document.getElementById('audio').play()",
-        );
+        return runner.runTest("await document.getElementById('audio').play()");
       }, source);
 
       // If it were unable to play, it would throw "play() failed because the
