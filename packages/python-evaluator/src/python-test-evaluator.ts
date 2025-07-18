@@ -23,7 +23,6 @@ import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
 
 type EvaluatedTeststring = {
-  input?: string[];
   test: () => Promise<unknown>;
 };
 
@@ -103,6 +102,14 @@ class PythonTestEvaluator implements TestEvaluator {
 
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
+      // If input is not faked, tests can fail with io exceptions.
+      runPython(`
+def __fake_input(arg=None):
+  return ""
+
+input = __fake_input
+`);
+
       try {
         eval(opts.hooks?.beforeEach ?? "");
         // Eval test string to get the dummy input and actual test
@@ -124,43 +131,8 @@ class PythonTestEvaluator implements TestEvaluator {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                 eval(iifeTest).then(resolve).catch(reject);
               } else {
-                // The assumption is that if we're in this block, then the test
-                // is EITHER a standard JS test (in which case it should reject)
-                // OR a Python test that uses the `input()` function (in which case
-                // we need to fake the input function).
-
-                // While supporting both `{ test: () => { // test code } }` and
-                // `// test code /` we have to fake input before running the
-                // test. Otherwise any user code that uses `input()` will throw
-                // an error.
-                runPython(`
-def __fake_input(arg=None):
-  return ""
-
-input = __fake_input
-`);
-                eval(opts.hooks?.beforeEach ?? "");
-
-                // Evaluates the learner's code so that any variables they
-                // define are available to the test.
-                try {
-                  // It looks the source might be evaluated twice, but they're
-                  // on separate branches.
-                  runPython(opts.source ?? "");
-                } catch (sourceErr) {
-                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                  reject(sourceErr);
-                  return;
-                }
-
-                try {
-                  eval(testString);
-                } catch (testErr) {
-                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                  reject(testErr);
-                }
-
-                resolve(undefined);
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                reject(err);
               }
             }
           },
@@ -181,21 +153,7 @@ input = __fake_input
           );
         }
 
-        const { input, test } = evaluatedTestString as EvaluatedTeststring;
-
-        runPython(`
-		def __inputGen(xs):
-			def gen():
-				for x in xs:
-					yield x
-			iter = gen()
-			def input(arg=None):
-				return next(iter)
-
-			return input
-
-		input = __inputGen(${JSON.stringify(input ?? [])})
-		`);
+        const { test } = evaluatedTestString as EvaluatedTeststring;
 
         // Evaluates the learner's code so that any variables they define are
         // available to the test.

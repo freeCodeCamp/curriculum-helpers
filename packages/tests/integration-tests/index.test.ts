@@ -1304,25 +1304,6 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
       });
     });
 
-    it("should be able to test with mock input", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "python",
-          source: `
-first = input()
-second = input()
-`,
-        });
-
-        return runner?.runTest(`({
-	input: ["argle", "bargle"],
-  test: () => assert.equal(runPython('first + second'), "arglebargle")
-})`);
-      });
-
-      expect(result).toEqual({ pass: true });
-    });
-
     it("should make user code available to the python code as the _code variable", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
@@ -1470,39 +1451,14 @@ pattern = re.compile('l+')`;
       });
     });
 
-    it("should support runPython in simple tests", async () => {
+    it("should not throw io exceptions when input is called in a test", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
           type: "python",
         });
-        return runner?.runTest(`assert.equal(runPython('1 + 1'), 2)`);
-      });
-      expect(result).toEqual({ pass: true });
-    });
-
-    it("should evaluate user code before running tests", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "python",
-          source: "x = 3",
-        });
-        return runner?.runTest(`assert.equal(runPython('x + 1'), 5)`);
-      });
-
-      expect(result).toMatchObject({
-        err: {
-          actual: 4,
-          expected: 5,
-        },
-      });
-    });
-
-    it("should use a fake input function in simple tests", async () => {
-      const result = await page.evaluate(async () => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type: "python",
-        });
-        return runner?.runTest(`assert.equal(runPython('input("test")'), "")`);
+        return runner?.runTest(
+          `({ test: () => assert.equal(runPython('input("test")'), "") })`,
+        );
       });
 
       expect(result).toEqual({ pass: true });
@@ -1518,7 +1474,7 @@ pattern = re.compile('l+')`;
           },
         });
         return runner?.runTest(
-          `assert.equal(runPython('input()'), "test input")`,
+          `({ test: () => assert.equal(runPython('input()'), "test input") })`,
         );
       }, beforeEach);
 
@@ -1538,7 +1494,7 @@ pattern = re.compile('l+')`;
             },
           });
           return runner?.runTest(
-            `assert.equal(runPython('name'), "mocked input")`,
+            `({ test: () => assert.equal(runPython('name'), "mocked input") })`,
           );
         },
         source,
