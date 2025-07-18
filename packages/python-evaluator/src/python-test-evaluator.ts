@@ -22,6 +22,11 @@ import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
 
+type EvaluatedTeststring = {
+  input?: string[];
+  test: () => Promise<unknown>;
+};
+
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -99,23 +104,104 @@ class PythonTestEvaluator implements TestEvaluator {
       /* eslint-enable @typescript-eslint/no-unused-vars */
 
       try {
-        // If input isn't reassigned, it will throw when called during testing.
-        runPython(`
+        eval(opts.hooks?.beforeEach ?? "");
+        // Eval test string to get the dummy input and actual test
+        const evaluatedTestString = await new Promise<unknown>(
+          (resolve, reject) => {
+            try {
+              const test: unknown = eval(testString);
+              resolve(test);
+            } catch (err) {
+              const isUsingTopLevelAwait =
+                err instanceof SyntaxError &&
+                err.message.includes(
+                  "await is only valid in async functions and the top level bodies of modules",
+                );
+
+              if (isUsingTopLevelAwait) {
+                const iifeTest = createAsyncIife(testString);
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                eval(iifeTest).then(resolve).catch(reject);
+              } else {
+                // The assumption is that if we're in this block, then the test
+                // is EITHER a standard JS test (in which case it should reject)
+                // OR a Python test that uses the `input()` function (in which case
+                // we need to fake the input function).
+
+                // While supporting both `{ test: () => { // test code } }` and
+                // `// test code /` we have to fake input before running the
+                // test. Otherwise any user code that uses `input()` will throw
+                // an error.
+                runPython(`
 def __fake_input(arg=None):
   return ""
 
 input = __fake_input
 `);
-        eval(opts.hooks?.beforeEach ?? "");
+                eval(opts.hooks?.beforeEach ?? "");
 
-        const iifeTest = createAsyncIife(testString);
+                // Evaluates the learner's code so that any variables they
+                // define are available to the test.
+                try {
+                  // It looks the source might be evaluated twice, but they're
+                  // on separate branches.
+                  runPython(opts.source ?? "");
+                } catch (sourceErr) {
+                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                  reject(sourceErr);
+                  return;
+                }
 
-        // Evaluates the learner's code so that any variables they
-        // define are available to the test.
+                try {
+                  eval(testString);
+                } catch (testErr) {
+                  // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                  reject(testErr);
+                }
 
+                resolve(undefined);
+              }
+            }
+          },
+        );
+
+        // If the test string does not evaluate to an object, then we assume that
+        // it's a standard JS test and any assertions have already passed.
+        if (typeof evaluatedTestString !== "object") {
+          // Execute afterEach hook if it exists
+          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
+
+          return { pass: true, ...this.#proxyConsole.flush() };
+        }
+
+        if (!evaluatedTestString || !("test" in evaluatedTestString)) {
+          throw Error(
+            "Test string did not evaluate to an object with the 'test' property",
+          );
+        }
+
+        const { input, test } = evaluatedTestString as EvaluatedTeststring;
+
+        runPython(`
+		def __inputGen(xs):
+			def gen():
+				for x in xs:
+					yield x
+			iter = gen()
+			def input(arg=None):
+				return next(iter)
+
+			return input
+
+		input = __inputGen(${JSON.stringify(input ?? [])})
+		`);
+
+        // Evaluates the learner's code so that any variables they define are
+        // available to the test.
         runPython(opts.source ?? "");
 
-        await eval(iifeTest);
+        await test();
 
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
