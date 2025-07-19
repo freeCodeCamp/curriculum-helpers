@@ -21,11 +21,13 @@ import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
+import { createFetchProxy } from "../../shared/src/proxy-fetch";
 
 type EvaluatedTeststring = {
   test: () => Promise<unknown>;
 };
 
+const originalFetch = globalThis.fetch;
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -110,6 +112,9 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
+      // @ts-expect-error The proxy doesn't not fully implement the fetch API
+      globalThis.fetch = createFetchProxy(globalThis);
+
       try {
         eval(opts.hooks?.beforeEach ?? "");
         // Eval test string to get the test property
@@ -189,6 +194,7 @@ input = __fake_input
         }
 
         __userGlobals.destroy();
+        globalThis.fetch = originalFetch;
       }
     };
   }
