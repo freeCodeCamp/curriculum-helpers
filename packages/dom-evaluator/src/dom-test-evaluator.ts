@@ -136,7 +136,7 @@ export class DOMTestEvaluator implements TestEvaluator {
 
     this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
-      // @ts-expect-error The proxy doesn't not fully implement the fetch API
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
       globalThis.fetch = createFetchProxy(parent);
 
       try {

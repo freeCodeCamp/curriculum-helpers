@@ -112,7 +112,7 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
-      // @ts-expect-error The proxy doesn't not fully implement the fetch API
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
       globalThis.fetch = createFetchProxy(globalThis);
 
       try {

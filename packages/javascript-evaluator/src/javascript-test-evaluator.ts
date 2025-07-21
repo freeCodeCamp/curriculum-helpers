@@ -63,7 +63,7 @@ export class JavascriptTestEvaluator implements TestEvaluator {
     this.#runTest = async (rawTest) => {
       this.#proxyConsole.on();
 
-      // @ts-expect-error The proxy doesn't not fully implement the fetch API
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
       globalThis.fetch = createFetchProxy(globalThis);
       const test = createAsyncIife(rawTest);
       // This can be reassigned by the eval inside the try block, so it should be declared as a let
