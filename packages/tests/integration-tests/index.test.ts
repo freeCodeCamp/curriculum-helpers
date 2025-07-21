@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import "vitest-environment-puppeteer";
 import { compileForTests } from "../../shared/tooling/webpack-compile";
 import type { FCCTestRunner } from "../../main/src/index";
