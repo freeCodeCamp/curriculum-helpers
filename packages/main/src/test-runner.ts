@@ -23,7 +23,6 @@ interface Runner {
   runTest(test: string, timeout?: number): Promise<Pass | Fail>;
   runAllTests(tests: string[], timeout?: number): Promise<(Pass | Fail)[]>;
   dispose(): void;
-  addEventListener(type: "message", listener: EventListener): void;
 }
 
 const getFullAssetPath = (assetPath = "/dist/") => {
@@ -38,6 +37,30 @@ const getFullAssetPath = (assetPath = "/dist/") => {
   }
 
   return assetPath;
+};
+
+const fetchListener = (event: MessageEvent) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (event.data.type === "fetch") {
+    const { url, options } = event.data as {
+      url: string;
+      options?: RequestInit;
+    };
+
+    void fetch(url, {
+      ...options,
+      credentials: "omit",
+    }).then(async (res) => {
+      const text = await res.text();
+
+      event.ports[0].postMessage({
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url,
+        text,
+      });
+    });
+  }
 };
 
 type RunnerConfig = {
@@ -90,9 +113,13 @@ export class DOMTestRunner implements Runner {
     const { scriptHTML, iframe } = this.#createTestEvaluator(config);
     this.#testEvaluator = iframe;
     this.#script = scriptHTML;
+    this.#addEventListener("message", fetchListener);
   }
 
-  addEventListener(type: "message", listener: EventListener): void {
+  #addEventListener(
+    type: "message",
+    listener: (event: MessageEvent) => void,
+  ): void {
     const safeListener = (event: MessageEvent) => {
       if (
         event.origin === "null" &&
@@ -210,9 +237,13 @@ export class WorkerTestRunner implements Runner {
 
   constructor(config: RunnerConfig) {
     this.#testEvaluator = this.#createTestEvaluator(config);
+    this.#addEventListener("message", fetchListener);
   }
 
-  addEventListener(type: "message", listener: EventListener): void {
+  #addEventListener(
+    type: "message",
+    listener: (event: MessageEvent) => void,
+  ): void {
     this.#testEvaluator.addEventListener("message", listener);
   }
 

@@ -1,4 +1,3 @@
-/* eslint-disable max-nested-callbacks */
 import "vitest-environment-puppeteer";
 import { compileForTests } from "../../shared/tooling/webpack-compile";
 import type { FCCTestRunner } from "../../main/src/index";
@@ -577,48 +576,86 @@ new Promise((resolve) => {
       });
     });
 
-    it("should handle fetch via a proxy", async () => {
+    it("should make fetch requests from the browsing context of the test runner", async () => {
       const result = await page.evaluate(async (type) => {
-        const runner = await window.FCCTestRunner.createTestRunner({
-          type,
-        });
+        // Create spy
+        const originalFetch = window.fetch;
+        let fetchCallArgs: unknown[];
+        window.fetch = ((...args: [unknown]) => {
+          fetchCallArgs = args;
+          return Promise.resolve(
+            new Response('{"message": "Hello, world!"}', {
+              status: 200,
+              statusText: "OK",
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }) as typeof fetch;
 
-        const messagePromise = new Promise((resolve) => {
-          runner.addEventListener("message", (event: MessageEvent) => {
-            const { data } = event as { data: Record<string, unknown> };
-            if (data.type === "fetch") {
-              event.ports[0].postMessage({
-                status: 200,
-                statusText: "OK",
-                url: data.url,
-                text: JSON.stringify({ message: "Hello, world!" }),
-              });
-              resolve(data);
-            }
+        try {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
           });
-        });
 
-        return [
-          await runner.runTest(`
-          const response = await fetch('https://doesnot.exist', { method: 'GET' });
+          await runner.runTest(
+            `const response = await fetch('https://doesnot.exist', { method: 'GET' });
           const data = await response.json();
           assert.deepEqual(data, { message: 'Hello, world!' });
           assert.equal(response.status, 200);
           assert.equal(response.statusText, 'OK');
           assert.equal(response.url, 'https://doesnot.exist');
-          assert.equal(response.ok, true);
-        `),
-          await messagePromise,
-        ];
+          assert.equal(response.ok, true);`,
+          );
+
+          return {
+            fetchCallArgs,
+          };
+        } finally {
+          // Restore original fetch
+          window.fetch = originalFetch;
+        }
+      }, type);
+
+      expect(result.fetchCallArgs).toEqual([
+        "https://doesnot.exist",
+        { method: "GET", credentials: "omit" },
+      ]);
+    });
+
+    it("should always omit credentials in fetch requests", async () => {
+      const result = await page.evaluate(async (type) => {
+        // Create spy
+        const originalFetch = window.fetch;
+        let fetchCallArgs: unknown[];
+        try {
+          window.fetch = ((...args: [unknown]) => {
+            fetchCallArgs = args;
+            return Promise.resolve(
+              new Response('{"message": "Hello, world!"}', {
+                status: 200,
+                statusText: "OK",
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }) as typeof fetch;
+
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+          });
+
+          await runner.runTest(
+            `await fetch('https://doesnot.exist', { method: 'GET', credentials: 'include' });`,
+          );
+          return fetchCallArgs;
+        } finally {
+          // Restore original fetch
+          window.fetch = originalFetch;
+        }
       }, type);
 
       expect(result).toEqual([
-        { pass: true },
-        {
-          type: "fetch",
-          url: "https://doesnot.exist",
-          options: { method: "GET" },
-        },
+        "https://doesnot.exist",
+        { method: "GET", credentials: "omit" },
       ]);
     });
   });
