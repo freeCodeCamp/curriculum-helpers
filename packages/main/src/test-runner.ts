@@ -12,7 +12,7 @@ import {
   TEST_EVALUATOR_SCRIPT_ID,
   TEST_EVALUATOR_HOOKS_ID,
 } from "../../shared/src/ids";
-import { post } from "./awaitable-post";
+import { post } from "../../shared/src/awaitable-post";
 
 interface Runner {
   init(opts?: InitOptions, timeout?: number): Promise<void>;
@@ -37,6 +37,30 @@ const getFullAssetPath = (assetPath = "/dist/") => {
   }
 
   return assetPath;
+};
+
+const fetchListener = (event: MessageEvent) => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (event.data.type === "fetch") {
+    const { url, options } = event.data as {
+      url: string;
+      options?: RequestInit;
+    };
+
+    void fetch(url, {
+      ...options,
+      credentials: "omit",
+    }).then(async (res) => {
+      const text = await res.text();
+
+      event.ports[0].postMessage({
+        status: res.status,
+        statusText: res.statusText,
+        url: res.url,
+        text,
+      });
+    });
+  }
 };
 
 type RunnerConfig = {
@@ -89,6 +113,23 @@ export class DOMTestRunner implements Runner {
     const { scriptHTML, iframe } = this.#createTestEvaluator(config);
     this.#testEvaluator = iframe;
     this.#script = scriptHTML;
+    this.#addEventListener("message", fetchListener);
+  }
+
+  #addEventListener(
+    type: "message",
+    listener: (event: MessageEvent) => void,
+  ): void {
+    const safeListener = (event: MessageEvent) => {
+      if (
+        event.origin === "null" &&
+        event.source === this.#testEvaluator.contentWindow
+      ) {
+        listener(event);
+      }
+    };
+
+    window.addEventListener("message", safeListener);
   }
 
   // Rather than trying to create an async constructor, we'll use an init method
@@ -196,6 +237,14 @@ export class WorkerTestRunner implements Runner {
 
   constructor(config: RunnerConfig) {
     this.#testEvaluator = this.#createTestEvaluator(config);
+    this.#addEventListener("message", fetchListener);
+  }
+
+  #addEventListener(
+    type: "message",
+    listener: (event: MessageEvent) => void,
+  ): void {
+    this.#testEvaluator.addEventListener("message", listener);
   }
 
   async init(opts: InitWorkerOptions, timeout?: number) {
