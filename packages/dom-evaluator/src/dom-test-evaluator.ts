@@ -50,6 +50,12 @@ const removeTestScripts = () => {
   hooksScript?.remove();
 };
 
+// Prevent form submissions from navigating the page. If we don't do this, the
+// iframe's browsing context could be replaced destroying the test runner.
+document.addEventListener("submit", (e) => {
+  e.preventDefault();
+});
+
 export class DOMTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
   #proxyConsole: ProxyConsole;
