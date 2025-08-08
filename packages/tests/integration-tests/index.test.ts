@@ -1098,6 +1098,37 @@ assert(mocked.find('.greeting').length === 1);
         });
       },
     );
+
+    it("should prevent forms from triggering navigation", async () => {
+      const source = `<!DOCTYPE html>
+        <form>
+        <button id="check-btn">Check</button>
+        </form>
+  `;
+
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          source,
+          type: "dom",
+        });
+
+        await runner.runTest(`
+const checkBtn = document.getElementById('check-btn');
+checkBtn.click();`);
+
+        // Small delay to allow the page to navigate (if it does)
+        await new Promise((resolve) => {
+          setTimeout(resolve, 100);
+        });
+
+        return runner.runTest(`
+const checkBtn = document.getElementById('check-btn');
+checkBtn.click();
+       `);
+      }, source);
+
+      expect(result).toEqual({ pass: true });
+    });
   });
 
   describe("Javascript evaluator", () => {
