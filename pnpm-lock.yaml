@@ -46,7 +46,7 @@ importers:
         version: 0.11.10
       puppeteer:
         specifier: ^24.9.0
-        version: 24.17.1(typescript@5.9.2)
+        version: 24.19.0(typescript@5.9.2)
       pyodide:
         specifier: 0.23.3
         version: 0.23.3
@@ -1508,8 +1508,8 @@ packages:
   bare-events@2.6.1:
     resolution: {integrity: sha512-AuTJkq9XmE6Vk0FJVNq5QxETrSA/vKHarWVBG5l/JbdCL1prJemiyJqUS0jrlXO0MftuPq4m3YVYhoNc5+aE/g==}
 
-  bare-fs@4.2.1:
-    resolution: {integrity: sha512-mELROzV0IhqilFgsl1gyp48pnZsaV9xhQapHLDsvn4d4ZTfbFhcghQezl7FTEDNBcGqLUnNI3lUlm6ecrLWdFA==}
+  bare-fs@4.2.3:
+    resolution: {integrity: sha512-1aGs5pRVLToMQ79elP+7cc0u0s/wXAzfBv/7hDloT7WFggLqECCas5qqPky7WHCFdsBH5WDq6sD4fAoz5sJbtA==}
     engines: {bare: '>=1.16.0'}
     peerDependencies:
       bare-buffer: '*'
@@ -1908,8 +1908,8 @@ packages:
     engines: {node: '>=0.8.0'}
     hasBin: true
 
-  devtools-protocol@0.0.1475386:
-    resolution: {integrity: sha512-RQ809ykTfJ+dgj9bftdeL2vRVxASAuGU+I9LEx9Ij5TXU5HrgAQVmzi72VA+mkzscE12uzlRv5/tWWv9R9J1SA==}
+  devtools-protocol@0.0.1495869:
+    resolution: {integrity: sha512-i+bkd9UYFis40RcnkW7XrOprCujXRAHg62IVh/Ah3G8MmNXpCGt1m0dTFhSdx/AVs8XEMbdOGRwdkR1Bcta8AA==}
 
   diffie-hellman@5.0.3:
     resolution: {integrity: sha512-kqag/Nl+f3GwyK25fhUMYj81BUOrZ9IuJsjIcDE5icNM9FJHAVm3VcUDxdLPoQtTuUylWm6ZIknYJwwaPxsUzg==}
@@ -3196,12 +3196,12 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  puppeteer-core@24.17.1:
-    resolution: {integrity: sha512-Msh/kf9k1XFN0wuKiT4/npMmMWOT7kPBEUw01gWvRoKOOoz3It9TEmWjnt4Gl4eO+p73VMrvR+wfa0dm9rfxjw==}
+  puppeteer-core@24.19.0:
+    resolution: {integrity: sha512-qsEys4OIb2VGC2tNWKAs4U0mnjkIAxueMOOzk2nEFM9g4Y8QuvYkEMtmwsEdvzNGsUFd7DprOQfABmlN7WBOlg==}
     engines: {node: '>=18'}
 
-  puppeteer@24.17.1:
-    resolution: {integrity: sha512-KIuX0w+0um4TUbm55yFl2WIsbgjya2BHIgW9ylTuhavtwjXCOM7lMo9oLR1jQnCxrFvm9h/Yeb+zfs4nlgntPg==}
+  puppeteer@24.19.0:
+    resolution: {integrity: sha512-gUWgHX36m9K6yUbvNBEA7CXElIL92yXMoAVFrO8OpZkItqrruLVqYA8ikmfgwcw/cNfYgkt0n2+yP9jd9RSETA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -5668,7 +5668,7 @@ snapshots:
   bare-events@2.6.1:
     optional: true
 
-  bare-fs@4.2.1:
+  bare-fs@4.2.3:
     dependencies:
       bare-events: 2.6.1
       bare-path: 3.0.0
@@ -5917,9 +5917,9 @@ snapshots:
 
   chrome-trace-event@1.0.4: {}
 
-  chromium-bidi@8.0.0(devtools-protocol@0.0.1475386):
+  chromium-bidi@8.0.0(devtools-protocol@0.0.1495869):
     dependencies:
-      devtools-protocol: 0.0.1475386
+      devtools-protocol: 0.0.1495869
       mitt: 3.0.1
       zod: 3.25.76
 
@@ -6172,7 +6172,7 @@ snapshots:
       defined: 1.0.1
       minimist: 1.2.8
 
-  devtools-protocol@0.0.1475386: {}
+  devtools-protocol@0.0.1495869: {}
 
   diffie-hellman@5.0.3:
     dependencies:
@@ -7662,12 +7662,12 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.17.1:
+  puppeteer-core@24.19.0:
     dependencies:
       '@puppeteer/browsers': 2.10.8
-      chromium-bidi: 8.0.0(devtools-protocol@0.0.1475386)
+      chromium-bidi: 8.0.0(devtools-protocol@0.0.1495869)
       debug: 4.4.1
-      devtools-protocol: 0.0.1475386
+      devtools-protocol: 0.0.1495869
       typed-query-selector: 2.12.0
       ws: 8.18.3
     transitivePeerDependencies:
@@ -7676,13 +7676,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.17.1(typescript@5.9.2):
+  puppeteer@24.19.0(typescript@5.9.2):
     dependencies:
       '@puppeteer/browsers': 2.10.8
-      chromium-bidi: 8.0.0(devtools-protocol@0.0.1475386)
+      chromium-bidi: 8.0.0(devtools-protocol@0.0.1495869)
       cosmiconfig: 9.0.0(typescript@5.9.2)
-      devtools-protocol: 0.0.1475386
-      puppeteer-core: 24.17.1
+      devtools-protocol: 0.0.1495869
+      puppeteer-core: 24.19.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-buffer
@@ -8231,7 +8231,7 @@ snapshots:
       pump: 3.0.3
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 4.2.1
+      bare-fs: 4.2.3
       bare-path: 3.0.0
     transitivePeerDependencies:
       - bare-buffer
