@@ -46,7 +46,7 @@ importers:
         version: 0.11.10
       puppeteer:
         specifier: ^24.9.0
-        version: 24.19.0(typescript@5.9.2)
+        version: 24.20.0(typescript@5.9.2)
       pyodide:
         specifier: 0.23.3
         version: 0.23.3
@@ -979,8 +979,8 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@puppeteer/browsers@2.10.8':
-    resolution: {integrity: sha512-f02QYEnBDE0p8cteNoPYHHjbDuwyfbe4cCIVlNi8/MRicIxFW4w4CfgU0LNgWEID6s06P+hRJ1qjpBLMhPRCiQ==}
+  '@puppeteer/browsers@2.10.9':
+    resolution: {integrity: sha512-kUGHwABarVhvMP+zhW5zvDA7LmGcd4TwrTEBwcTQic5EebUqaK5NjC0UXLJepIFVGsr2N/Z8NJQz2JYGo1ZwxA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1521,8 +1521,13 @@ packages:
   axios@1.9.0:
     resolution: {integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==}
 
-  b4a@1.6.7:
-    resolution: {integrity: sha512-OnAYlL5b7LEkALw87fUVafQw5rVR9RjwGd4KUwNQ6DrrNmaVaUCgLipfVlzrPQ4tWOR9P0IXGNOx50jYCCdSJg==}
+  b4a@1.7.0:
+    resolution: {integrity: sha512-KtsH1alSKomfNi/yDAFaD8PPFfi0LxJCEbPuzogcXrMF+yH40Z1ykTDo2vyxuQfN1FLjv0LFM7CadLHEPrVifw==}
+    peerDependencies:
+      react-native-b4a: ^0.0.0
+    peerDependenciesMeta:
+      react-native-b4a:
+        optional: true
 
   babel-plugin-polyfill-corejs2@0.4.14:
     resolution: {integrity: sha512-Co2Y9wX854ts6U8gAAPXfn0GmAyctHuK8n0Yhfjd6t30g7yvKjspvvOo9yG+z52PZRgFErt7Ka2pYnXCjLKEpg==}
@@ -1545,8 +1550,8 @@ packages:
   bare-events@2.6.1:
     resolution: {integrity: sha512-AuTJkq9XmE6Vk0FJVNq5QxETrSA/vKHarWVBG5l/JbdCL1prJemiyJqUS0jrlXO0MftuPq4m3YVYhoNc5+aE/g==}
 
-  bare-fs@4.2.3:
-    resolution: {integrity: sha512-1aGs5pRVLToMQ79elP+7cc0u0s/wXAzfBv/7hDloT7WFggLqECCas5qqPky7WHCFdsBH5WDq6sD4fAoz5sJbtA==}
+  bare-fs@4.3.3:
+    resolution: {integrity: sha512-W+ZpiQx1i0dm073So22v3jColDtvyqSTyUYEnooYwKcl+SHuqnQGKyuHdwigQffWJV5ghKtskVH7ydAkBVKQZQ==}
     engines: {bare: '>=1.16.0'}
     peerDependencies:
       bare-buffer: '*'
@@ -1571,6 +1576,9 @@ packages:
         optional: true
       bare-events:
         optional: true
+
+  bare-url@2.2.2:
+    resolution: {integrity: sha512-g+ueNGKkrjMazDG3elZO1pNs3HY5+mMmOet1jtKyhOaCnkLzitxf26z7hoAEkDNgdNmnc1KIlt/dw6Po6xZMpA==}
 
   base-64@1.0.0:
     resolution: {integrity: sha512-kwDPIFCGx0NZHog36dj+tHiwP4QMzsZ3AgMViUBKI0+V5n4U0ufTCUMhnQ04diaRI8EX/QcPfql7zlhZ7j4zgg==}
@@ -3233,12 +3241,12 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  puppeteer-core@24.19.0:
-    resolution: {integrity: sha512-qsEys4OIb2VGC2tNWKAs4U0mnjkIAxueMOOzk2nEFM9g4Y8QuvYkEMtmwsEdvzNGsUFd7DprOQfABmlN7WBOlg==}
+  puppeteer-core@24.20.0:
+    resolution: {integrity: sha512-n0y/f8EYyZt4yEJkjP3Vrqf9A4qa3uYpKYdsiedIY4bxIfTw1aAJSpSVPmWBPlr1LO4cNq2hGNIBWKPhvBF68w==}
     engines: {node: '>=18'}
 
-  puppeteer@24.19.0:
-    resolution: {integrity: sha512-gUWgHX36m9K6yUbvNBEA7CXElIL92yXMoAVFrO8OpZkItqrruLVqYA8ikmfgwcw/cNfYgkt0n2+yP9jd9RSETA==}
+  puppeteer@24.20.0:
+    resolution: {integrity: sha512-iLnLV9oHKKAujmxiSxRWKfcT1q2COu0g1N9iU2TCp1MlmsyjgNAkcBOR3cAOqKb5UTiVPIGG4z5PO5yfpYZ6jA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3986,6 +3994,9 @@ packages:
   watchpack@2.4.2:
     resolution: {integrity: sha512-TnbFSbcOCcDgjZ4piURLCbJ3nJhznVh9kw6F6iokjiFPl8ONxe9A6nMDVXDiNbrSfLILs6vB07F7wLBrwPYzJw==}
     engines: {node: '>=10.13.0'}
+
+  webdriver-bidi-protocol@0.2.8:
+    resolution: {integrity: sha512-KPvtVAIX8VHjLZH1KHT5GXoOaPeb0Ju+JlAcdshw6Z/gsmRtLoxt0Hw99PgJwZta7zUQaAUIHHWDRkzrPHsQTQ==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -5103,7 +5114,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@puppeteer/browsers@2.10.8':
+  '@puppeteer/browsers@2.10.9':
     dependencies:
       debug: 4.4.1
       extract-zip: 2.0.1
@@ -5114,6 +5125,7 @@ snapshots:
       yargs: 17.7.2
     transitivePeerDependencies:
       - bare-buffer
+      - react-native-b4a
       - supports-color
 
   '@rollup/rollup-android-arm-eabi@4.43.0':
@@ -5726,7 +5738,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  b4a@1.6.7: {}
+  b4a@1.7.0: {}
 
   babel-plugin-polyfill-corejs2@0.4.14(@babel/core@7.28.4):
     dependencies:
@@ -5757,11 +5769,15 @@ snapshots:
   bare-events@2.6.1:
     optional: true
 
-  bare-fs@4.2.3:
+  bare-fs@4.3.3:
     dependencies:
       bare-events: 2.6.1
       bare-path: 3.0.0
       bare-stream: 2.7.0(bare-events@2.6.1)
+      bare-url: 2.2.2
+      fast-fifo: 1.3.2
+    transitivePeerDependencies:
+      - react-native-b4a
     optional: true
 
   bare-os@3.6.2:
@@ -5777,6 +5793,13 @@ snapshots:
       streamx: 2.22.1
     optionalDependencies:
       bare-events: 2.6.1
+    transitivePeerDependencies:
+      - react-native-b4a
+    optional: true
+
+  bare-url@2.2.2:
+    dependencies:
+      bare-path: 3.0.0
     optional: true
 
   base-64@1.0.0: {}
@@ -7751,31 +7774,34 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.19.0:
+  puppeteer-core@24.20.0:
     dependencies:
-      '@puppeteer/browsers': 2.10.8
+      '@puppeteer/browsers': 2.10.9
       chromium-bidi: 8.0.0(devtools-protocol@0.0.1495869)
       debug: 4.4.1
       devtools-protocol: 0.0.1495869
       typed-query-selector: 2.12.0
+      webdriver-bidi-protocol: 0.2.8
       ws: 8.18.3
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
+      - react-native-b4a
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.19.0(typescript@5.9.2):
+  puppeteer@24.20.0(typescript@5.9.2):
     dependencies:
-      '@puppeteer/browsers': 2.10.8
+      '@puppeteer/browsers': 2.10.9
       chromium-bidi: 8.0.0(devtools-protocol@0.0.1495869)
       cosmiconfig: 9.0.0(typescript@5.9.2)
       devtools-protocol: 0.0.1495869
-      puppeteer-core: 24.19.0
+      puppeteer-core: 24.20.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-buffer
       - bufferutil
+      - react-native-b4a
       - supports-color
       - typescript
       - utf-8-validate
@@ -8232,6 +8258,8 @@ snapshots:
       text-decoder: 1.2.3
     optionalDependencies:
       bare-events: 2.6.1
+    transitivePeerDependencies:
+      - react-native-b4a
 
   string-argv@0.3.2: {}
 
@@ -8320,16 +8348,19 @@ snapshots:
       pump: 3.0.3
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 4.2.3
+      bare-fs: 4.3.3
       bare-path: 3.0.0
     transitivePeerDependencies:
       - bare-buffer
+      - react-native-b4a
 
   tar-stream@3.1.7:
     dependencies:
-      b4a: 1.6.7
+      b4a: 1.7.0
       fast-fifo: 1.3.2
       streamx: 2.22.1
+    transitivePeerDependencies:
+      - react-native-b4a
 
   terser-webpack-plugin@5.3.14(webpack@5.101.3):
     dependencies:
@@ -8349,7 +8380,9 @@ snapshots:
 
   text-decoder@1.2.3:
     dependencies:
-      b4a: 1.6.7
+      b4a: 1.7.0
+    transitivePeerDependencies:
+      - react-native-b4a
 
   through2@2.0.5:
     dependencies:
@@ -8670,6 +8703,8 @@ snapshots:
     dependencies:
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
+
+  webdriver-bidi-protocol@0.2.8: {}
 
   webidl-conversions@3.0.1: {}
 
