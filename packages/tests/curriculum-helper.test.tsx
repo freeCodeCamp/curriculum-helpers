@@ -132,6 +132,32 @@ describe("spyOn", () => {
     obj.method("arg");
     expect(spy.calls).toEqual([]);
   });
+
+  it("should call the original function, providing 'this'", () => {
+    const obj = {
+      value: "obj",
+      method(arg = "") {
+        return this.value + arg;
+      },
+    };
+
+    const spy = helper.spyOn(obj, "method");
+    const result = obj.method("arg");
+    expect(result).toBe("objarg");
+    expect(spy.calls).toEqual([["arg"]]);
+  });
+
+  it("should throw if the spied on property is not a function", () => {
+    const obj = {
+      notAFunction: "foo",
+    };
+
+    vitest.spyOn(console, "warn").mockImplementation(() => {});
+
+    expect(() => helper.spyOn(obj, "notAFunction")).toThrow(
+      "spyOn can only be called on function properties",
+    );
+  });
 });
 
 describe("spyOnCallbacks", () => {
