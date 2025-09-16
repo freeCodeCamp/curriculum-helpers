@@ -36,13 +36,20 @@ export class RandomMocker {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+function assertIsFunction(func: unknown): asserts func is Function {
+  if (!(typeof func === "function")) {
+    throw new TypeError("spyOn can only be called on function properties");
+  }
+}
+
 /** Calling spyOn creates a simple spy, inspired by Jest and Jasmine's spyOn functions.
  * @param obj - The object to spy on
  * @param method - The method to spy on
  * @returns A spy function that can be used to track calls to the original method
  */
 export function spyOn<Args extends unknown[], Return>(
-  obj: Record<string, (...args: Args) => Return>,
+  obj: Record<string, unknown>,
   method: string,
 ): {
   restore: () => void;
@@ -50,15 +57,18 @@ export function spyOn<Args extends unknown[], Return>(
   returns: Return[];
 } {
   const original = obj[method];
+  assertIsFunction(original);
+
   const calls: Args[] = [];
   const results: Return[] = [];
 
-  const fn = (...args: Args) => {
+  function fn(this: unknown, ...args: Args): unknown {
     calls.push(args);
-    const result = original(...args);
+    // If fn is called, original will be a function.
+    const result = (original as (...x: Args) => Return).apply(this, args);
     results.push(result);
     return result;
-  };
+  }
 
   obj[method] = fn;
 
