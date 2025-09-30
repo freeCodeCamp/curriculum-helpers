@@ -168,7 +168,6 @@ ${test}`);
           return this.#createErrorResponse(afterEachErr as TestError);
         }
 
-        // Reset fetch to the original implementation
         globalThis.fetch = originalFetch;
       }
     };
