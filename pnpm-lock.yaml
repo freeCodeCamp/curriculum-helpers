@@ -46,7 +46,7 @@ importers:
         version: 0.11.10
       puppeteer:
         specifier: ^24.9.0
-        version: 24.22.3(typescript@5.9.3)
+        version: 24.23.0(typescript@5.9.3)
       pyodide:
         specifier: 0.23.3
         version: 0.23.3
@@ -1478,8 +1478,8 @@ packages:
   axios@1.9.0:
     resolution: {integrity: sha512-re4CqKTJaURpzbLHtIi6XpDv20/CnpXOtjRY5/CU32L8gU8ek9UIivcfvSWvmKEngmVbrUtPpdDwWDWL7DNHvg==}
 
-  b4a@1.7.2:
-    resolution: {integrity: sha512-DyUOdz+E8R6+sruDpQNOaV0y/dBbV6X/8ZkxrDcR0Ifc3BgKlpgG0VAtfOozA0eMtJO5GGe9FsZhueLs00pTww==}
+  b4a@1.7.3:
+    resolution: {integrity: sha512-5Q2mfq2WfGuFp3uS//0s6baOJLMoVduPYVeNmDYxu5OUA1/cBfvr2RIS7vi62LdNj/urk1hfmj867I3qt6uZ7Q==}
     peerDependencies:
       react-native-b4a: '*'
     peerDependenciesMeta:
@@ -1507,8 +1507,8 @@ packages:
   bare-events@2.7.0:
     resolution: {integrity: sha512-b3N5eTW1g7vXkw+0CXh/HazGTcO5KYuu/RCNaJbDMPI6LHDi+7qe8EmxKUVe1sUbY2KZOVZFyj62x0OEz9qyAA==}
 
-  bare-fs@4.4.4:
-    resolution: {integrity: sha512-Q8yxM1eLhJfuM7KXVP3zjhBvtMJCYRByoTT+wHXjpdMELv0xICFJX+1w4c7csa+WZEOsq4ItJ4RGwvzid6m/dw==}
+  bare-fs@4.4.5:
+    resolution: {integrity: sha512-TCtu93KGLu6/aiGWzMr12TmSRS6nKdfhAnzTQRbXoSWxkbb9eRd53jQ51jG7g1gYjjtto3hbBrrhzg6djcgiKg==}
     engines: {bare: '>=1.16.0'}
     peerDependencies:
       bare-buffer: '*'
@@ -1915,8 +1915,8 @@ packages:
     engines: {node: '>=0.8.0'}
     hasBin: true
 
-  devtools-protocol@0.0.1495869:
-    resolution: {integrity: sha512-i+bkd9UYFis40RcnkW7XrOprCujXRAHg62IVh/Ah3G8MmNXpCGt1m0dTFhSdx/AVs8XEMbdOGRwdkR1Bcta8AA==}
+  devtools-protocol@0.0.1508733:
+    resolution: {integrity: sha512-QJ1R5gtck6nDcdM+nlsaJXcelPEI7ZxSMw1ujHpO1c4+9l+Nue5qlebi9xO1Z2MGr92bFOQTW7/rrheh5hHxDg==}
 
   diffie-hellman@5.0.3:
     resolution: {integrity: sha512-kqag/Nl+f3GwyK25fhUMYj81BUOrZ9IuJsjIcDE5icNM9FJHAVm3VcUDxdLPoQtTuUylWm6ZIknYJwwaPxsUzg==}
@@ -3198,12 +3198,12 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  puppeteer-core@24.22.3:
-    resolution: {integrity: sha512-M/Jhg4PWRANSbL/C9im//Yb55wsWBS5wdp+h59iwM+EPicVQQCNs56iC5aEAO7avfDPRfxs4MM16wHjOYHNJEw==}
+  puppeteer-core@24.23.0:
+    resolution: {integrity: sha512-yl25C59gb14sOdIiSnJ08XiPP+O2RjuyZmEG+RjYmCXO7au0jcLf7fRiyii96dXGUBW7Zwei/mVKfxMx/POeFw==}
     engines: {node: '>=18'}
 
-  puppeteer@24.22.3:
-    resolution: {integrity: sha512-mnhXzIqSYSJ1SMv1RYH07YMzWP81xCmmQj91Q8iQMZqnf97eVzeHgsGL6kpywiGCi+nQafta/+NkwM4URMy/XQ==}
+  puppeteer@24.23.0:
+    resolution: {integrity: sha512-BVR1Lg8sJGKXY79JARdIssFWK2F6e1j+RyuJP66w4CUmpaXjENicmA3nNpUXA8lcTdDjAndtP+oNdni3T/qQqA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3956,8 +3956,8 @@ packages:
     resolution: {integrity: sha512-c5EGNOiyxxV5qmTtAB7rbiXxi1ooX1pQKMLX/MIabJjRA0SJBQOjKF+KSVfHkr9U1cADPon0mRiVe/riyaiDUA==}
     engines: {node: '>=10.13.0'}
 
-  webdriver-bidi-protocol@0.2.11:
-    resolution: {integrity: sha512-Y9E1/oi4XMxcR8AT0ZC4OvYntl34SPgwjmELH+owjBr0korAX4jKgZULBWILGCVGdVCQ0dodTToIETozhG8zvA==}
+  webdriver-bidi-protocol@0.3.6:
+    resolution: {integrity: sha512-mlGndEOA9yK9YAbvtxaPTqdi/kaCWYYfwrZvGzcmkr/3lWM+tQj53BxtpVd6qbC6+E5OnHXgCcAhre6AkXzxjA==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -5642,7 +5642,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  b4a@1.7.2: {}
+  b4a@1.7.3: {}
 
   babel-plugin-polyfill-corejs2@0.4.14(@babel/core@7.28.4):
     dependencies:
@@ -5672,7 +5672,7 @@ snapshots:
 
   bare-events@2.7.0: {}
 
-  bare-fs@4.4.4:
+  bare-fs@4.4.5:
     dependencies:
       bare-events: 2.7.0
       bare-path: 3.0.0
@@ -5930,9 +5930,9 @@ snapshots:
 
   chrome-trace-event@1.0.4: {}
 
-  chromium-bidi@9.1.0(devtools-protocol@0.0.1495869):
+  chromium-bidi@9.1.0(devtools-protocol@0.0.1508733):
     dependencies:
-      devtools-protocol: 0.0.1495869
+      devtools-protocol: 0.0.1508733
       mitt: 3.0.1
       zod: 3.25.76
 
@@ -6189,7 +6189,7 @@ snapshots:
       defined: 1.0.1
       minimist: 1.2.8
 
-  devtools-protocol@0.0.1495869: {}
+  devtools-protocol@0.0.1508733: {}
 
   diffie-hellman@5.0.3:
     dependencies:
@@ -7674,14 +7674,14 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.22.3:
+  puppeteer-core@24.23.0:
     dependencies:
       '@puppeteer/browsers': 2.10.10
-      chromium-bidi: 9.1.0(devtools-protocol@0.0.1495869)
+      chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
       debug: 4.4.3
-      devtools-protocol: 0.0.1495869
+      devtools-protocol: 0.0.1508733
       typed-query-selector: 2.12.0
-      webdriver-bidi-protocol: 0.2.11
+      webdriver-bidi-protocol: 0.3.6
       ws: 8.18.3
     transitivePeerDependencies:
       - bare-buffer
@@ -7690,13 +7690,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.22.3(typescript@5.9.3):
+  puppeteer@24.23.0(typescript@5.9.3):
     dependencies:
       '@puppeteer/browsers': 2.10.10
-      chromium-bidi: 9.1.0(devtools-protocol@0.0.1495869)
+      chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
       cosmiconfig: 9.0.0(typescript@5.9.3)
-      devtools-protocol: 0.0.1495869
-      puppeteer-core: 24.22.3
+      devtools-protocol: 0.0.1508733
+      puppeteer-core: 24.23.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-buffer
@@ -8249,7 +8249,7 @@ snapshots:
       pump: 3.0.3
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 4.4.4
+      bare-fs: 4.4.5
       bare-path: 3.0.0
     transitivePeerDependencies:
       - bare-buffer
@@ -8257,7 +8257,7 @@ snapshots:
 
   tar-stream@3.1.7:
     dependencies:
-      b4a: 1.7.2
+      b4a: 1.7.3
       fast-fifo: 1.3.2
       streamx: 2.23.0
     transitivePeerDependencies:
@@ -8281,7 +8281,7 @@ snapshots:
 
   text-decoder@1.2.3:
     dependencies:
-      b4a: 1.7.2
+      b4a: 1.7.3
     transitivePeerDependencies:
       - react-native-b4a
 
@@ -8605,7 +8605,7 @@ snapshots:
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
 
-  webdriver-bidi-protocol@0.2.11: {}
+  webdriver-bidi-protocol@0.3.6: {}
 
   webidl-conversions@3.0.1: {}
 
