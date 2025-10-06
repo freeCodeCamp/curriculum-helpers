@@ -19,10 +19,10 @@ importers:
         version: 3.5.33
       '@types/react':
         specifier: ^19.1.8
-        version: 19.2.0
+        version: 19.2.1
       '@types/react-dom':
         specifier: ^19.1.6
-        version: 19.2.0(@types/react@19.2.0)
+        version: 19.2.0(@types/react@19.2.1)
       '@types/sinonjs__fake-timers':
         specifier: ^8.1.5
         version: 8.1.5
@@ -1144,8 +1144,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.0':
-    resolution: {integrity: sha512-1LOH8xovvsKsCBq1wnT4ntDUdCJKmnEakhsuoUSy6ExlHCkGP2hqnatagYTgFk6oeL0VU31u7SNjunPN+GchtA==}
+  '@types/react@19.2.1':
+    resolution: {integrity: sha512-1U5NQWh/GylZQ50ZMnnPjkYHEaGhg6t5i/KI0LDDh3t4E3h3T3vzm+GLY2BRzMfIjSBwzm6tginoZl5z0O/qsA==}
 
   '@types/sinonjs__fake-timers@8.1.5':
     resolution: {integrity: sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==}
@@ -5215,11 +5215,11 @@ snapshots:
     dependencies:
       undici-types: 7.13.0
 
-  '@types/react-dom@19.2.0(@types/react@19.2.0)':
+  '@types/react-dom@19.2.0(@types/react@19.2.1)':
     dependencies:
-      '@types/react': 19.2.0
+      '@types/react': 19.2.1
 
-  '@types/react@19.2.0':
+  '@types/react@19.2.1':
     dependencies:
       csstype: 3.1.3
 
