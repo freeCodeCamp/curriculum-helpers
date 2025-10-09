@@ -125,7 +125,7 @@ importers:
         version: 8.46.0(eslint@9.37.0)(typescript@5.9.3)
       vitest:
         specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.6.1)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.1)
+        version: 3.2.4(@types/node@24.7.1)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.1)
       webpack:
         specifier: 5.102.1
         version: 5.102.1(webpack-cli@5.1.4)
@@ -152,7 +152,7 @@ importers:
     dependencies:
       '@types/node':
         specifier: ^22.15.34
-        version: 22.18.8
+        version: 22.18.9
 
 packages:
 
@@ -1133,11 +1133,11 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@22.18.8':
-    resolution: {integrity: sha512-pAZSHMiagDR7cARo/cch1f3rXy0AEXwsVsVH09FcyeJVAzCnGgmYis7P3JidtTUjyadhTeSo8TgRPswstghDaw==}
+  '@types/node@22.18.9':
+    resolution: {integrity: sha512-5yBtK0k/q8PjkMXbTfeIEP/XVYnz1R9qZJ3yUicdEW7ppdDJfe+MqXEhpqDL3mtn4Wvs1u0KLEG0RXzCgNpsSg==}
 
-  '@types/node@24.6.1':
-    resolution: {integrity: sha512-ljvjjs3DNXummeIaooB4cLBKg2U6SPI6Hjra/9rRIy7CpM0HpLtG9HptkMKAb4HYWy5S7HUvJEuWgr/y0U8SHw==}
+  '@types/node@24.7.1':
+    resolution: {integrity: sha512-CmyhGZanP88uuC5GpWU9q+fI61j2SkhO3UGMUdfYRE6Bcy0ccyzn1Rqj9YAB/ZY4kOXmNf0ocah5GtphmLMP6Q==}
 
   '@types/react-dom@19.2.1':
     resolution: {integrity: sha512-/EEvYBdT3BflCWvTMO7YkYBHVE9Ci6XdqZciZANQgKpaiDRGOLIlRo91jbTNRQjgPFWVaRxcYc0luVNFitz57A==}
@@ -3822,8 +3822,8 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici-types@7.13.0:
-    resolution: {integrity: sha512-Ov2Rr9Sx+fRgagJ5AX0qvItZG/JKKoBRAVITs1zk7IqZGTJUwgUr7qoYBpWwakpWilTZFM98rG/AFRocu10iIQ==}
+  undici-types@7.14.0:
+    resolution: {integrity: sha512-QQiYxHuyZ9gQUIrmPo3IA+hUl4KYk8uSA7cHrcKd/l3p1OTpZcM0Tbp9x7FAtXdAYhlasd60ncPpgu6ihG6TOA==}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
     resolution: {integrity: sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==}
@@ -5225,13 +5225,13 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@22.18.8':
+  '@types/node@22.18.9':
     dependencies:
       undici-types: 6.21.0
 
-  '@types/node@24.6.1':
+  '@types/node@24.7.1':
     dependencies:
-      undici-types: 7.13.0
+      undici-types: 7.14.0
 
   '@types/react-dom@19.2.1(@types/react@19.2.2)':
     dependencies:
@@ -5247,7 +5247,7 @@ snapshots:
 
   '@types/yauzl@2.10.3':
     dependencies:
-      '@types/node': 22.18.8
+      '@types/node': 24.7.1
     optional: true
 
   '@typescript-eslint/eslint-plugin@8.46.0(@typescript-eslint/parser@8.46.0(eslint@9.37.0)(typescript@5.9.3))(eslint@9.37.0)(typescript@5.9.3)':
@@ -5351,13 +5351,13 @@ snapshots:
       chai: 5.2.0
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.2.4(vite@6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1))':
+  '@vitest/mocker@3.2.4(vite@6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1))':
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.17
     optionalDependencies:
-      vite: 6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1)
+      vite: 6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -7171,7 +7171,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.18.8
+      '@types/node': 24.7.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -7578,7 +7578,7 @@ snapshots:
 
   parse5@3.0.3:
     dependencies:
-      '@types/node': 24.6.1
+      '@types/node': 24.7.1
 
   parse5@7.3.0:
     dependencies:
@@ -8463,7 +8463,7 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici-types@7.13.0: {}
+  undici-types@7.14.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 
@@ -8526,13 +8526,13 @@ snapshots:
       is-typed-array: 1.1.15
       which-typed-array: 1.1.19
 
-  vite-node@3.2.4(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1):
+  vite-node@3.2.4(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1):
     dependencies:
       cac: 6.7.14
       debug: 4.4.1
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1)
+      vite: 6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -8547,7 +8547,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite@6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1):
+  vite@6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.5
       fdir: 6.4.6(picomatch@4.0.2)
@@ -8556,7 +8556,7 @@ snapshots:
       rollup: 4.43.0
       tinyglobby: 0.2.14
     optionalDependencies:
-      '@types/node': 24.6.1
+      '@types/node': 24.7.1
       fsevents: 2.3.3
       terser: 5.39.0
       yaml: 2.8.1
@@ -8583,11 +8583,11 @@ snapshots:
       - debug
       - typescript
 
-  vitest@3.2.4(@types/node@24.6.1)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.1):
+  vitest@3.2.4(@types/node@24.7.1)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.1):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1))
+      '@vitest/mocker': 3.2.4(vite@6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4
@@ -8605,11 +8605,11 @@ snapshots:
       tinyglobby: 0.2.14
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
-      vite: 6.3.5(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1)
-      vite-node: 3.2.4(@types/node@24.6.1)(terser@5.39.0)(yaml@2.8.1)
+      vite: 6.3.5(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1)
+      vite-node: 3.2.4(@types/node@24.7.1)(terser@5.39.0)(yaml@2.8.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 24.6.1
+      '@types/node': 24.7.1
       jsdom: 20.0.3
     transitivePeerDependencies:
       - jiti
