@@ -46,7 +46,7 @@ importers:
         version: 0.11.10
       puppeteer:
         specifier: ^24.9.0
-        version: 24.23.1(typescript@5.9.3)
+        version: 24.24.0(typescript@5.9.3)
       pyodide:
         specifier: 0.23.3
         version: 0.23.3
@@ -1512,8 +1512,8 @@ packages:
       bare-abort-controller:
         optional: true
 
-  bare-fs@4.4.9:
-    resolution: {integrity: sha512-sh8UV8OvXBZa3Yg5rhF1LNH3U4DfHniexdqyUXelC1thQUxO9TCF37yvd1/7Ir+cgeSg/6YrXyH67xvRr7yaOg==}
+  bare-fs@4.4.10:
+    resolution: {integrity: sha512-arqVF+xX/rJHwrONZaSPhlzleT2gXwVs9rsAe1p1mIVwWZI2A76/raio+KwwxfWMO8oV9Wo90EaUkS2QwVmy4w==}
     engines: {bare: '>=1.16.0'}
     peerDependencies:
       bare-buffer: '*'
@@ -3221,12 +3221,12 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  puppeteer-core@24.23.1:
-    resolution: {integrity: sha512-TH7YjTj5pjwM0hicDSqIYBFgHCJqPO+zWS/iaoKrlIfKOERJBtEc0kHCTTPRy0FoGrMYqYlIUL3WJZG0h5NOPQ==}
+  puppeteer-core@24.24.0:
+    resolution: {integrity: sha512-RR5AeQ6dIbSepDe9PTtfgK1fgD7TuA9qqyGxPbFCyGfvfkbR7MiqNYdE7AhbTaFIqG3hFBtWwbVKVZF8oEqj7Q==}
     engines: {node: '>=18'}
 
-  puppeteer@24.23.1:
-    resolution: {integrity: sha512-Az5+ufV/opJqgTaCdkJvE0ZeQ8Xgc57jjwkKKfNblyX6fO5w8a7V4+YRMA7jDEtDYF6XxOzG6q/tuqgEaBNEFQ==}
+  puppeteer@24.24.0:
+    resolution: {integrity: sha512-jRn6T8rSrQZXIplXICpH2zYJ2XrIFY7Ug0+TxRTuwY8ZTL7+MKDvFH0aLG7Xx3ts4twzxIKZmiYo+qg7whNpZw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -5703,7 +5703,7 @@ snapshots:
 
   bare-events@2.8.0: {}
 
-  bare-fs@4.4.9:
+  bare-fs@4.4.10:
     dependencies:
       bare-events: 2.8.0
       bare-path: 3.0.0
@@ -7725,7 +7725,7 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.23.1:
+  puppeteer-core@24.24.0:
     dependencies:
       '@puppeteer/browsers': 2.10.11
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
@@ -7742,13 +7742,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.23.1(typescript@5.9.3):
+  puppeteer@24.24.0(typescript@5.9.3):
     dependencies:
       '@puppeteer/browsers': 2.10.11
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
       cosmiconfig: 9.0.0(typescript@5.9.3)
       devtools-protocol: 0.0.1508733
-      puppeteer-core: 24.23.1
+      puppeteer-core: 24.24.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-abort-controller
@@ -8305,7 +8305,7 @@ snapshots:
       pump: 3.0.3
       tar-stream: 3.1.7
     optionalDependencies:
-      bare-fs: 4.4.9
+      bare-fs: 4.4.10
       bare-path: 3.0.0
     transitivePeerDependencies:
       - bare-abort-controller
