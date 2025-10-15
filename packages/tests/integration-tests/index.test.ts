@@ -591,6 +591,89 @@ new Promise((resolve) => {
         },
       });
     });
+
+    it("should make fetch requests from the browsing context of the test runner", async () => {
+      const result = await page.evaluate(async (type) => {
+        // Create spy
+        const originalFetch = window.fetch;
+        let fetchCallArgs: unknown[];
+        window.fetch = ((...args: [unknown]) => {
+          fetchCallArgs = args;
+          return Promise.resolve(
+            new Response('{"message": "Hello, world!"}', {
+              status: 200,
+              statusText: "OK",
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }) as typeof fetch;
+
+        try {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+          });
+
+          await runner.runTest(
+            `const response = await fetch('https://doesnot.exist', { method: 'GET' });
+          const data = await response.json();
+          assert.deepEqual(data, { message: 'Hello, world!' });
+          assert.equal(response.status, 200);
+          assert.equal(response.statusText, 'OK');
+          assert.equal(response.url, 'https://doesnot.exist');
+          assert.equal(response.ok, true);`,
+          );
+
+          return {
+            fetchCallArgs,
+          };
+        } finally {
+          // Restore original fetch
+          window.fetch = originalFetch;
+        }
+      }, type);
+
+      expect(result.fetchCallArgs).toEqual([
+        "https://doesnot.exist",
+        { method: "GET", credentials: "omit" },
+      ]);
+    });
+
+    it("should always omit credentials in fetch requests", async () => {
+      const result = await page.evaluate(async (type) => {
+        // Create spy
+        const originalFetch = window.fetch;
+        let fetchCallArgs: unknown[];
+        try {
+          window.fetch = ((...args: [unknown]) => {
+            fetchCallArgs = args;
+            return Promise.resolve(
+              new Response('{"message": "Hello, world!"}', {
+                status: 200,
+                statusText: "OK",
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }) as typeof fetch;
+
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+          });
+
+          await runner.runTest(
+            `await fetch('https://doesnot.exist', { method: 'GET', credentials: 'include' });`,
+          );
+          return fetchCallArgs;
+        } finally {
+          // Restore original fetch
+          window.fetch = originalFetch;
+        }
+      }, type);
+
+      expect(result).toEqual([
+        "https://doesnot.exist",
+        { method: "GET", credentials: "omit" },
+      ]);
+    });
   });
 
   describe.each([
@@ -799,9 +882,7 @@ const getFive = () => 5;
 
           // Wait for a message from otherFrame
           const awaitMessage = new Promise((resolve, reject) => {
-            // eslint-disable-next-line max-nested-callbacks
             setTimeout(() => resolve("done"), 100);
-            // eslint-disable-next-line max-nested-callbacks
             window.addEventListener("message", () =>
               reject(Error("Should not have received a message")),
             );

@@ -25,6 +25,7 @@ import { MockLocalStorage } from "./mock-local-storage";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { format } from "../../shared/src/format";
 import { createAsyncIife } from "../../shared/src/async-iife";
+import { createFetchProxy } from "../../shared/src/proxy-fetch";
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
@@ -57,6 +58,7 @@ const removeTestScripts = () => {
 document.addEventListener("submit", (e) => {
   e.preventDefault();
 });
+const originalFetch = globalThis.fetch;
 
 export class DOMTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
@@ -134,6 +136,9 @@ export class DOMTestEvaluator implements TestEvaluator {
 
     this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
+      globalThis.fetch = createFetchProxy(parent);
+
       try {
         const testWithBefore = `${opts.hooks?.beforeEach ?? ""};
 ${rawTest}`;
@@ -163,6 +168,8 @@ ${rawTest}`;
           // eslint-disable-next-line no-unsafe-finally
           return this.#createErrorResponse(afterEachErr as TestError);
         }
+
+        globalThis.fetch = originalFetch;
       }
     };
 
