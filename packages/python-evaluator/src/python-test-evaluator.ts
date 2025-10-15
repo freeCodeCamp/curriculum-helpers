@@ -22,6 +22,12 @@ import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
 
+declare global {
+  var __helpers: typeof helpers;
+}
+
+globalThis.__helpers = helpers;
+
 type EvaluatedTeststring = {
   test: () => Promise<unknown>;
 };
@@ -65,14 +71,13 @@ class PythonTestEvaluator implements TestEvaluator {
     const pyodide = await this.#setupPyodide();
     eval(opts.hooks?.beforeAll ?? "");
 
-    this.#runTest = async (testString): Promise<Pass | Fail> => {
+    this.#runTest = async (rawTestString): Promise<Pass | Fail> => {
       this.#proxyConsole.on();
       const code = (opts.code?.contents ?? "").slice();
       /* eslint-disable @typescript-eslint/no-unused-vars */
       const editableContents = (opts.code?.editableContents ?? "").slice();
 
       const { assert } = chai;
-      const __helpers = helpers;
 
       // Create fresh globals for each test
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -111,7 +116,8 @@ input = __fake_input
 `);
 
       try {
-        eval(opts.hooks?.beforeEach ?? "");
+        const testString = `${opts.hooks?.beforeEach ?? ""};
+${rawTestString}`;
         // Eval test string to get the test property
 
         let evaluatedTestString;

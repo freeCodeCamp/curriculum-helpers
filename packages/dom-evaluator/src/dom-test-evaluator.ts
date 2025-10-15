@@ -31,12 +31,14 @@ const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
   var __FakeTimers: typeof FakeTimers;
   var assert: typeof chaiAssert;
+  var __helpers: typeof helpers;
 }
 
 // @ts-expect-error jQuery cannot be declared.
 globalThis.$ = jQuery;
 globalThis.__FakeTimers = FakeTimers;
 globalThis.assert = chaiAssert;
+globalThis.__helpers = helpers;
 
 // Local storage is not accessible in a sandboxed iframe, so we need to mock it
 Object.defineProperty(globalThis, "localStorage", {
@@ -116,8 +118,6 @@ export class DOMTestEvaluator implements TestEvaluator {
       return o;
     };
 
-    const __helpers = helpers;
-
     let Enzyme;
     if (opts.loadEnzyme) {
       let Adapter16;
@@ -135,10 +135,11 @@ export class DOMTestEvaluator implements TestEvaluator {
     this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
       try {
-        const test = createAsyncIife(rawTest);
+        const testWithBefore = `${opts.hooks?.beforeEach ?? ""};
+${rawTest}`;
+        const test = createAsyncIife(testWithBefore);
 
-        await eval(`${opts.hooks?.beforeEach ?? ""}
-${test}`);
+        await eval(test);
 
         return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
