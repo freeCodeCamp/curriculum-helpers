@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import "vitest-environment-puppeteer";
 import { compileForTests } from "../../shared/tooling/webpack-compile";
 import type { FCCTestRunner } from "../../main/src/index";
@@ -310,6 +311,21 @@ for(let i = 0; i < 3; i++) {
           expected: 3,
         },
       });
+    });
+
+    it("should handle beforeEach expressions without trailing semicolons", async () => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type,
+          hooks: {
+            beforeEach: "let x = 1;Array()",
+          },
+        });
+        const one = await runner.runTest("(assert.equal(x, 1))");
+        return one;
+      }, type);
+
+      expect(result).toEqual({ pass: true });
     });
 
     it("should evaluate the beforeEach hook before each test", async () => {
@@ -1146,6 +1162,27 @@ checkBtn.click();
 
       expect(result).toEqual({ pass: true });
     });
+
+    it("should make __helpers available in before hooks", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "dom",
+          hooks: {
+            beforeEach:
+              "const before = __helpers.removeJSComments('before // this')",
+            beforeAll:
+              "const beforeall = __helpers.removeJSComments('before all // this')",
+          },
+        });
+
+        return runner.runAllTests([
+          "assert.equal(before, 'before ')",
+          "assert.equal(beforeall, 'before all ')",
+        ]);
+      });
+
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
   });
 
   describe("Javascript evaluator", () => {
@@ -1220,6 +1257,49 @@ checkBtn.click();
           ),
         },
       });
+    });
+
+    it("should make __helpers available in before hooks", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "javascript",
+          hooks: {
+            beforeEach:
+              "const before = __helpers.removeJSComments('before // this')",
+            beforeAll:
+              "globalThis.beforeall = __helpers.removeJSComments('before all // this')",
+          },
+        });
+
+        return runner.runAllTests([
+          "assert.equal(before, 'before ')",
+          "assert.equal(globalThis.beforeall, 'before all ')",
+        ]);
+      });
+
+      expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
+
+    // Weird edge case, but if the user code starts with an opening bracket and
+    // the beforeEach hook does not end with a semicolon, the combination of the
+    // two could be interpreted as a function call. In this case
+    // Array()( { key: 'value' }) )
+    // and that's a TypeError.
+    it("should handle user code with leading brackets", async () => {
+      const source = `({ key: 'value' })`;
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          source,
+          code: { contents: source },
+          type: "javascript",
+          hooks: {
+            beforeEach: "Array()",
+          },
+        });
+        return runner.runTest("(assert.equal(code, '({ key: \\'value\\' })'))");
+      }, source);
+
+      expect(result).toEqual({ pass: true });
     });
   });
 
@@ -1529,6 +1609,28 @@ pattern = re.compile('l+')`;
       );
 
       expect(result).toEqual({ pass: true });
+    });
+
+    it("should make __helpers available in before hooks", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          hooks: {
+            beforeEach:
+              "const before = __helpers.removeJSComments('before // this'); await ''",
+            beforeAll:
+              "globalThis.beforeall = __helpers.removeJSComments('before all // this')",
+          },
+        });
+
+        return runner.runAllTests([
+          "assert.equal(before, 'before ')",
+          "({test: () => { assert.equal(before, 'before ')}})",
+          "assert.equal(globalThis.beforeall, 'before all ')",
+        ]);
+      });
+
+      expect(result).toEqual([{ pass: true }, { pass: true }, { pass: true }]);
     });
   });
 });
