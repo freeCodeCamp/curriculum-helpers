@@ -114,13 +114,7 @@ class Node:
     def has_returns(self, returns_str):
         if not isinstance(self.tree, (ast.FunctionDef, ast.AsyncFunctionDef)):
             return False
-        if isinstance(self.tree.returns, ast.Name):
-            return returns_str == self.tree.returns.id
-        elif isinstance(self.tree.returns, ast.Constant):
-            return returns_str == self.tree.returns.value
-        elif isinstance((ann := self.tree.returns), ast.Subscript):
-            return Node(ann).is_equivalent(returns_str)
-        return False
+        return Node(self.tree.returns).is_equivalent(returns_str)
 
     def find_body(self):
         if not isinstance(self.tree, ast.AST):
