@@ -316,12 +316,20 @@ def foo() -> int:
 
 def spam() -> Dict[str, int]:
   pass
+  
+def eggs() -> None:
+    pass
+    
+def ham():
+    pass
 """
         node = Node(code_str)
 
         self.assertTrue(node.find_function("foo").has_returns("int"))
         self.assertFalse(node.find_function("foo").has_returns("str"))
         self.assertTrue(node.find_function("spam").has_returns("Dict[str, int]"))
+        self.assertTrue(node.find_function("eggs").has_returns("None"))
+        self.assertFalse(node.find_function("ham").has_returns("float"))
 
     def test_has_returns_without_returns(self):
         code_str = """
@@ -517,12 +525,16 @@ class A:
 
 class B(A, C):
    pass
+   
+class C(abc.ABC):
+   pass
 """
         node = Node(code_str)
 
         self.assertFalse(node.find_class("A").inherits_from("B"))
         self.assertTrue(node.find_class("B").inherits_from("C", "A"))
         self.assertTrue(node.find_class("B").inherits_from("A"))
+        self.assertTrue(node.find_class("C").inherits_from("abc.ABC"))
 
     def test_find_method_args(self):
         code_str = """
