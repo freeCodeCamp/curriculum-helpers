@@ -96,8 +96,8 @@ class Node:
         dec_str = "\n".join(dec_list) + "\n" if dec_list else ""
         if id := getattr(self.tree.returns, "id", False):
             returns = f" -> {id}"
-        elif val := getattr(self.tree.returns, "value", False):
-            returns = f" -> '{val}'"
+        elif hasattr(self.tree.returns, "value"):
+            returns = f" -> {self.tree.returns.value}"
         else:
             returns = ""
         async_kw = ""
