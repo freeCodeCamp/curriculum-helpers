@@ -525,12 +525,16 @@ class A:
 
 class B(A, C):
    pass
+   
+class C(abc.ABC):
+   pass
 """
         node = Node(code_str)
 
         self.assertFalse(node.find_class("A").inherits_from("B"))
         self.assertTrue(node.find_class("B").inherits_from("C", "A"))
         self.assertTrue(node.find_class("B").inherits_from("A"))
+        self.assertTrue(node.find_class("C").inherits_from("abc.ABC"))
 
     def test_find_method_args(self):
         code_str = """

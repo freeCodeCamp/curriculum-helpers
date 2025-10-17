@@ -383,7 +383,10 @@ class Node:
             return False
         if not self.tree.bases:
             return False
-        id_list = [node.id for node in self.tree.bases]
+        id_list = [
+            node.id if isinstance(node, ast.Name) else f"{node.value.id}.{node.attr}"
+            for node in self.tree.bases
+        ]
         return all(arg in id_list for arg in args)
 
     # Find an array of if statements
