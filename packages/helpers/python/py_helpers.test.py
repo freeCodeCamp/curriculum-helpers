@@ -303,11 +303,15 @@ def foo():
         code_str = """
 def foo(a: int, b: int) -> int:
    pass
+
+def spam(a: str, b: bool) -> None:
+   pass
 """
         node = Node(code_str)
 
         self.assertTrue(node.find_function("foo").has_args("a: int, b: int"))
         self.assertFalse(node.find_function("foo").has_args("a, b"))
+        self.assertTrue(node.find_function("spam").has_args("a: str, b: bool"))
 
     def test_has_returns(self):
         code_str = """
