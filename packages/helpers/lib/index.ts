@@ -669,3 +669,30 @@ export function getFunctionParams(code: string) {
   // Return an empty array if no function parameters are found
   return [];
 }
+
+/**
+ * Retries a test function with a specified delay between attempts
+ * Useful for testing DOM elements that may not be immediately available
+ * @param test - Function that returns a truthy value when the condition is met
+ * @param message - Error message to throw if all retry attempts fail
+ * @param tries - Number of retry attempts (defaults to 20)
+ * @returns Promise that resolves when test passes or rejects with message
+ * @example
+ * await retryingTest(() => document.querySelector('img'), "'img' element not found");
+ */
+export function retryingTest(
+  test: () => unknown,
+  message: string,
+  tries = 20,
+): Promise<void> {
+  if (tries < 1) return Promise.reject(new Error(message));
+  if (test()) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      retryingTest(test, message, tries - 1)
+        .then(resolve)
+        .catch(reject);
+    }, 1);
+  });
+}
