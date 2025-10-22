@@ -54,8 +54,6 @@ describe("js-help", () => {
 
     afterEach(() => {
       vi.useRealTimers();
-      // Flush any remaining timers to prevent unhandled rejections
-      vi.clearAllTimers();
     });
 
     it("should resolve immediately when test passes on first try", async () => {
@@ -157,15 +155,16 @@ describe("js-help", () => {
       const testFn = vi
         .fn()
         .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
         .mockReturnValueOnce(true);
 
       const promise = retryingTest(testFn, "Test failed");
 
-      // Check that it hasn't resolved yet after 0ms
+      // Step through timers manually to verify 1ms delay
       expect(testFn).toHaveBeenCalledTimes(1);
-
-      // Run all timers to complete the retry sequence
-      vi.runAllTimers();
+      vi.advanceTimersByTime(1);
+      expect(testFn).toHaveBeenCalledTimes(2);
+      vi.advanceTimersByTime(1);
 
       await expect(promise).resolves.toBeUndefined();
       expect(testFn).toHaveBeenCalledTimes(2);
