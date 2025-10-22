@@ -167,7 +167,7 @@ describe("js-help", () => {
       vi.advanceTimersByTime(1);
 
       await expect(promise).resolves.toBeUndefined();
-      expect(testFn).toHaveBeenCalledTimes(2);
+      expect(testFn).toHaveBeenCalledTimes(3);
     });
   });
 });
