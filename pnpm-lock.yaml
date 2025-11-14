@@ -19,10 +19,10 @@ importers:
         version: 3.5.33
       '@types/react':
         specifier: ^19.1.8
-        version: 19.2.4
+        version: 19.2.5
       '@types/react-dom':
         specifier: ^19.1.6
-        version: 19.2.3(@types/react@19.2.4)
+        version: 19.2.3(@types/react@19.2.5)
       '@types/sinonjs__fake-timers':
         specifier: ^8.1.5
         version: 8.1.5
@@ -1156,8 +1156,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.4':
-    resolution: {integrity: sha512-tBFxBp9Nfyy5rsmefN+WXc1JeW/j2BpBHFdLZbEVfs9wn3E3NRFxwV0pJg8M1qQAexFpvz73hJXFofV0ZAu92A==}
+  '@types/react@19.2.5':
+    resolution: {integrity: sha512-keKxkZMqnDicuvFoJbzrhbtdLSPhj/rZThDlKWCDbgXmUg0rEUFtRssDXKYmtXluZlIqiC5VqkCgRwzuyLHKHw==}
 
   '@types/sinonjs__fake-timers@8.1.5':
     resolution: {integrity: sha512-mQkU2jY8jJEF7YHjHvsQO8+3ughTL1mcnn96igfhONmR+fUPSKIkefQYpSe8bsly2Ep7oQbn/6VG5/9/0qcArQ==}
@@ -1830,8 +1830,8 @@ packages:
     resolution: {integrity: sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==}
     engines: {node: '>=8'}
 
-  csstype@3.1.3:
-    resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
+  csstype@3.2.0:
+    resolution: {integrity: sha512-si++xzRAY9iPp60roQiFta7OFbhrgvcthrhlNAGeQptSY25uJjkfUV8OArC3KLocB8JT8ohz+qgxWCmz8RhjIg==}
 
   cwd@0.10.0:
     resolution: {integrity: sha512-YGZxdTTL9lmLkCUTpg4j0zQ7IhRB5ZmqNBbGCl3Tg6MP/d5/6sY7L5mmTjzbc6JKgVZYiqTQTNhPFsbXNGlRaA==}
@@ -5261,13 +5261,13 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.4)':
+  '@types/react-dom@19.2.3(@types/react@19.2.5)':
     dependencies:
-      '@types/react': 19.2.4
+      '@types/react': 19.2.5
 
-  '@types/react@19.2.4':
+  '@types/react@19.2.5':
     dependencies:
-      csstype: 3.1.3
+      csstype: 3.2.0
 
   '@types/sinonjs__fake-timers@8.1.5': {}
 
@@ -6141,7 +6141,7 @@ snapshots:
       cssom: 0.3.8
     optional: true
 
-  csstype@3.1.3: {}
+  csstype@3.2.0: {}
 
   cwd@0.10.0:
     dependencies:
