@@ -21,6 +21,7 @@ import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
+import { createFetchProxy } from "../../shared/src/proxy-fetch";
 
 declare global {
   var __helpers: typeof helpers;
@@ -32,6 +33,7 @@ type EvaluatedTeststring = {
   test: () => Promise<unknown>;
 };
 
+const originalFetch = globalThis.fetch;
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -115,6 +117,9 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
+      globalThis.fetch = createFetchProxy(globalThis);
+
       try {
         const testString = `${opts.hooks?.beforeEach ?? ""};
 ${rawTestString}`;
@@ -195,6 +200,7 @@ ${rawTestString}`;
         }
 
         __userGlobals.destroy();
+        globalThis.fetch = originalFetch;
       }
     };
   }

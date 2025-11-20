@@ -17,6 +17,9 @@ import { postCloneableMessage } from "../../shared/src/messages";
 import { format } from "../../shared/src/format";
 import { createAsyncIife } from "../../shared/src/async-iife";
 import { ProxyConsole } from "../../shared/src/proxy-console";
+import { createFetchProxy } from "../../shared/src/proxy-fetch";
+
+const originalFetch = globalThis.fetch;
 
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 declare global {
@@ -59,6 +62,9 @@ export class JavascriptTestEvaluator implements TestEvaluator {
 
     this.#runTest = async (rawTest) => {
       this.#proxyConsole.on();
+
+      // @ts-expect-error The proxy doesn't fully implement the fetch API
+      globalThis.fetch = createFetchProxy(globalThis);
       const test = createAsyncIife(rawTest);
       // This can be reassigned by the eval inside the try block, so it should be declared as a let
       // eslint-disable-next-line prefer-const
@@ -104,6 +110,8 @@ ${test};`);
           // eslint-disable-next-line no-unsafe-finally
           return this.#createErrorResponse(afterEachErr as TestError);
         }
+
+        globalThis.fetch = originalFetch;
       }
     };
   }
