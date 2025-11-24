@@ -671,23 +671,23 @@ describe("functionRegex", () => {
     expect(code.match(funcRE)![0]).toBe("const naomi = (love) => ");
   });
 
-  it("matches function expression", () => {
+  it("matches named anonymous function", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1"]);
     expect(regEx.test("myFunc = function(arg1){}")).toBe(true);
   });
-  it("matches function expressions without parameters", () => {
+  it("matches named anonymous function without parameters", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName);
     expect(regEx.test("myFunc = function(){ }")).toBe(true);
   });
-  it("does not match function expression with different name", () => {
+  it("does not match named anonymous function with different name", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName);
     expect(regEx.test("notMyFunc = function(arg1){ }")).toBe(false);
   });
 
-  it("matches function expression with arguments and a body", () => {
+  it("matches named anonymous function with arguments and a body", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(
@@ -695,19 +695,19 @@ describe("functionRegex", () => {
     ).toBe(true);
   });
 
-  it("does not match function expression with different arguments", () => {
+  it("does not match named anonymous function with different arguments", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
     expect(regEx.test("myFunc = function(arg1, arg3){}")).toBe(false);
   });
-  it("matches const function expression declarations if they are present", () => {
+  it("matches const named anonymous function declarations if they are present", () => {
     const regEx = functionRegex("myFunc", ["arg1", "arg2"]);
     const func = "const myFunc = function(arg1, arg2) {}";
     const match = func.match(regEx);
     expect(match).not.toBeNull();
     expect(match![0]).toBe(func);
   });
-  it("can capture function expression", () => {
+  it("can capture named anonymous function", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"], { capture: true });
     const func = "myFunc = function(arg1, arg2){return arg1 + arg2}";

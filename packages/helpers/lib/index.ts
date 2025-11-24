@@ -265,13 +265,16 @@ export function functionRegex(
     ? `${arrowFuncREHead}${arrowFuncREBody}`
     : `${arrowFuncREHead}`;
 
-  const expressionFuncREHead = `${arrowFunctionName}function\\s*\\(\\s*${params}\\s*\\)\\s*\\{`;
-  const expressionFuncRegEx = includeBody
-    ? `${expressionFuncREHead}${funcREBody}`
-    : `${expressionFuncREHead}`;
+  const anonymousFunctionName = funcName
+    ? `(let|const|var)?\\s?${escapeRegExp(funcName)}\\s*=\\s*function\\s*`
+    : "";
+  const anonymousFuncREHead = `${anonymousFunctionName}\\(\\s*${params}\\s*\\)\\s*\\{`;
+  const anonymousFuncRegEx = includeBody
+    ? `${anonymousFuncREHead}${funcREBody}`
+    : `${anonymousFuncREHead}`;
 
   return new RegExp(
-    `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${expressionFuncRegEx})`,
+    `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${anonymousFuncRegEx})`,
   );
 }
 
