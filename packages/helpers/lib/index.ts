@@ -264,7 +264,13 @@ export function functionRegex(
   const arrowFuncRegEx = includeBody
     ? `${arrowFuncREHead}${arrowFuncREBody}`
     : `${arrowFuncREHead}`;
-  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
+
+  const expressionFuncREHead = `${arrowFunctionName}function\\s*\\(\\s*${params}\\s*\\)\\s*\\{`;
+  const expressionFuncRegEx = includeBody
+    ? `${expressionFuncREHead}${funcREBody}`
+    : `${expressionFuncREHead}`;
+
+  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${expressionFuncRegEx})`);
 }
 
 function _permutations(permutation: (string | RegExp)[]) {
