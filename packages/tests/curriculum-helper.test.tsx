@@ -690,9 +690,9 @@ describe("functionRegex", () => {
   it("matches function expression with arguments and a body", () => {
     const funcName = "myFunc";
     const regEx = functionRegex(funcName, ["arg1", "arg2"]);
-    expect(regEx.test("myFunc = function(arg1, arg2){\n console.log()\n}")).toBe(
-      true,
-    );
+    expect(
+      regEx.test("myFunc = function(arg1, arg2){\n console.log()\n}"),
+    ).toBe(true);
   });
 
   it("does not match function expression with different arguments", () => {

@@ -270,7 +270,9 @@ export function functionRegex(
     ? `${expressionFuncREHead}${funcREBody}`
     : `${expressionFuncREHead}`;
 
-  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${expressionFuncRegEx})`);
+  return new RegExp(
+    `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${expressionFuncRegEx})`,
+  );
 }
 
 function _permutations(permutation: (string | RegExp)[]) {
