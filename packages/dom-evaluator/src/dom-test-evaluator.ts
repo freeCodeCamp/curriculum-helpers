@@ -58,7 +58,9 @@ const removeTestScripts = () => {
 document.addEventListener("submit", (e) => {
   e.preventDefault();
 });
-const originalFetch = globalThis.fetch;
+
+// @ts-expect-error The proxy doesn't fully implement the fetch API
+globalThis.fetch = createFetchProxy(parent);
 
 export class DOMTestEvaluator implements TestEvaluator {
   #runTest?: TestEvaluator["runTest"];
@@ -136,8 +138,6 @@ export class DOMTestEvaluator implements TestEvaluator {
 
     this.#runTest = async function (rawTest: string): Promise<Fail | Pass> {
       this.#proxyConsole.on();
-      // @ts-expect-error The proxy doesn't fully implement the fetch API
-      globalThis.fetch = createFetchProxy(parent);
 
       try {
         const testWithBefore = `${opts.hooks?.beforeEach ?? ""};
@@ -168,8 +168,6 @@ ${rawTest}`;
           // eslint-disable-next-line no-unsafe-finally
           return this.#createErrorResponse(afterEachErr as TestError);
         }
-
-        globalThis.fetch = originalFetch;
       }
     };
 
