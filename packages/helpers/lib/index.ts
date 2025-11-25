@@ -264,7 +264,18 @@ export function functionRegex(
   const arrowFuncRegEx = includeBody
     ? `${arrowFuncREHead}${arrowFuncREBody}`
     : `${arrowFuncREHead}`;
-  return new RegExp(`(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx})`);
+
+  const anonymousFunctionName = funcName
+    ? `(let|const|var)?\\s?${escapeRegExp(funcName)}\\s*=\\s*function\\s*`
+    : "";
+  const anonymousFuncREHead = `${anonymousFunctionName}\\(\\s*${params}\\s*\\)\\s*\\{`;
+  const anonymousFuncRegEx = includeBody
+    ? `${anonymousFuncREHead}${funcREBody}`
+    : `${anonymousFuncREHead}`;
+
+  return new RegExp(
+    `(${capture ? "" : "?:"}${funcRegEx}|${arrowFuncRegEx}|${anonymousFuncRegEx})`,
+  );
 }
 
 function _permutations(permutation: (string | RegExp)[]) {
