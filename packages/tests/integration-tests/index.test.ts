@@ -849,6 +849,35 @@ const getFive = () => 5;
       });
     });
 
+    it("should use a different approach to hide the iframe when using allowAnimations", async () => {
+      await page.evaluate(async () => {
+        await window.FCCTestRunner.createTestRunner({
+          type: "dom",
+          allowAnimations: true,
+        });
+      });
+
+      const iframe = await page.$("iframe");
+      const style = await iframe?.evaluate((iframe) => {
+        const style = window.getComputedStyle(iframe);
+        return {
+          width: style.width,
+          height: style.height,
+          opacity: style.opacity,
+          pointerEvents: style.pointerEvents,
+          visbility: style.visibility,
+        };
+      });
+
+      expect(style).toEqual({
+        width: "0px",
+        height: "0px",
+        opacity: "0",
+        pointerEvents: "none",
+        visbility: "visible", // This confirms that the default style has been reverted
+      });
+    });
+
     it("should layout the iframe correctly", async () => {
       const source = `<body>
 				indented text
@@ -1263,6 +1292,42 @@ checkBtn.click();
       });
 
       expect(result).toEqual([{ pass: true }, { pass: true }]);
+    });
+
+    it("should be possible to test CSS transitions", async () => {
+      const source = `<style>
+      #box {
+        width: 100px;
+        transition: width 0.1s;
+      }
+      #box.expanded {
+        width: 200px;
+      }
+    </style>
+    <div id="box"></div>`;
+
+      const result = await page.evaluate(async (source) => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          source,
+          type: "dom",
+          allowAnimations: true,
+        });
+
+        return runner.runTest(`
+        const box = document.getElementById('box');
+        box.classList.add('expanded');
+
+        // Wait for the transition to complete
+        await new Promise((resolve) => {
+          box.addEventListener('transitionend', resolve, { once: true });
+        });
+
+        const computedStyle = window.getComputedStyle(box);
+        assert.equal(computedStyle.width, '200px');
+      `);
+      }, source);
+
+      expect(result).toEqual({ pass: true });
     });
   });
 
