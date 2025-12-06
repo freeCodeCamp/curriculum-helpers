@@ -1,0 +1,1 @@
+﻿export default { name: "helpers-unit", test: { include: ["test/**/*.test.ts"], environment: "node", globals: false, threads: false } };

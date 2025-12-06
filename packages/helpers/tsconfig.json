@@ -4,6 +4,7 @@
     "rootDir": "./",
     "declarationDir": "../../dist/types/helpers",
     "outDir": "./build",
-    "tsBuildInfoFile": ".tsbuildinfo"
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "types": ["node", "vitest/globals"]
   }
 }

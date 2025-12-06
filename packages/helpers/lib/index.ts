@@ -707,3 +707,99 @@ export function retryingTest(
     }, 1);
   });
 }
+
+/**
+ * Checks whether any of the provided selectors exactly appears in the CSS text.
+ * This avoids partial/substring matches by parsing selector groups before
+ * the opening `{` of each rule and splitting on commas while respecting
+ * parentheses/brackets/quotes.
+ */
+export function getStyleAny(css: string, selectors: string[]): boolean {
+  if (!css || !selectors || !selectors.length) return false;
+
+  const cleaned = removeCssComments(css);
+  const foundSelectors: string[] = [];
+
+  const ruleHeadRe = /([^\{]+)\{/g;
+  let match: RegExpExecArray | null;
+
+  const splitSelectorGroup = (group: string) => {
+    const parts: string[] = [];
+    let cur = "";
+    let paren = 0;
+    let bracket = 0;
+    let inQuote: string | null = null;
+    let esc = false;
+
+    for (let i = 0; i < group.length; i++) {
+      const ch = group[i];
+      if (esc) {
+        cur += ch;
+        esc = false;
+        continue;
+      }
+      if (ch === "\\") {
+        esc = true;
+        cur += ch;
+        continue;
+      }
+      if (inQuote) {
+        cur += ch;
+        if (ch === inQuote) inQuote = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") {
+        inQuote = ch;
+        cur += ch;
+        continue;
+      }
+      if (ch === "(") {
+        paren++;
+        cur += ch;
+        continue;
+      }
+      if (ch === ")") {
+        paren = Math.max(0, paren - 1);
+        cur += ch;
+        continue;
+      }
+      if (ch === "[") {
+        bracket++;
+        cur += ch;
+        continue;
+      }
+      if (ch === "]") {
+        bracket = Math.max(0, bracket - 1);
+        cur += ch;
+        continue;
+      }
+      if (ch === "," && paren === 0 && bracket === 0) {
+        parts.push(cur.trim());
+        cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+
+    if (cur.trim()) parts.push(cur.trim());
+    return parts;
+  };
+
+  while ((match = ruleHeadRe.exec(cleaned)) !== null) {
+    const group = match[1].trim();
+    if (!group) continue;
+    const parts = splitSelectorGroup(group);
+    for (const p of parts) {
+      // Normalize internal whitespace to a single space for comparison
+      foundSelectors.push(p.replace(/\s+/g, " ").trim());
+    }
+  }
+
+  const normalizedFound = new Set(foundSelectors);
+  for (const sel of selectors) {
+    const norm = sel.replace(/\s+/g, " ").trim();
+    if (normalizedFound.has(norm)) return true;
+  }
+
+  return false;
+}
