@@ -91,6 +91,24 @@ const hideFrame = (iframe: HTMLIFrameElement) => {
   iframe.style.visibility = "hidden";
 };
 
+const hideAllowingAnimations = (iframe: HTMLIFrameElement) => {
+  iframe.style.width = "0px";
+  iframe.style.height = "0px";
+  iframe.style.opacity = "0";
+  iframe.style.pointerEvents = "none";
+};
+
+const resetCSS = (iframe: HTMLIFrameElement) => {
+  iframe.style.position = "";
+  iframe.style.left = "";
+  iframe.style.top = "";
+  iframe.style.visibility = "";
+  iframe.style.width = "";
+  iframe.style.height = "";
+  iframe.style.opacity = "";
+  iframe.style.pointerEvents = "";
+};
+
 export class DOMTestRunner implements Runner {
   #testEvaluator: HTMLIFrameElement;
   #script: string;
@@ -101,7 +119,6 @@ export class DOMTestRunner implements Runner {
     iframe.sandbox.add("allow-scripts", "allow-forms");
     iframe.allow = "autoplay";
     iframe.id = "test-frame";
-    hideFrame(iframe);
 
     const scriptUrl = getFullAssetPath(assetPath) + script;
     const scriptHTML = `<script id='${TEST_EVALUATOR_SCRIPT_ID}' src='${scriptUrl}'></script>`;
@@ -164,6 +181,17 @@ ${hooks.beforeAll}
 ${this.#script}
 ${hooksScript}
 ${opts.source}`;
+
+    resetCSS(this.#testEvaluator);
+    // Whether or not animations will run depends on the browser. By default, at
+    // time of writing, Firefox allows animations in offscreen iframes, while
+    // Chrome does not. If this option is set, we try and allow animations by
+    // making the frame tiny but visible.
+    if (opts.allowAnimations) {
+      hideAllowingAnimations(this.#testEvaluator);
+    } else {
+      hideFrame(this.#testEvaluator);
+    }
 
     document.body.appendChild(this.#testEvaluator);
     await isReady;

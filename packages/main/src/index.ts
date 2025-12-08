@@ -20,6 +20,7 @@ interface EvaluatorConfig {
     afterEach?: string;
     afterAll?: string;
   };
+  allowAnimations?: boolean;
   loadEnzyme?: boolean;
 }
 
@@ -53,7 +54,15 @@ export class FCCTestRunner {
   }
 
   async createTestRunner(
-    { source, type, code, assetPath, hooks, loadEnzyme }: EvaluatorConfig,
+    {
+      source,
+      type,
+      code,
+      assetPath,
+      hooks,
+      loadEnzyme,
+      allowAnimations,
+    }: EvaluatorConfig,
     { timeout }: RunnerConfig = { timeout: 20000 },
   ) {
     let testRunner: DOMTestRunner | WorkerTestRunner | null = null;
@@ -82,7 +91,10 @@ export class FCCTestRunner {
         break;
     }
 
-    await testRunner.init({ code, source, loadEnzyme, hooks }, timeout);
+    await testRunner.init(
+      { code, source, loadEnzyme, hooks, allowAnimations },
+      timeout,
+    );
 
     return testRunner;
   }

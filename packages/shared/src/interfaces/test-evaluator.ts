@@ -41,6 +41,7 @@ export interface InitTestFrameOptions {
     afterEach?: string;
     afterAll?: string;
   };
+  allowAnimations?: boolean;
 }
 
 export interface InitWorkerOptions {
