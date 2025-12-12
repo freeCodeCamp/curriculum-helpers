@@ -592,6 +592,76 @@ new Promise((resolve) => {
       });
     });
 
+    it("should be possible to mock fetch in tests", async () => {
+      const beforeAll = `
+globalThis.originalFetch = globalThis.fetch;
+globalThis.fetch = () => Promise.resolve( { json: () => Promise.resolve({ message: 'Mocked fetch!' }) } );
+    `;
+
+      const afterAll = `
+globalThis.fetch = originalFetch;
+    `;
+
+      const result = await page.evaluate(
+        async (type, beforeAll, afterAll) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+            hooks: {
+              beforeAll,
+              afterAll,
+            },
+          });
+          return runner.runAllTests([
+            `
+const response = await fetch('https://any.url');
+const data = await response.json();
+assert.deepEqual(data, { message: 'Mocked fetch!' });
+`,
+          ]);
+        },
+        type,
+        beforeAll,
+        afterAll,
+      );
+
+      expect(result).toEqual([{ pass: true }]);
+    });
+
+    it("should be possible to mock fetch in the beforeEach hook", async () => {
+      const beforeEach = `
+globalThis.originalFetch = globalThis.fetch;
+globalThis.fetch = () => Promise.resolve( { json: () => Promise.resolve({ message: 'Mocked fetch in beforeEach!' }) } );
+    `;
+
+      const afterEach = `
+globalThis.fetch = originalFetch;
+    `;
+
+      const result = await page.evaluate(
+        async (type, beforeEach, afterEach) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+            hooks: {
+              beforeEach,
+              afterEach,
+            },
+          });
+          return runner.runAllTests([
+            `
+const response = await fetch('https://any.url');
+const data = await response.json();
+assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
+`,
+          ]);
+        },
+        type,
+        beforeEach,
+        afterEach,
+      );
+
+      expect(result).toEqual([{ pass: true }]);
+    });
+
     it("should make fetch requests from the browsing context of the test runner", async () => {
       const result = await page.evaluate(async (type) => {
         // Create spy

@@ -33,7 +33,6 @@ type EvaluatedTeststring = {
   test: () => Promise<unknown>;
 };
 
-const originalFetch = globalThis.fetch;
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
@@ -71,6 +70,8 @@ class PythonTestEvaluator implements TestEvaluator {
 
   async init(opts: InitWorkerOptions) {
     const pyodide = await this.#setupPyodide();
+    // @ts-expect-error The proxy doesn't fully implement the fetch API
+    globalThis.fetch = createFetchProxy(globalThis);
     eval(opts.hooks?.beforeAll ?? "");
 
     this.#runTest = async (rawTestString): Promise<Pass | Fail> => {
@@ -116,9 +117,6 @@ def __fake_input(arg=None):
 
 input = __fake_input
 `);
-
-      // @ts-expect-error The proxy doesn't fully implement the fetch API
-      globalThis.fetch = createFetchProxy(globalThis);
 
       try {
         const testString = `${opts.hooks?.beforeEach ?? ""};
@@ -200,7 +198,6 @@ ${rawTestString}`;
         }
 
         __userGlobals.destroy();
-        globalThis.fetch = originalFetch;
       }
     };
   }
