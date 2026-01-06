@@ -378,8 +378,8 @@ export async function prepTestComponent(
   const createdElement = globalThis.React?.createElement(component, props);
 
   // @ts-expect-error or here
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/require-await
-  await globalThis.React?.act(async () => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  await globalThis.React?.act(() => {
     // @ts-expect-error or here
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     globalThis.ReactDOM?.createRoot(testDiv).render(createdElement);
@@ -485,50 +485,51 @@ export class CSSHelp {
       .map((x) => x.style);
   }
 
-  getStyle(selector: string): ExtendedStyleDeclaration | null {
-    const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector,
-    )?.style as ExtendedStyleDeclaration | undefined;
-    if (!style) return null;
-    style.getPropVal = (prop: string, strip = false) =>
-      strip
-        ? style.getPropertyValue(prop).replace(/\s+/g, "")
-        : style.getPropertyValue(prop);
+ getStyle(selector: string): ExtendedStyleDeclaration | null {
+  const style = this._getStyleRules().find(
+    (ele) => ele?.selectorText === selector
+  )?.style as ExtendedStyleDeclaration | undefined;
 
-    return style;
-  }
+  if (!style) return null;
 
-  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
-  getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
-    for (const selector of selectors) {
+  style.getPropVal = (prop: string, strip = false) =>
+    strip
+      ? style.getPropertyValue(prop).replace(/\s+/g, "")
+      : style.getPropertyValue(prop);
+  return style;
+}
+// A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
+
+getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
+  for (const selector of selectors) {
+    // Skip wildcard unless explicitly requested
+    if (selector === "*") {
       const style = this.getStyle(selector);
-
-      if (style) {
-        return style;
-      }
+      if (style) return style;
+      continue;
     }
-
-    return null;
+    // Exact match only
+    const style = this.getStyle(selector);
+    if (style) return style;
   }
-
-  getStyleRule(selector: string): ExtendedStyleRule | null {
-    const styleRule = this._getStyleRules()?.find(
-      (ele) => ele?.selectorText === selector,
-    );
-    if (styleRule) {
-      return {
-        ...styleRule,
-        isDeclaredAfter: (selector: string) =>
-          getIsDeclaredAfter(styleRule)(selector),
-      };
-    }
-
-    return null;
-  }
+  return null;
+}
+getStyleRule(selector: string): ExtendedStyleRule | null {
+  const styleRule = this._getStyleRules()?.find(
+    (ele) => ele?.selectorText === selector
+  );
+  if (!styleRule) return null;
+  return {
+    ...styleRule,
+    isDeclaredAfter: (targetSelector: string) =>
+      getIsDeclaredAfter(styleRule)(targetSelector),
+  };
+}
 
   getCSSRules(element?: string): CSSRule[] {
     const styleSheet = this.getStyleSheet();
     const cssRules = this.styleSheetToCssRulesArray(styleSheet);
+
     switch (element) {
       case "media":
         return cssRules.filter((ele) => ele.type === CSSRule.MEDIA_RULE);
