@@ -1,6 +1,21 @@
 // @vitest-environment jsdom
-import { cssString } from "./__fixtures__/curriculum-helper-css";
+import {
+  cssString,
+  cssWithoutWildcard,
+} from "./__fixtures__/curriculum-helper-css";
 import { CSSHelp } from "./../helpers/lib/index";
+
+describe("getStyle with no wildcard in css", () => {
+  it("should return null when wildcard selector is not present in css", () => {
+    const style = document.createElement("style");
+    style.textContent = String(cssWithoutWildcard);
+    document.head.appendChild(style);
+
+    const helper = new CSSHelp(document);
+
+    expect(helper.getStyle("*")).toBeNull();
+  });
+});
 
 describe("css-help", () => {
   const doc = document;

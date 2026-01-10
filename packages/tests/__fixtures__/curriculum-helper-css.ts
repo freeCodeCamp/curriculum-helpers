@@ -37,6 +37,13 @@ a {
   }
 }`;
 
+export const cssWithoutWildcard: string = `
+.box {
+  width: 100px;
+  height: 100px;
+}
+`;
+
 export const cssString = `:root {
   --building-color1: #aa80ff;
   --building-color2: #66cc99;
@@ -47,7 +54,7 @@ export const cssString = `:root {
   --window-color3: #d98cb3;
   --window-color4: #8cb3d9;
 }
-  
+
 * {
   box-sizing: border-box;
 }
