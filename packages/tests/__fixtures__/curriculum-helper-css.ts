@@ -47,6 +47,11 @@ export const cssString = `:root {
   --window-color3: #d98cb3;
   --window-color4: #8cb3d9;
 }
+  
+* {
+  box-sizing: border-box;
+}
+
 body {
   height: 100vh;
   margin: 0;

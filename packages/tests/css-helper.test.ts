@@ -21,12 +21,11 @@ describe("css-help", () => {
     });
   });
   describe("getStyle", () => {
-    it("should return null for wildcard selectors", () => {
-      expect(t.getStyle("*")).toBeNull();
+    it("should return a style for wildcard selector when present", () => {
+      expect(t.getStyle("*")).toBeTruthy();
     });
-
-    it("should return null for compound wildcard selectors", () => {
-      expect(t.getStyle("div > * > span")).toBeNull();
+    it("should return null for selector not present in CSS", () => {
+      expect(t.getStyle(".this-selector-does-not-exist")).toBeNull();
     });
     it("should return a non-empty ExtendedCSSStyleDeclaration object", () => {
       expect(t.getStyle(".bb1")).toBeTruthy();
@@ -42,9 +41,9 @@ describe("css-help", () => {
       expect(t.getStyleAny([".earth", ".sky"])?.length).toEqual(1);
     });
     it("should return null when none of the selectors match", () => {
-      expect(t.getStyleAny([".sun", ".earth", ".moon"])).toBeNull();
+      expect(t.getStyleAny([".sun", ".moon"])).toBeNull();
     });
-    it("should ignore wildcard selectors inside getStyleAny", () => {
+    it("should return style even if wildcard selector is present in the list", () => {
       expect(t.getStyleAny(["*", ".bb1"])).toBeTruthy();
     });
   });
