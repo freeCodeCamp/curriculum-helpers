@@ -486,35 +486,35 @@ export class CSSHelp {
   }
 
   getStyle(selector: string): ExtendedStyleDeclaration | null {
-  // Reject wildcard selectors (including compound ones like div > * > span)
-  if (selector.includes("*")) {
+    // Reject wildcard selectors (including compound ones like div > * > span)
+    if (selector.includes("*")) {
+      return null;
+    }
+
+    const style = this._getStyleRules().find(
+      (ele) => ele?.selectorText === selector,
+    )?.style as ExtendedStyleDeclaration | undefined;
+
+    if (!style) return null;
+
+    style.getPropVal = (prop: string, strip = false) =>
+      strip
+        ? style.getPropertyValue(prop).replace(/\s+/g, "")
+        : style.getPropertyValue(prop);
+
+    return style;
+  }
+
+  // Wrapper for multiple allowed selectors
+  getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
+    for (const selector of selectors) {
+      // Reuse getStyle logic (keeps wildcard rules consistent)
+      const style = this.getStyle(selector);
+      if (style) return style;
+    }
+
     return null;
   }
-
-  const style = this._getStyleRules().find(
-    (ele) => ele?.selectorText === selector,
-  )?.style as ExtendedStyleDeclaration | undefined;
-
-  if (!style) return null;
-
-  style.getPropVal = (prop: string, strip = false) =>
-    strip
-      ? style.getPropertyValue(prop).replace(/\s+/g, "")
-      : style.getPropertyValue(prop);
-
-  return style;
-}
-
-// Wrapper for multiple allowed selectors
-getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
-  for (const selector of selectors) {
-    // Reuse getStyle logic (keeps wildcard rules consistent)
-    const style = this.getStyle(selector);
-    if (style) return style;
-  }
-
-  return null;
-}
 
   getStyleRule(selector: string): ExtendedStyleRule | null {
     const styleRule = this._getStyleRules()?.find(

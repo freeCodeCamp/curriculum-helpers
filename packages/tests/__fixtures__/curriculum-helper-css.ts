@@ -26,7 +26,7 @@ a {
 }
 .aClass {
   font-size: 32px;
-  
+
   flex: 1;
   flex-direction: row;
 }
@@ -46,9 +46,6 @@ export const cssString = `:root {
   --window-color2: #8cd9b3;
   --window-color3: #d98cb3;
   --window-color4: #8cb3d9;
-}
-* {
-  box-sizing: border-box;
 }
 body {
   height: 100vh;
