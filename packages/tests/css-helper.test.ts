@@ -21,8 +21,12 @@ describe("css-help", () => {
     });
   });
   describe("getStyle", () => {
-    it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {
-      expect(t.getStyle("*")?.length).toEqual(1);
+    it("should return null for wildcard selectors", () => {
+      expect(t.getStyle("*")).toBeNull();
+    });
+
+    it("should return null for compound wildcard selectors", () => {
+      expect(t.getStyle("div > * > span")).toBeNull();
     });
     it("should return a non-empty ExtendedCSSStyleDeclaration object", () => {
       expect(t.getStyle(".bb1")).toBeTruthy();
@@ -34,11 +38,14 @@ describe("css-help", () => {
     });
   });
   describe("getStyleAny", () => {
-    it("should return an ExtendedCSSStyleDeclartion object of length 1", () => {
+    it("should return an ExtendedCSSStyleDeclaration object of length 1", () => {
       expect(t.getStyleAny([".earth", ".sky"])?.length).toEqual(1);
     });
-    it("should return null", () => {
+    it("should return null when none of the selectors match", () => {
       expect(t.getStyleAny([".sun", ".earth", ".moon"])).toBeNull();
+    });
+    it("should ignore wildcard selectors inside getStyleAny", () => {
+      expect(t.getStyleAny(["*", ".bb1"])).toBeTruthy();
     });
   });
   describe("isPropertyUsed", () => {
