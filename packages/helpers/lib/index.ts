@@ -485,46 +485,49 @@ export class CSSHelp {
       .map((x) => x.style);
   }
 
- getStyle(selector: string): ExtendedStyleDeclaration | null {
-  const style = this._getStyleRules().find(
-    (ele) => ele?.selectorText === selector
-  )?.style as ExtendedStyleDeclaration | undefined;
+  getStyle(selector: string): ExtendedStyleDeclaration | null {
+    const style = this._getStyleRules().find(
+      (ele) => ele?.selectorText === selector,
+    )?.style as ExtendedStyleDeclaration | undefined;
 
-  if (!style) return null;
+    if (!style) return null;
 
-  style.getPropVal = (prop: string, strip = false) =>
-    strip
-      ? style.getPropertyValue(prop).replace(/\s+/g, "")
-      : style.getPropertyValue(prop);
-  return style;
-}
-// A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
+    style.getPropVal = (prop: string, strip = false) =>
+      strip
+        ? style.getPropertyValue(prop).replace(/\s+/g, "")
+        : style.getPropertyValue(prop);
+    return style;
+  }
+  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
 
-getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
-  for (const selector of selectors) {
-    // Skip wildcard unless explicitly requested
-    if (selector === "*") {
+  getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
+    for (const selector of selectors) {
+      // Skip wildcard unless explicitly requested
+      if (selector === "*") {
+        const style = this.getStyle(selector);
+        if (style) return style;
+        continue;
+      }
+      // Exact match only
+
       const style = this.getStyle(selector);
       if (style) return style;
-      continue;
     }
-    // Exact match only
-    const style = this.getStyle(selector);
-    if (style) return style;
+
+    return null;
   }
-  return null;
-}
-getStyleRule(selector: string): ExtendedStyleRule | null {
-  const styleRule = this._getStyleRules()?.find(
-    (ele) => ele?.selectorText === selector
-  );
-  if (!styleRule) return null;
-  return {
-    ...styleRule,
-    isDeclaredAfter: (targetSelector: string) =>
-      getIsDeclaredAfter(styleRule)(targetSelector),
-  };
-}
+
+  getStyleRule(selector: string): ExtendedStyleRule | null {
+    const styleRule = this._getStyleRules()?.find(
+      (ele) => ele?.selectorText === selector,
+    );
+    if (!styleRule) return null;
+    return {
+      ...styleRule,
+      isDeclaredAfter: (targetSelector: string) =>
+        getIsDeclaredAfter(styleRule)(targetSelector),
+    };
+  }
 
   getCSSRules(element?: string): CSSRule[] {
     const styleSheet = this.getStyleSheet();
