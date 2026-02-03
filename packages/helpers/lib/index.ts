@@ -471,9 +471,11 @@ export class CSSHelp {
   constructor(doc: Document) {
     this.doc = doc;
   }
-private selectorHasUniversal(selector: string): boolean {
-  return /(^|\s|\+|>|~)\*/.test(selector);
-}
+
+  private selectorHasUniversal(selector: string): boolean {
+    return /(^|\s|\+|>|~)\*/.test(selector);
+  }
+
   private _getStyleRules() {
     const styleSheet = this.getStyleSheet();
     return this.styleSheetToCssRulesArray(styleSheet).filter(
@@ -495,7 +497,7 @@ private selectorHasUniversal(selector: string): boolean {
 
       const ruleHasUniversal = this.selectorHasUniversal(ele.selectorText);
 
-      // block universal selector leakage
+      // Block universal selector leakage
       if (ruleHasUniversal && !wantsUniversal) return false;
 
       return ele.selectorText === selector;
@@ -512,7 +514,6 @@ private selectorHasUniversal(selector: string): boolean {
 
     return style;
   }
-
 
   // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
   getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
