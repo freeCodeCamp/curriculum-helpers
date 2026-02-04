@@ -305,6 +305,10 @@ body {
 .card:hover {
   background-color: khaki;
 }
+  span[class~="one"] *:first-of-type {
+  background-image: linear-gradient(#f93, #f93);
+  border-color: #d61;
+}
 `;
 
 const testValues = {

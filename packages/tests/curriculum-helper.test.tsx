@@ -4,10 +4,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import cssTestValues from "./__fixtures__/curriculum-helper-css";
+import { cssString } from "./__fixtures__/curriculum-helper-css";
 import htmlTestValues from "./__fixtures__/curriculum-helpers-html";
 import jsTestValues from "./__fixtures__/curriculum-helpers-javascript";
 import whiteSpaceTestValues from "./__fixtures__/curriculum-helpers-remove-white-space";
+
 import * as helper from "./../helpers/lib/index";
+import { CSSHelp } from "./../helpers/lib/index";
 
 const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
   whiteSpaceTestValues;
@@ -860,5 +863,34 @@ describe("permutateRegex", () => {
     expect(regex.test("'b` === a")).toBe(false);
     expect(regex.test('`b" === a')).toBe(false);
     expect(regex.test(`'b" === a`)).toBe(false);
+  });
+});
+describe("CSSHelp – universal selector handling", () => {
+  beforeEach(() => {
+    const style = document.createElement("style");
+    style.className = "fcc-injected-styles";
+    style.textContent = cssString;
+    document.head.appendChild(style);
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  it("should return styles for selectors containing a universal selector", () => {
+    const cssHelp = new CSSHelp(document);
+
+    const style = cssHelp.getStyle('span[class~="one"] *:first-of-type');
+
+    expect(style).not.toBeNull();
+    expect(style?.getPropVal("border-color")).toBe("#d61");
+  });
+
+  it("should return null for selectors that do not exist", () => {
+    const cssHelp = new CSSHelp(document);
+
+    const style = cssHelp.getStyle("div.non-existent-selector");
+
+    expect(style).toBeNull();
   });
 });
