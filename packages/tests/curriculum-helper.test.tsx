@@ -4,18 +4,22 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import cssTestValues from "./__fixtures__/curriculum-helper-css";
-import { cssString } from "./__fixtures__/curriculum-helper-css";
+
 import htmlTestValues from "./__fixtures__/curriculum-helpers-html";
 import jsTestValues from "./__fixtures__/curriculum-helpers-javascript";
 import whiteSpaceTestValues from "./__fixtures__/curriculum-helpers-remove-white-space";
 
 import * as helper from "./../helpers/lib/index";
-import { CSSHelp } from "./../helpers/lib/index";
 
 const { stringWithWhiteSpaceChars, stringWithWhiteSpaceCharsRemoved } =
   whiteSpaceTestValues;
 
-const { cssFullExample, cssCodeWithCommentsRemoved } = cssTestValues;
+const {
+  cssFullExample,
+  cssCodeWithCommentsRemoved,
+  cssWithUniversal,
+  cssWithoutUniversal,
+} = cssTestValues;
 
 const { htmlFullExample, htmlCodeWithCommentsRemoved } = htmlTestValues;
 
@@ -865,20 +869,22 @@ describe("permutateRegex", () => {
     expect(regex.test(`'b" === a`)).toBe(false);
   });
 });
-describe("CSSHelp – universal selector handling", () => {
-  beforeEach(() => {
-    const style = document.createElement("style");
-    style.className = "fcc-injected-styles";
-    style.textContent = cssString;
-    document.head.appendChild(style);
-  });
 
+describe("CSSHelp – universal selector handling", () => {
   afterEach(() => {
     document.head.innerHTML = "";
   });
 
-  it("should return styles for selectors containing a universal selector", () => {
-    const cssHelp = new CSSHelp(document);
+  it("want universal selector, universal selector in css", () => {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      span[class~="one"] *:first-of-type {
+        border-color: #d61;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    const cssHelp = new helper.CSSHelp(document);
 
     const style = cssHelp.getStyle('span[class~="one"] *:first-of-type');
 
@@ -886,11 +892,52 @@ describe("CSSHelp – universal selector handling", () => {
     expect(style?.getPropVal("border-color")).toBe("#d61");
   });
 
-  it("should return null for selectors that do not exist", () => {
-    const cssHelp = new CSSHelp(document);
+  it("want universal selector, universal selector not in css", () => {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      span[class~="one"] > p:first-of-type {
+        color: red;
+      }
+    `;
+    document.head.appendChild(styleEl);
 
-    const style = cssHelp.getStyle("div.non-existent-selector");
+    const cssHelp = new helper.CSSHelp(document);
+
+    const style = cssHelp.getStyle('span[class~="one"] *:first-of-type');
 
     expect(style).toBeNull();
+  });
+
+  it("don't want universal selector, universal selector in css", () => {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      span[class~="one"] *:first-of-type {
+        border-color: #d61;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    const cssHelp = new helper.CSSHelp(document);
+
+    const style = cssHelp.getStyle('span[class~="one"] > p:first-of-type');
+
+    expect(style).toBeNull();
+  });
+
+  it("don't want universal selector, universal selector not in css", () => {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = `
+      span[class~="one"] > p:first-of-type {
+        color: red;
+      }
+    `;
+    document.head.appendChild(styleEl);
+
+    const cssHelp = new helper.CSSHelp(document);
+
+    const style = cssHelp.getStyle('span[class~="one"] > p:first-of-type');
+
+    expect(style).not.toBeNull();
+    expect(style?.getPropVal("color")).toBe("red");
   });
 });
