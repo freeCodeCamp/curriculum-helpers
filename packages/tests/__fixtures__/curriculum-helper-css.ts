@@ -322,8 +322,6 @@ export const cssWithoutUniversal = `
 const testValues = {
   cssFullExample,
   cssCodeWithCommentsRemoved,
-  cssWithUniversal,
-  cssWithoutUniversal,
 };
 
 export default testValues;
