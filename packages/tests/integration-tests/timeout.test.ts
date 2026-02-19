@@ -68,6 +68,21 @@ loop();
     });
   });
   describe("Python Test Runner", () => {
+    beforeAll(async () => {
+      // It's helpful to initialize the test runner ahead of time since it's
+      // quite a slow process. Otherwise we have to remember to give the first
+      // test a longer timeout.
+      await page.evaluate(async () => {
+        await window.FCCTestRunner.createTestRunner({
+          type: "python",
+          code: {
+            contents: "",
+          },
+          source: "",
+        });
+      });
+    });
+
     it("should return errors if the test does not terminate", async () => {
       const source = `
 def loop():
