@@ -606,7 +606,7 @@ describe("getTypeProps", () => {
 });
 
 describe("hasTypeProps", () => {
-  it("returns true if there are no type props and the argument is an empty array", () => {
+  it("returns false if there are no type props", () => {
     const sourceCode = `
                     type Foo = { };
                     interface Bar { }
@@ -614,18 +614,18 @@ describe("hasTypeProps", () => {
                 `;
     const explorer = new Explorer(sourceCode);
     const typeFoo = explorer.getTypes().Foo;
-    expect(typeFoo.hasTypeProps([])).toBe(true);
+    expect(typeFoo.hasTypeProps([{ name: "x" }])).toBe(false);
 
     const interfaceBar = explorer.getInterfaces().Bar;
-    expect(interfaceBar.hasTypeProps([])).toBe(true);
+    expect(interfaceBar.hasTypeProps([{ name: "y" }])).toBe(false);
 
     const varBaz = explorer.getVariables().baz;
-    expect(varBaz.hasTypeProps([])).toBe(true);
+    expect(varBaz.hasTypeProps([{ name: "z" }])).toBe(false);
   });
 
-  it("returns false if there are type props but the argument is an empty array", () => {
+  it("returns false if the argument is an empty array", () => {
     const sourceCode = `
-                    type Foo = { x: number; };
+                    type Foo = { };
                     interface Bar { y: string; }
                     let baz: { z: boolean; };
                 `;

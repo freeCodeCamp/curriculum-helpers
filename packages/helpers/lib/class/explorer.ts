@@ -50,18 +50,6 @@ function createSource(source: string): SourceFile {
   );
 }
 
-const normalizeStringQuotes = (str: string): string => {
-  // Convert all single quotes to double quotes for consistent comparison
-  if (
-    (str.startsWith('"') && str.endsWith('"')) ||
-    (str.startsWith("'") && str.endsWith("'"))
-  ) {
-    return `"${str.slice(1, -1)}"`;
-  }
-
-  return str;
-};
-
 function findMembers(
   tree: Node,
 ): NodeArray<TypeElement | ClassElement> | undefined {
@@ -150,10 +138,13 @@ const areNodesEquivalent = (
 
   if (children1.length === 0 && children2.length === 0) {
     // Leaf node - compare text content with normalized quotes
-    return (
-      normalizeStringQuotes(node1.getText()) ===
-      normalizeStringQuotes(node2.getText())
-    );
+    if ("text" in node1 && "text" in node2) {
+      // If the `text` property exists, it is the raw, unquoted value. e.g. if
+      // getText() returns '"a-string"', the `text` property will be 'a-string'.
+      return node1.text === node2.text;
+    }
+
+    return node1.getText() === node2.getText();
   }
 
   if (children1.length !== children2.length) return false;
@@ -574,15 +565,7 @@ class Explorer {
     }
 
     const members = this.getTypeProps();
-    if (Object.keys(members).length === 0) {
-      if (props.length === 0) {
-        return true; // If no properties are specified, consider it a match
-      }
-
-      return false;
-    }
-
-    if (props.length === 0) {
+    if (Object.keys(members).length === 0 || props.length === 0) {
       return false;
     }
 
