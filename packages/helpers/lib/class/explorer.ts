@@ -19,6 +19,7 @@ import {
   ClassElement,
   NodeArray,
   isSourceFile,
+  isBlock,
   isVariableStatement,
   isParameter,
   isPropertyDeclaration,
@@ -229,8 +230,8 @@ class Explorer {
       }
     }
 
-    // Check if the tree is a SourceFile or a single node
-    if (isSourceFile(this.tree)) {
+    // Check if the tree is a SourceFile or a Block (for function/method bodies)
+    if (isSourceFile(this.tree) || isBlock(this.tree)) {
       // Iterate through the statements of the SourceFile
       this.tree.statements.forEach((statement) => {
         if (!startsAtMember && statement.kind === kind) {
@@ -242,11 +243,6 @@ class Explorer {
         }
       });
     }
-
-    // If the root is a single node, check if it matches the kind
-    // if (!startsAtMember && this.tree?.kind === kind) {
-    //   nodes.push(new Explorer(this.tree));
-    // }
 
     if (startsAtMember) {
       pushMembers(this.tree);
@@ -350,6 +346,42 @@ class Explorer {
     }
 
     return result;
+  }
+
+  // Retrieves the body of a function, method, or other construct that has a body
+  getBody(): Explorer {
+    if (!this.tree) {
+      return new Explorer();
+    }
+
+    let body: Node | undefined;
+
+    // Handle FunctionDeclaration, MethodDeclaration, FunctionExpression, ArrowFunction
+    if (
+      isFunctionDeclaration(this.tree) ||
+      isMethodDeclaration(this.tree) ||
+      isFunctionExpression(this.tree) ||
+      isArrowFunction(this.tree)
+    ) {
+      body = this.tree.body;
+    }
+
+    // Handle VariableStatement with function initializer
+    if (isVariableStatement(this.tree)) {
+      const { initializer } = this.tree.declarationList.declarations[0];
+      if (
+        initializer &&
+        (isArrowFunction(initializer) || isFunctionExpression(initializer))
+      ) {
+        body = initializer.body;
+      }
+    }
+
+    if (body) {
+      return new Explorer(body);
+    }
+
+    return new Explorer();
   }
 
   // Checks if a function (function declaration, method, arrow function, or function expression) has a specific return type annotation

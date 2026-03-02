@@ -128,6 +128,7 @@ describe("getVariables", () => {
                     const bar = () => 42;
                     let baz;
                     function foo() { const b = 2; };
+                    class Spam { method1() { const c = 3; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const variables = explorer.getVariables();
@@ -135,6 +136,15 @@ describe("getVariables", () => {
     expect(variables.a.matches("const a = 1;")).toBe(true);
     expect(variables.bar.matches("const bar = () => 42;")).toBe(true);
     expect(variables.baz.matches("let baz;")).toBe(true);
+
+    const { foo } = explorer.getFunctions();
+    expect(foo.getBody().getVariables().b.matches("const b = 2;")).toBe(true);
+
+    const { Spam } = explorer.getClasses();
+    const { method1 } = Spam.getMethods();
+    expect(method1.getBody().getVariables().c.matches("const c = 3;")).toBe(
+      true,
+    );
   });
 });
 
@@ -701,5 +711,25 @@ describe("hasTypeProps", () => {
     const varBaz = explorer.getVariables().baz;
     expect(varBaz.hasTypeProps({ name: "a" })).toBe(false);
     expect(varBaz.hasTypeProps([{ name: "x", isOptional: false }])).toBe(false);
+  });
+});
+
+describe("getBody", () => {
+  it("returns an Explorer object for the body of a function/method", () => {
+    const sourceCode = `
+                    function foo() { const a = 1; const b = 2; }
+                    class Bar { method() { const c = 3; } }
+                    const x = () => { const d = 4; };
+                    const y = function() { const e = 5; };
+                  `;
+    const explorer = new Explorer(sourceCode);
+    const body = explorer.getFunctions().foo.getBody();
+    expect(body).toBeInstanceOf(Explorer);
+    const methodBody = explorer.getClasses().Bar.getMethods().method.getBody();
+    expect(methodBody).toBeInstanceOf(Explorer);
+    const arrowFuncBody = explorer.getFunctions(true).x.getBody();
+    expect(arrowFuncBody).toBeInstanceOf(Explorer);
+    const funcExprBody = explorer.getFunctions(true).y.getBody();
+    expect(funcExprBody).toBeInstanceOf(Explorer);
   });
 });
