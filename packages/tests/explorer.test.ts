@@ -392,14 +392,14 @@ describe("getMethods", () => {
   it("returns one entry per method", () => {
     const sourceCode = "class Foo { method1() {} method2() {} }";
     const explorer = new Explorer(sourceCode);
-    const methods = explorer.getMethods();
+    const methods = explorer.getClasses().Foo.getMethods();
     expect(Object.keys(methods)).toHaveLength(2);
   });
 
   it("returns an empty object if there are no methods", () => {
     const sourceCode = "class Foo { }";
     const explorer = new Explorer(sourceCode);
-    const methods = explorer.getMethods();
+    const methods = explorer.getClasses().Foo.getMethods();
     expect(Object.keys(methods)).toHaveLength(0);
   });
 
@@ -481,7 +481,8 @@ describe("findClassProps", () => {
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(1);
-    // TODO: fix matches to handle expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(true);
+    // TODO: fix matches to handle
+    // expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(true);
   });
 });
 

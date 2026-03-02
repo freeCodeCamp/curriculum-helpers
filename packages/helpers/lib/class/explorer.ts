@@ -117,9 +117,7 @@ function createTree(
   }
 
   sourceFile = createSource(code);
-  return sourceFile.statements.length === 1
-    ? sourceFile.statements[0]
-    : sourceFile;
+  return sourceFile;
 }
 
 const removeSemicolons = (nodes: readonly Node[]): Node[] =>
@@ -131,10 +129,23 @@ const areNodesEquivalent = (
 ): boolean => {
   if (node1 === null && node2 === null) return true;
   if (node1 === null || node2 === null) return false;
-  if (node1.kind !== node2.kind) return false;
 
-  const children1 = removeSemicolons(node1.getChildren());
-  const children2 = removeSemicolons(node2.getChildren());
+  // Unwrap single-statement SourceFiles to their statement for comparison
+  let current1 = node1;
+  let current2 = node2;
+
+  if (isSourceFile(current1) && current1.statements.length === 1) {
+    current1 = current1.statements[0];
+  }
+
+  if (isSourceFile(current2) && current2.statements.length === 1) {
+    current2 = current2.statements[0];
+  }
+
+  if (current1.kind !== current2.kind) return false;
+
+  const children1 = removeSemicolons(current1.getChildren());
+  const children2 = removeSemicolons(current2.getChildren());
 
   if (children1.length === 0 && children2.length === 0) {
     // Leaf node - compare text content with normalized quotes
@@ -233,9 +244,9 @@ class Explorer {
     }
 
     // If the root is a single node, check if it matches the kind
-    if (!startsAtMember && this.tree?.kind === kind) {
-      nodes.push(new Explorer(this.tree));
-    }
+    // if (!startsAtMember && this.tree?.kind === kind) {
+    //   nodes.push(new Explorer(this.tree));
+    // }
 
     if (startsAtMember) {
       pushMembers(this.tree);
