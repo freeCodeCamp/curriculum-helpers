@@ -138,13 +138,11 @@ describe("getVariables", () => {
     expect(variables.baz.matches("let baz;")).toBe(true);
 
     const { foo } = explorer.getFunctions();
-    expect(foo.getBody().getVariables().b.matches("const b = 2;")).toBe(true);
+    expect(foo.getVariables().b.matches("const b = 2;")).toBe(true);
 
     const { Spam } = explorer.getClasses();
     const { method1 } = Spam.getMethods();
-    expect(method1.getBody().getVariables().c.matches("const c = 3;")).toBe(
-      true,
-    );
+    expect(method1.getVariables().c.matches("const c = 3;")).toBe(true);
   });
 });
 
@@ -714,22 +712,37 @@ describe("hasTypeProps", () => {
   });
 });
 
-describe("getBody", () => {
-  it("returns an Explorer object for the body of a function/method", () => {
-    const sourceCode = `
-                    function foo() { const a = 1; const b = 2; }
-                    class Bar { method() { const c = 3; } }
-                    const x = () => { const d = 4; };
-                    const y = function() { const e = 5; };
-                  `;
-    const explorer = new Explorer(sourceCode);
-    const body = explorer.getFunctions().foo.getBody();
-    expect(body).toBeInstanceOf(Explorer);
-    const methodBody = explorer.getClasses().Bar.getMethods().method.getBody();
-    expect(methodBody).toBeInstanceOf(Explorer);
-    const arrowFuncBody = explorer.getFunctions(true).x.getBody();
-    expect(arrowFuncBody).toBeInstanceOf(Explorer);
-    const funcExprBody = explorer.getFunctions(true).y.getBody();
-    expect(funcExprBody).toBeInstanceOf(Explorer);
+describe("querying statements", () => {
+  describe("getVariables in different scopes", () => {
+    it("finds variables in SourceFile scope", () => {
+      const sourceCode = `
+        const a = 1;
+        let b = 2;
+      `;
+      const explorer = new Explorer(sourceCode);
+      const variables = explorer.getVariables();
+      expect(Object.keys(variables)).toHaveLength(2);
+      expect(variables.a.matches("const a = 1;")).toBe(true);
+      expect(variables.b.matches("let b = 2;")).toBe(true);
+    });
+
+    it("finds variables in Block scope", () => {
+      const sourceCode = `
+        function foo() {
+          const x = 10;
+          let y = 20;
+        }
+      `;
+      const explorer = new Explorer(sourceCode);
+      const variables = explorer.getFunctions().foo.getVariables();
+
+      expect(Object.keys(variables)).toHaveLength(2);
+      expect(variables.x.matches("const x = 10;")).toBe(true);
+      expect(variables.y.matches("let y = 20;")).toBe(true);
+    });
+
+    it.todo("finds variables in ModuleBlock scope", () => {});
+
+    it.todo("finds variables in CaseOrDefaultClause scope", () => {});
   });
 });

@@ -17,7 +17,6 @@ import {
   PropertyDeclaration,
   TypeElement,
   ClassElement,
-  NodeArray,
   isSourceFile,
   isBlock,
   isVariableStatement,
@@ -33,6 +32,9 @@ import {
   isIdentifier,
   isPropertySignature,
   isTypeLiteralNode,
+  isModuleBlock,
+  isCaseOrDefaultClause,
+  Statement,
 } from "typescript";
 
 type TypeProp = {
@@ -51,15 +53,13 @@ function createSource(source: string): SourceFile {
   );
 }
 
-function findMembers(
-  tree: Node,
-): NodeArray<TypeElement | ClassElement> | undefined {
+function findMembers(tree: Node): ReadonlyArray<TypeElement | ClassElement> {
   // Handle VariableStatement with TypeLiteral annotation
   if (isVariableStatement(tree)) {
     const declaration = tree.declarationList.declarations[0];
     return declaration.type && isTypeLiteralNode(declaration.type)
       ? declaration.type.members
-      : undefined;
+      : [];
   }
 
   // Handle InterfaceDeclaration, TypeLiteralNode and ClassDeclaration directly
@@ -73,7 +73,7 @@ function findMembers(
 
   // Handle TypeAliasDeclaration with TypeLiteral
   if (isTypeAliasDeclaration(tree)) {
-    return isTypeLiteralNode(tree.type) ? tree.type.members : undefined;
+    return isTypeLiteralNode(tree.type) ? tree.type.members : [];
   }
 
   // Handle PropertySignature, PropertyDeclaration and Parameter: if it has a type literal annotation, return its members
@@ -82,9 +82,47 @@ function findMembers(
     isPropertyDeclaration(tree) ||
     isParameter(tree)
   ) {
-    return tree.type && isTypeLiteralNode(tree.type)
-      ? tree.type.members
-      : undefined;
+    return tree.type && isTypeLiteralNode(tree.type) ? tree.type.members : [];
+  }
+
+  return [];
+}
+
+function findStatements(tree: Node): ReadonlyArray<Statement> {
+  // Handle SourceFile, Block, ModuleBlock, and CaseOrDefaultClause directly
+  if (
+    isSourceFile(tree) ||
+    isBlock(tree) ||
+    isModuleBlock(tree) ||
+    isCaseOrDefaultClause(tree)
+  ) {
+    return tree.statements;
+  }
+
+  return [];
+}
+
+// Retrieves the body of a function, method, or other construct that has a body
+function getBody(tree: Node): Node | undefined {
+  // Handle FunctionDeclaration, MethodDeclaration, FunctionExpression, ArrowFunction
+  if (
+    isFunctionDeclaration(tree) ||
+    isMethodDeclaration(tree) ||
+    isFunctionExpression(tree) ||
+    isArrowFunction(tree)
+  ) {
+    return tree.body;
+  }
+
+  // Handle VariableStatement with function initializer
+  if (isVariableStatement(tree)) {
+    const { initializer } = tree.declarationList.declarations[0];
+    if (
+      initializer &&
+      (isArrowFunction(initializer) || isFunctionExpression(initializer))
+    ) {
+      return initializer.body;
+    }
   }
 }
 
@@ -209,46 +247,25 @@ class Explorer {
     return areNodesEquivalent(this.tree, otherExplorer.tree);
   }
 
-  // Finds all nodes of a specific kind in the tree. If `startsAtMember` is
-  // true, the search will look inside member lists (e.g. class/interface/type
-  // literal members) instead of at the top-level statements.
-  getAll(kind: SyntaxKind, startsAtMember: boolean = false): Explorer[] {
+  // Finds all nodes of a specific kind in the current scope.
+  getAll(kind: SyntaxKind): Explorer[] {
     if (!this.tree) {
       return [];
     }
 
-    const nodes: Explorer[] = [];
+    const body = getBody(this.tree);
+    // If the body exists, it must be the scope, otherwise we search the current
+    // tree (e.g. for class members)
+    const scope = body ?? this.tree;
 
-    function pushMembers(tree: Node): void {
-      const members = findMembers(tree);
-      if (members) {
-        members.forEach((m) => {
-          if (m.kind === kind) {
-            nodes.push(new Explorer(m));
-          }
-        });
-      }
-    }
+    const members = findMembers(scope);
+    const statements = findStatements(scope);
 
-    // Check if the tree is a SourceFile or a Block (for function/method bodies)
-    if (isSourceFile(this.tree) || isBlock(this.tree)) {
-      // Iterate through the statements of the SourceFile
-      this.tree.statements.forEach((statement) => {
-        if (!startsAtMember && statement.kind === kind) {
-          nodes.push(new Explorer(statement));
-        }
+    const explorers = [...members, ...statements]
+      .filter((node) => node.kind === kind)
+      .map((node) => new Explorer(node));
 
-        if (startsAtMember) {
-          pushMembers(statement);
-        }
-      });
-    }
-
-    if (startsAtMember) {
-      pushMembers(this.tree);
-    }
-
-    return nodes;
+    return explorers;
   }
 
   // Finds all variable statements
@@ -346,42 +363,6 @@ class Explorer {
     }
 
     return result;
-  }
-
-  // Retrieves the body of a function, method, or other construct that has a body
-  getBody(): Explorer {
-    if (!this.tree) {
-      return new Explorer();
-    }
-
-    let body: Node | undefined;
-
-    // Handle FunctionDeclaration, MethodDeclaration, FunctionExpression, ArrowFunction
-    if (
-      isFunctionDeclaration(this.tree) ||
-      isMethodDeclaration(this.tree) ||
-      isFunctionExpression(this.tree) ||
-      isArrowFunction(this.tree)
-    ) {
-      body = this.tree.body;
-    }
-
-    // Handle VariableStatement with function initializer
-    if (isVariableStatement(this.tree)) {
-      const { initializer } = this.tree.declarationList.declarations[0];
-      if (
-        initializer &&
-        (isArrowFunction(initializer) || isFunctionExpression(initializer))
-      ) {
-        body = initializer.body;
-      }
-    }
-
-    if (body) {
-      return new Explorer(body);
-    }
-
-    return new Explorer();
   }
 
   // Checks if a function (function declaration, method, arrow function, or function expression) has a specific return type annotation
@@ -493,7 +474,7 @@ class Explorer {
   getMethods(): { [key: string]: Explorer } {
     const result: { [key: string]: Explorer } = {};
     if (this.tree && isClassDeclaration(this.tree)) {
-      this.getAll(SyntaxKind.MethodDeclaration, true).forEach((member) => {
+      this.getAll(SyntaxKind.MethodDeclaration).forEach((member) => {
         const method = member.tree as MethodDeclaration;
         const methodName = (method.name as Identifier).text;
         result[methodName] = member;
@@ -511,7 +492,7 @@ class Explorer {
 
     const result: { [key: string]: Explorer } = {};
 
-    this.getAll(SyntaxKind.PropertyDeclaration, true).forEach((property) => {
+    this.getAll(SyntaxKind.PropertyDeclaration).forEach((property) => {
       const prop = property.tree as PropertyDeclaration;
       const name = (prop.name as Identifier).text;
       result[name] = new Explorer(prop);
@@ -526,7 +507,7 @@ class Explorer {
     }
 
     const result: { [key: string]: Explorer } = {};
-    this.getAll(SyntaxKind.PropertySignature, true).forEach((member) => {
+    this.getAll(SyntaxKind.PropertySignature).forEach((member) => {
       const prop = member.tree as PropertyDeclaration;
       const name = (prop.name as Identifier).text;
       result[name] = member;
