@@ -17,6 +17,7 @@ import {
   PropertyDeclaration,
   TypeElement,
   ClassElement,
+  ObjectLiteralExpression,
   isSourceFile,
   isBlock,
   isVariableStatement,
@@ -34,6 +35,8 @@ import {
   isTypeLiteralNode,
   isModuleBlock,
   isCaseOrDefaultClause,
+  isObjectLiteralExpression,
+  isPropertyAssignment,
   Statement,
 } from "typescript";
 
@@ -278,6 +281,35 @@ class Explorer {
     return result;
   }
 
+  // Retrieves the assigned value of a variable, property, parameter, enum member, or binding element
+  getValue(): Explorer {
+    if (this.isEmpty()) {
+      return new Explorer();
+    }
+
+    const node = this.tree!;
+
+    // Handle VariableStatement
+    if (isVariableStatement(node)) {
+      const { initializer } = node.declarationList.declarations[0];
+      return initializer ? new Explorer(initializer) : new Explorer();
+    }
+
+    // Handle PropertyDeclaration (class properties), PropertySignature (interface/type properties), and Parameter (function/method parameters)
+    if (isPropertyDeclaration(node) || isParameter(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle PropertyAssignment (object literal properties)
+    if (isPropertyAssignment(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    return new Explorer();
+  }
+
+  // ...existing code...
+
   // Retrieves the type annotation of the current node if it exists, otherwise returns an empty Explorer
   getAnnotation(): Explorer {
     if (this.isEmpty()) {
@@ -508,6 +540,44 @@ class Explorer {
       const prop = member.tree as PropertyDeclaration;
       const name = (prop.name as Identifier).text;
       result[name] = member;
+    });
+
+    return result;
+  }
+
+  // Finds all properties in an object literal and returns them as Explorer instances
+  getObjectProps(): { [key: string]: Explorer } {
+    if (!this.tree) {
+      return {};
+    }
+
+    let objectLiteral: ObjectLiteralExpression | undefined;
+
+    // If the current tree is an object literal, use it directly
+    if (isObjectLiteralExpression(this.tree)) {
+      objectLiteral = this.tree;
+    }
+
+    // If it's a variable statement with an object literal initializer, get the object
+    if (isVariableStatement(this.tree)) {
+      const { initializer } = this.tree.declarationList.declarations[0];
+      if (initializer && isObjectLiteralExpression(initializer)) {
+        objectLiteral = initializer;
+      }
+    }
+
+    if (!objectLiteral) {
+      return {};
+    }
+
+    const result: { [key: string]: Explorer } = {};
+    objectLiteral.properties.forEach((property) => {
+      if (isPropertyAssignment(property)) {
+        if (property.name && isIdentifier(property.name)) {
+          const name = property.name.text;
+          result[name] = new Explorer(property);
+        }
+      }
     });
 
     return result;

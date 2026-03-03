@@ -146,6 +146,32 @@ describe("getVariables", () => {
   });
 });
 
+describe("getValue", () => {
+  it("returns an Explorer object for the initializer of a variable", () => {
+    const sourceCode = "const a = 1; const b = { x: 10 };";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    const valueA = variables.a.getValue();
+    expect(valueA).toBeInstanceOf(Explorer);
+    expect(valueA.toString()).toBe("1");
+
+    const valueB = variables.b.getValue();
+    expect(valueB).toBeInstanceOf(Explorer);
+    expect(valueB.toString()).toBe("{ x: 10 }");
+
+    expect(variables.b.getObjectProps().x.getValue().toString()).toBe("10");
+  });
+
+  it("returns an empty Explorer if the variable has no initializer", () => {
+    const sourceCode = "const a;";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    const valueA = variables.a.getValue();
+    expect(valueA).toBeInstanceOf(Explorer);
+    expect(valueA.isEmpty()).toBe(true);
+  });
+});
+
 describe("getFunctions", () => {
   it("returns an object with Explorer objects as values", () => {
     const sourceCode =
@@ -566,6 +592,33 @@ describe("annotations", () => {
       expect(parametersFoo[0].hasAnnotation("number")).toBe(false);
       expect(parametersFoo[1].hasAnnotation("string")).toBe(false);
     });
+  });
+});
+
+describe("getObjectProps", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode =
+      "const obj: {[name: string]: number} = { x: 10, y: 20 };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    Object.values(objectProps).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("returns one entry per property", () => {
+    const sourceCode =
+      "const obj: {[name: string]: number} = { x: 10, y: 20 };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    expect(Object.keys(objectProps)).toHaveLength(2);
+  });
+
+  it("returns an empty object if there are no properties", () => {
+    const sourceCode = "const obj: {[name: string]: number} = { };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    expect(Object.keys(objectProps)).toHaveLength(0);
   });
 });
 
