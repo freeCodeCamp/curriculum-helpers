@@ -100,651 +100,346 @@ describe("matches", () => {
   });
 });
 
-describe("variables", () => {
-  describe("getVariables", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const variables = explorer.getVariables();
-      variables.forEach((v) => expect(v).toBeInstanceOf(Explorer));
-    });
+describe("getVariables", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    Object.values(variables).forEach((v) => expect(v).toBeInstanceOf(Explorer));
+  });
 
-    it("returns one entry per variable", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const variables = explorer.getVariables();
-      expect(variables).toHaveLength(2);
-    });
+  it("returns one entry per variable", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    expect(Object.keys(variables)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no variables", () => {
-      const sourceCode = "function foo() { return 42; }";
-      const explorer = new Explorer(sourceCode);
-      const variables = explorer.getVariables();
-      expect(variables).toHaveLength(0);
-    });
+  it("returns an empty object if there are no variables", () => {
+    const sourceCode = "function foo() { return 42; }";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    expect(Object.keys(variables)).toHaveLength(0);
+  });
 
-    it("finds all variables in the current scope", () => {
-      const sourceCode = `
+  it("finds all variables in the current scope", () => {
+    const sourceCode = `
                     const a = 1;
                     const bar = () => 42;
                     let baz;
                     function foo() { const b = 2; };
+                    class Spam { method1() { const c = 3; } }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const variables = explorer.getVariables();
-      expect(variables).toHaveLength(3);
-      expect(variables[0].matches("const a = 1;")).toBe(true);
-      expect(variables[1].matches("const bar = () => 42;")).toBe(true);
-      expect(variables[2].matches("let baz;")).toBe(true);
-    });
-  });
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    expect(Object.keys(variables)).toHaveLength(3);
+    expect(variables.a.matches("const a = 1;")).toBe(true);
+    expect(variables.bar.matches("const bar = () => 42;")).toBe(true);
+    expect(variables.baz.matches("let baz;")).toBe(true);
 
-  describe("findVariable", () => {
-    it("returns an Explorer object for the specified variable name", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const variableA = explorer.findVariable("a");
-      expect(variableA).toBeInstanceOf(Explorer);
-      expect(variableA.matches("const a = 1;")).toBe(true);
+    const { foo } = explorer.getFunctions();
+    expect(foo.getVariables().b.matches("const b = 2;")).toBe(true);
 
-      const variableB = explorer.findVariable("b");
-      expect(variableB).toBeInstanceOf(Explorer);
-      expect(variableB.matches("const b = 2;")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified variable name is not found", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const variableC = explorer.findVariable("c");
-      expect(variableC).toBeInstanceOf(Explorer);
-      expect(variableC.isEmpty()).toBe(true);
-    });
-  });
-
-  describe("hasVariable", () => {
-    it("returns true if a variable with the specified name exists", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasVariable("a")).toBe(true);
-      expect(explorer.hasVariable("b")).toBe(true);
-    });
-
-    it("returns false if a variable with the specified name does not exist", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasVariable("c")).toBe(false);
-    });
+    const { Spam } = explorer.getClasses();
+    const { method1 } = Spam.getMethods();
+    expect(method1.getVariables().c.matches("const c = 3;")).toBe(true);
   });
 });
 
-describe("functions", () => {
-  describe("findFunctions", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode =
-        "function foo() { return 42; } function bar() { return 24; }";
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions();
-      functions.forEach((f) => expect(f).toBeInstanceOf(Explorer));
-    });
+describe("getFunctions", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode =
+      "function foo() { return 42; } function bar() { return 24; }";
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions();
+    Object.values(functions).forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
 
-    it("returns one entry per function", () => {
-      const sourceCode =
-        "function foo() { return 42; } function bar() { return 24; }";
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions();
-      expect(functions).toHaveLength(2);
-    });
+  it("returns one entry per function", () => {
+    const sourceCode =
+      "function foo() { return 42; } function bar() { return 24; }";
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions();
+    expect(Object.keys(functions)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no functions", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions();
-      expect(functions).toHaveLength(0);
-    });
+  it("returns an empty object if there are no functions", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions();
+    expect(Object.keys(functions)).toHaveLength(0);
+  });
 
-    it("finds only functions in the current scope", () => {
-      const sourceCode = `
+  it("finds only functions in the current scope", () => {
+    const sourceCode = `
                     function foo() { return 42; }
                     function bar() { function baz() { return 24; } }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions();
-      expect(functions).toHaveLength(2);
-      expect(functions[0].matches("function foo() { return 42; }")).toBe(true);
-      expect(
-        functions[1].matches(
-          "function bar() { function baz() { return 24; } }",
-        ),
-      ).toBe(true);
-    });
-
-    it("does not find function expressions and arrow functions assigned to variables by default", () => {
-      const sourceCode = `
-                    const foo = function() { return 42; };
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions();
-      expect(functions).toHaveLength(0);
-    });
-
-    it("finds function expressions and arrow functions assigned to variables when withVariables is true", () => {
-      const sourceCode = `
-                    const foo = function() { return 42; };
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      const functions = explorer.getFunctions(true);
-      expect(functions).toHaveLength(2);
-    });
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions();
+    expect(Object.keys(functions)).toHaveLength(2);
+    expect(functions.foo.matches("function foo() { return 42; }")).toBe(true);
+    expect(
+      functions.bar.matches("function bar() { function baz() { return 24; } }"),
+    ).toBe(true);
   });
 
-  describe("findFunction", () => {
-    it("returns an Explorer object for the specified function name", () => {
-      const sourceCode = `
-                    const a = [1, 2, 3];
-                    function foo() { return 42; }
-                    const b = 1;
-                `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      expect(functionFoo).toBeInstanceOf(Explorer);
-      expect(functionFoo.matches("function foo() { return 42; }")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified function name is not found", () => {
-      const sourceCode = `
-                    function foo() { return 42; }
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      const functionBaz = explorer.findFunction("baz");
-      expect(functionBaz).toBeInstanceOf(Explorer);
-      expect(functionBaz.isEmpty()).toBe(true);
-    });
-
-    it("does not find function expressions and arrow functions assigned to variables by default", () => {
-      const sourceCode = `
+  it("does not find function expressions and arrow functions assigned to variables by default", () => {
+    const sourceCode = `
                     const foo = function() { return 42; };
                     const bar = () => 24;
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      expect(functionFoo.isEmpty()).toBe(true);
-
-      const functionBar = explorer.findFunction("bar");
-      expect(functionBar.isEmpty()).toBe(true);
-    });
-
-    it("finds function expressions and arrow functions assigned to variables when withVariables is true", () => {
-      const sourceCode = `
-                    const foo = function() { return 42; };
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo", true);
-      expect(functionFoo).toBeInstanceOf(Explorer);
-      expect(
-        functionFoo.matches("const foo = function() { return 42; };"),
-      ).toBe(true);
-
-      const functionBar = explorer.findFunction("bar", true);
-      expect(functionBar).toBeInstanceOf(Explorer);
-      expect(functionBar.matches("const bar = () => 24;")).toBe(true);
-    });
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions();
+    expect(Object.keys(functions)).toHaveLength(0);
   });
 
-  describe("hasFunction", () => {
-    it("returns true if a function with the specified name exists", () => {
-      const sourceCode = `
-                    function foo() { return 42; }
-                    const bar = () => 24;
-                    const baz = function() { return 42; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasFunction("foo")).toBe(true);
-    });
-
-    it("returns false if a function with the specified name does not exist", () => {
-      const sourceCode = `
-                    function foo() { return 42; }
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasFunction("baz")).toBe(false);
-    });
-
-    it("does not find function expressions and arrow functions assigned to variables by default", () => {
-      const sourceCode = `
+  it("finds function expressions and arrow functions assigned to variables when withVariables is true", () => {
+    const sourceCode = `
                     const foo = function() { return 42; };
                     const bar = () => 24;
                 `;
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasFunction("foo")).toBe(false);
-      expect(explorer.hasFunction("bar")).toBe(false);
-    });
-
-    it("finds function expressions and arrow functions assigned to variables when withVariables is true", () => {
-      const sourceCode = `
-                    const foo = function() { return 42; };
-                    const bar = () => 24;
-                `;
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasFunction("foo", true)).toBe(true);
-      expect(explorer.hasFunction("bar", true)).toBe(true);
-    });
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    expect(Object.keys(functions)).toHaveLength(2);
   });
+});
 
-  describe("getParameters", () => {
-    it("returns an array of Explorer objects for the parameters of a function", () => {
-      const sourceCode = `
+describe("getParameters", () => {
+  it("returns an array of Explorer objects for the parameters of a function", () => {
+    const sourceCode = `
                     function foo(x: number, y: string) { return 42; }
                     const bar = (a: boolean) => 24;
                     const baz = function(b: any, c: string) { return 42; };
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      const parametersFoo = functionFoo.getParameters();
-      expect(parametersFoo).toHaveLength(2);
-      // TODO: handles comparison of parameters in matches().
-      // This doesn't ignore whitespace
-      expect(parametersFoo[0].toString()).toBe("x: number");
-      expect(parametersFoo[1].toString()).toBe("y: string");
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    const parametersFoo = functions.foo.getParameters();
+    expect(parametersFoo).toHaveLength(2);
+    // TODO: handles comparison of parameters in matches().
+    // This doesn't ignore whitespace
+    expect(parametersFoo[0].toString()).toBe("x: number");
+    expect(parametersFoo[1].toString()).toBe("y: string");
 
-      const functionBar = explorer.findFunction("bar", true);
-      const parametersBar = functionBar.getParameters();
-      expect(parametersBar).toHaveLength(1);
-      expect(parametersBar[0].toString()).toBe("a: boolean");
+    const parametersBar = functions.bar.getParameters();
+    expect(parametersBar).toHaveLength(1);
+    expect(parametersBar[0].toString()).toBe("a: boolean");
 
-      const functionBaz = explorer.findFunction("baz", true);
-      const parametersBaz = functionBaz.getParameters();
-      expect(parametersBaz).toHaveLength(2);
-      expect(parametersBaz[0].toString()).toBe("b: any");
-      expect(parametersBaz[1].toString()).toBe("c: string");
-    });
+    const parametersBaz = functions.baz.getParameters();
+    expect(parametersBaz).toHaveLength(2);
+    expect(parametersBaz[0].toString()).toBe("b: any");
+    expect(parametersBaz[1].toString()).toBe("c: string");
+  });
 
-    it("returns an empty array if the function has no parameters", () => {
-      const sourceCode = `
+  it("returns an empty array if the function has no parameters", () => {
+    const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => 24;
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      const parametersFoo = functionFoo.getParameters();
-      expect(parametersFoo).toHaveLength(0);
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    const parametersFoo = functions.foo.getParameters();
+    expect(parametersFoo).toHaveLength(0);
 
-      const functionBar = explorer.findFunction("bar", true);
-      const parametersBar = functionBar.getParameters();
-      expect(parametersBar).toHaveLength(0);
-    });
+    const parametersBar = functions.bar.getParameters();
+    expect(parametersBar).toHaveLength(0);
   });
+});
 
-  describe("hasReturnAnnotation", () => {
-    it("returns true if the function has the specified return type annotation", () => {
-      const sourceCode = `
+describe("hasReturnAnnotation", () => {
+  it("returns true if the function has the specified return type annotation", () => {
+    const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
                     const baz = function(): boolean { return true; };
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      expect(functionFoo.hasReturnAnnotation("number")).toBe(true);
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    expect(functions.foo.hasReturnAnnotation("number")).toBe(true);
+    expect(functions.bar.hasReturnAnnotation("string")).toBe(true);
+    expect(functions.baz.hasReturnAnnotation("boolean")).toBe(true);
+  });
 
-      const functionBar = explorer.findFunction("bar", true);
-      expect(functionBar.hasReturnAnnotation("string")).toBe(true);
-
-      const functionBaz = explorer.findFunction("baz", true);
-      expect(functionBaz.hasReturnAnnotation("boolean")).toBe(true);
-    });
-
-    it("returns false if the function does not have the specified return type annotation", () => {
-      const sourceCode = `
+  it("returns false if the function does not have the specified return type annotation", () => {
+    const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      expect(functionFoo.hasReturnAnnotation("string")).toBe(false);
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    expect(functions.foo.hasReturnAnnotation("string")).toBe(false);
+    expect(functions.bar.hasReturnAnnotation("number")).toBe(false);
+  });
 
-      const functionBar = explorer.findFunction("bar", true);
-      expect(functionBar.hasReturnAnnotation("number")).toBe(false);
-    });
-
-    it("returns false if the function has no return type annotation", () => {
-      const sourceCode = `
+  it("returns false if the function has no return type annotation", () => {
+    const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => "hello";
                 `;
-      const explorer = new Explorer(sourceCode);
-      const functionFoo = explorer.findFunction("foo");
-      expect(functionFoo.hasReturnAnnotation("number")).toBe(false);
-
-      const functionBar = explorer.findFunction("bar", true);
-      expect(functionBar.hasReturnAnnotation("string")).toBe(false);
-    });
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.getFunctions(true);
+    expect(functions.foo.hasReturnAnnotation("number")).toBe(false);
+    expect(functions.bar.hasReturnAnnotation("string")).toBe(false);
   });
 });
 
-describe("types", () => {
-  describe("findTypes", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      const types = explorer.getTypes();
-      types.forEach((t) => expect(t).toBeInstanceOf(Explorer));
-    });
+describe("getTypes", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "type Foo = { x: number; }; type Bar = { y: string; };";
+    const explorer = new Explorer(sourceCode);
+    const types = explorer.getTypes();
+    Object.values(types).forEach((t) => expect(t).toBeInstanceOf(Explorer));
+  });
 
-    it("returns one entry per type", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      const types = explorer.getTypes();
-      expect(types).toHaveLength(2);
-    });
+  it("returns one entry per type", () => {
+    const sourceCode = "type Foo = { x: number; }; type Bar = { y: string; };";
+    const explorer = new Explorer(sourceCode);
+    const types = explorer.getTypes();
+    expect(Object.keys(types)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no types", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const types = explorer.getTypes();
-      expect(types).toHaveLength(0);
-    });
+  it("returns an empty object if there are no types", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const types = explorer.getTypes();
+    expect(Object.keys(types)).toHaveLength(0);
+  });
 
-    it("finds only types in the current scope", () => {
-      const sourceCode = `
+  it("finds only types in the current scope", () => {
+    const sourceCode = `
                     type Foo = { x: number; };
                     function bar() { type Baz = { y: string; }; }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const types = explorer.getTypes();
-      expect(types).toHaveLength(1);
-      expect(types[0].matches("type Foo = { x: number; };")).toBe(true);
-    });
-  });
-
-  describe("findType", () => {
-    it("returns an Explorer object for the specified type name", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo).toBeInstanceOf(Explorer);
-      expect(typeFoo.matches("type Foo = { x: number; };")).toBe(true);
-
-      const typeBar = explorer.findType("Bar");
-      expect(typeBar).toBeInstanceOf(Explorer);
-      expect(typeBar.matches("type Bar = { y: string; };")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified type name is not found", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      const typeBaz = explorer.findType("Baz");
-      expect(typeBaz).toBeInstanceOf(Explorer);
-      expect(typeBaz.isEmpty()).toBe(true);
-    });
-  });
-
-  describe("hasType", () => {
-    it("returns true if a type with the specified name exists", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasType("Foo")).toBe(true);
-      expect(explorer.hasType("Bar")).toBe(true);
-    });
-
-    it("returns false if a type with the specified name does not exist", () => {
-      const sourceCode =
-        "type Foo = { x: number; }; type Bar = { y: string; };";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasType("Baz")).toBe(false);
-    });
+    const explorer = new Explorer(sourceCode);
+    const types = explorer.getTypes();
+    expect(Object.keys(types)).toHaveLength(1);
+    expect(types.Foo.matches("type Foo = { x: number; };")).toBe(true);
   });
 });
 
-describe("interfaces", () => {
-  describe("findInterfaces", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const interfaces = explorer.getInterfaces();
-      interfaces.forEach((i) => expect(i).toBeInstanceOf(Explorer));
-    });
+describe("getInterfaces", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode =
+      "interface Foo { x: number; } interface Bar { y: string; }";
+    const explorer = new Explorer(sourceCode);
+    const interfaces = explorer.getInterfaces();
+    Object.values(interfaces).forEach((i) =>
+      expect(i).toBeInstanceOf(Explorer),
+    );
+  });
 
-    it("returns one entry per interface", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const interfaces = explorer.getInterfaces();
-      expect(interfaces).toHaveLength(2);
-    });
+  it("returns one entry per interface", () => {
+    const sourceCode =
+      "interface Foo { x: number; } interface Bar { y: string; }";
+    const explorer = new Explorer(sourceCode);
+    const interfaces = explorer.getInterfaces();
+    expect(Object.keys(interfaces)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no interfaces", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const interfaces = explorer.getInterfaces();
-      expect(interfaces).toHaveLength(0);
-    });
+  it("returns an empty object if there are no interfaces", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const interfaces = explorer.getInterfaces();
+    expect(Object.keys(interfaces)).toHaveLength(0);
+  });
 
-    it("finds only interfaces in the current scope", () => {
-      const sourceCode = `
+  it("finds only interfaces in the current scope", () => {
+    const sourceCode = `
                     interface Foo { x: number; }
                     function bar() { interface Baz { y: string; } }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const interfaces = explorer.getInterfaces();
-      expect(interfaces).toHaveLength(1);
-      expect(interfaces[0].matches("interface Foo { x: number; }")).toBe(true);
-    });
-  });
-
-  describe("findInterface", () => {
-    it("returns an Explorer object for the specified interface name", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const interfaceFoo = explorer.findInterface("Foo");
-      expect(interfaceFoo).toBeInstanceOf(Explorer);
-      expect(interfaceFoo.matches("interface Foo { x: number; }")).toBe(true);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar).toBeInstanceOf(Explorer);
-      expect(interfaceBar.matches("interface Bar { y: string; }")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified interface name is not found", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const interfaceBaz = explorer.findInterface("Baz");
-      expect(interfaceBaz).toBeInstanceOf(Explorer);
-      expect(interfaceBaz.isEmpty()).toBe(true);
-    });
-  });
-
-  describe("hasInterface", () => {
-    it("returns true if an interface with the specified name exists", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasInterface("Foo")).toBe(true);
-      expect(explorer.hasInterface("Bar")).toBe(true);
-    });
-
-    it("returns false if an interface with the specified name does not exist", () => {
-      const sourceCode =
-        "interface Foo { x: number; } interface Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasInterface("Baz")).toBe(false);
-    });
+    const explorer = new Explorer(sourceCode);
+    const interfaces = explorer.getInterfaces();
+    expect(Object.keys(interfaces)).toHaveLength(1);
+    expect(interfaces.Foo.matches("interface Foo { x: number; }")).toBe(true);
   });
 });
 
-describe("classes", () => {
-  describe("findClasses", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const classes = explorer.getClasses();
-      classes.forEach((c) => expect(c).toBeInstanceOf(Explorer));
-    });
+describe("getClasses", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    Object.values(classes).forEach((c) => expect(c).toBeInstanceOf(Explorer));
+  });
 
-    it("returns one entry per class", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const classes = explorer.getClasses();
-      expect(classes).toHaveLength(2);
-    });
+  it("returns one entry per class", () => {
+    const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    expect(Object.keys(classes)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no classes", () => {
-      const sourceCode = "const a = 1; const b = 2;";
-      const explorer = new Explorer(sourceCode);
-      const classes = explorer.getClasses();
-      expect(classes).toHaveLength(0);
-    });
+  it("returns an empty object if there are no classes", () => {
+    const sourceCode = "const a = 1; const b = 2;";
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    expect(Object.keys(classes)).toHaveLength(0);
+  });
 
-    it("finds only classes in the current scope", () => {
-      const sourceCode = `
+  it("finds only classes in the current scope", () => {
+    const sourceCode = `
                     class Foo { x: number; }
                     function bar() { class Baz { y: string; } }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const classes = explorer.getClasses();
-      expect(classes).toHaveLength(1);
-      expect(classes[0].matches("class Foo { x: number; }")).toBe(true);
-    });
-  });
-
-  describe("findClass", () => {
-    it("returns an Explorer object for the specified class name", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const classFoo = explorer.findClass("Foo");
-      expect(classFoo).toBeInstanceOf(Explorer);
-      expect(classFoo.matches("class Foo { x: number; }")).toBe(true);
-
-      const classBar = explorer.findClass("Bar");
-      expect(classBar).toBeInstanceOf(Explorer);
-      expect(classBar.matches("class Bar { y: string; }")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified class name is not found", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      const classBaz = explorer.findClass("Baz");
-      expect(classBaz).toBeInstanceOf(Explorer);
-      expect(classBaz.isEmpty()).toBe(true);
-    });
-  });
-
-  describe("hasClass", () => {
-    it("returns true if a class with the specified name exists", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasClass("Foo")).toBe(true);
-      expect(explorer.hasClass("Bar")).toBe(true);
-    });
-
-    it("returns false if a class with the specified name does not exist", () => {
-      const sourceCode = "class Foo { x: number; } class Bar { y: string; }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasClass("Baz")).toBe(false);
-    });
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    expect(Object.keys(classes)).toHaveLength(1);
+    expect(classes.Foo.matches("class Foo { x: number; }")).toBe(true);
   });
 });
 
-describe("methods", () => {
-  describe("findMethods", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      const methods = explorer.findMethods();
-      methods.forEach((m) => expect(m).toBeInstanceOf(Explorer));
-    });
+describe("getMethods", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "class Foo { method1() {} method2() {} }";
+    const explorer = new Explorer(sourceCode);
+    const methods = explorer.getMethods();
+    Object.values(methods).forEach((m) => expect(m).toBeInstanceOf(Explorer));
+  });
 
-    it("returns one entry per method", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      const methods = explorer.findMethods();
-      expect(methods).toHaveLength(2);
-    });
+  it("returns one entry per method", () => {
+    const sourceCode = "class Foo { method1() {} method2() {} }";
+    const explorer = new Explorer(sourceCode);
+    const methods = explorer.getClasses().Foo.getMethods();
+    expect(Object.keys(methods)).toHaveLength(2);
+  });
 
-    it("returns an empty array if there are no methods", () => {
-      const sourceCode = "class Foo { }";
-      const explorer = new Explorer(sourceCode);
-      const methods = explorer.findMethods();
-      expect(methods).toHaveLength(0);
-    });
+  it("returns an empty object if there are no methods", () => {
+    const sourceCode = "class Foo { }";
+    const explorer = new Explorer(sourceCode);
+    const methods = explorer.getClasses().Foo.getMethods();
+    expect(Object.keys(methods)).toHaveLength(0);
+  });
 
-    it("does not find methods unless called on a class Explorer", () => {
-      const sourceCode = `
+  it("does not find methods unless called on a class Explorer", () => {
+    const sourceCode = `
 const x = 1;
 class Foo { method1() {} }
 `;
 
-      const explorer = new Explorer(sourceCode);
-      const methods = explorer.findMethods();
-      expect(methods).toHaveLength(0);
+    const explorer = new Explorer(sourceCode);
+    const methods = explorer.getMethods();
+    expect(Object.keys(methods)).toHaveLength(0);
 
-      const classExplorer = explorer.findClass("Foo");
-      const methodsInClass = classExplorer.findMethods();
-      expect(methodsInClass).toHaveLength(1);
-    });
+    const classExplorer = explorer.getClasses().Foo;
+    const methodsInClass = classExplorer.getMethods();
+    expect(Object.keys(methodsInClass)).toHaveLength(1);
+  });
 
-    it("only finds methods when called on a single class Explorer", () => {
-      const sourceCode = `
+  it("only finds methods when called on a single class Explorer", () => {
+    const sourceCode = `
 class Foo { method1() {} }
 class Bar { method2() {} }
 `;
-      const explorer = new Explorer(sourceCode);
-      const methods = explorer.findMethods();
-      expect(methods).toHaveLength(0);
-    });
+    const explorer = new Explorer(sourceCode);
+    const methods = explorer.getMethods();
+    expect(Object.keys(methods)).toHaveLength(0);
   });
+});
 
-  describe("findMethod", () => {
-    it("returns an Explorer object for the specified method name", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      const method1 = explorer.findMethod("method1");
-      expect(method1).toBeInstanceOf(Explorer);
-      expect(method1.matches("method1() {}")).toBe(true);
-
-      const method2 = explorer.findMethod("method2");
-      expect(method2).toBeInstanceOf(Explorer);
-      expect(method2.matches("method2() {}")).toBe(true);
-    });
-
-    it("returns an empty Explorer object if the specified method name is not found", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      const method3 = explorer.findMethod("method3");
-      expect(method3).toBeInstanceOf(Explorer);
-      expect(method3.isEmpty()).toBe(true);
-    });
-  });
-
-  describe("hasMethod", () => {
-    it("returns true if a method with the specified name exists", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasMethod("method1")).toBe(true);
-      expect(explorer.hasMethod("method2")).toBe(true);
-    });
-
-    it("returns false if a method with the specified name does not exist", () => {
-      const sourceCode = "class Foo { method1() {} method2() {} }";
-      const explorer = new Explorer(sourceCode);
-      expect(explorer.hasMethod("method3")).toBe(false);
-    });
-  });
-
-  describe("findClassProps", () => {
-    it("returns an array of Explorer objects", () => {
-      const sourceCode = `
+describe("findClassProps", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = `
                     class Rectangle {
                       constructor(height, width) {
                         this.height = height;
@@ -753,18 +448,18 @@ class Bar { method2() {} }
                     }
                     class Foo { prop1: number; prop2: string; }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const rectangleClass = explorer.findClass("Rectangle");
-      const rectangleProps = rectangleClass.findClassProps();
-      rectangleProps.forEach((p) => expect(p).toBeInstanceOf(Explorer));
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    Object.values(classes.Rectangle.getClassProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+    Object.values(classes.Foo.getClassProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
 
-      const fooClass = explorer.findClass("Foo");
-      const props = fooClass.findClassProps();
-      props.forEach((p) => expect(p).toBeInstanceOf(Explorer));
-    });
-
-    it("returns one entry per property", () => {
-      const sourceCode = `
+  it("returns one entry per property", () => {
+    const sourceCode = `
                     class Rectangle {
                       constructor(height, width) {
                         this.height = height;
@@ -773,41 +468,30 @@ class Bar { method2() {} }
                     }
                     class Foo { prop1: number; prop2: string; }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const rectangleClass = explorer.findClass("Rectangle");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const rectangleProps = rectangleClass.findClassProps();
-      // TODO: fix method to handleexpect(rectangleProps).toHaveLength(2);
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    // TODO: fix method to handle expect(Object.keys(classes.Rectangle.getClassProps())).toHaveLength(2);
+    expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(2);
+  });
 
-      const fooClass = explorer.findClass("Foo");
-      const props = fooClass.findClassProps();
-      expect(props).toHaveLength(2);
-    });
+  it("returns an empty object if there are no properties", () => {
+    const sourceCode = "class Foo { }";
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(0);
+  });
 
-    it("returns an empty array if there are no properties", () => {
-      const sourceCode = "class Foo { }";
-      const explorer = new Explorer(sourceCode);
-      const fooClass = explorer.findClass("Foo");
-      const props = fooClass.findClassProps();
-      expect(props).toHaveLength(0);
-    });
-
-    it("finds only properties in the current class", () => {
-      const sourceCode = `
+  it("finds only properties in the current class", () => {
+    const sourceCode = `
                       class Foo { prop1: number; }
                       class Bar { prop2: string; }
                   `;
-      const explorer = new Explorer(sourceCode);
-      const fooClass = explorer.findClass("Foo");
-      const props = fooClass.findClassProps();
-      expect(props).toHaveLength(1);
-      // TODO: fix matches to handle expect(props[0].matches("prop1: number;")).toBe(true);
-    });
+    const explorer = new Explorer(sourceCode);
+    const classes = explorer.getClasses();
+    expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(1);
+    // TODO: fix matches to handle
+    // expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(true);
   });
-
-  // TODO: describe("findClassProp", () => { });
-
-  // TODO:describe("hasClassProp", () => { });
 });
 
 describe("annotations", () => {
@@ -820,7 +504,7 @@ describe("annotations", () => {
                     class Baz { spam: "spam" = "spam"; }
                 `;
       const explorer = new Explorer(sourceCode);
-      const varAnnotation = explorer.findVariable("a").getAnnotation();
+      const varAnnotation = explorer.getVariables().a.getAnnotation();
       expect(varAnnotation).toBeInstanceOf(Explorer);
       // TODO: handles comparison of annotations in matches(). This doesn't ignore whitespace
       expect(varAnnotation.toString()).toBe("number");
@@ -836,13 +520,17 @@ describe("annotations", () => {
                     class Baz { spam: "spam" = "spam"; }
                 `;
       const explorer = new Explorer(sourceCode);
-      expect(explorer.findVariable("a").hasAnnotation("number")).toBe(true);
+      expect(explorer.getVariables().a.hasAnnotation("number")).toBe(true);
 
-      const parametersFoo = explorer.findFunction("foo").getParameters();
+      const parametersFoo = explorer.getFunctions().foo.getParameters();
       expect(parametersFoo[0].hasAnnotation("number")).toBe(true);
       expect(parametersFoo[1].hasAnnotation("string")).toBe(true);
 
-      // TODO: complete findTypeProp
+      const interfaceBar = explorer.getInterfaces().Bar;
+      expect(interfaceBar.getTypeProps().x.hasAnnotation("number")).toBe(true);
+
+      const classBaz = explorer.getClasses().Baz;
+      expect(classBaz.getClassProps().spam.hasAnnotation('"spam"')).toBe(true);
     });
 
     it("returns false if the annotation is different from the argument", () => {
@@ -853,11 +541,17 @@ describe("annotations", () => {
                     class Baz { spam: "spam" = "spam"; }
                 `;
       const explorer = new Explorer(sourceCode);
-      expect(explorer.findVariable("a").hasAnnotation("string")).toBe(false);
+      expect(explorer.getVariables().a.hasAnnotation("string")).toBe(false);
 
-      const parametersFoo = explorer.findFunction("foo").getParameters();
+      const parametersFoo = explorer.getFunctions().foo.getParameters();
       expect(parametersFoo[0].hasAnnotation("string")).toBe(false);
       expect(parametersFoo[1].hasAnnotation("number")).toBe(false);
+
+      const interfaceBar = explorer.getInterfaces().Bar;
+      expect(interfaceBar.getTypeProps().x.hasAnnotation("string")).toBe(false);
+
+      const classBaz = explorer.getClasses().Baz;
+      expect(classBaz.getClassProps().spam.hasAnnotation('"eggs"')).toBe(false);
     });
 
     it("returns false if the value is not annotated", () => {
@@ -866,232 +560,197 @@ describe("annotations", () => {
                     function foo(x, y) { }
                 `;
       const explorer = new Explorer(sourceCode);
-      expect(explorer.findVariable("a").hasAnnotation("number")).toBe(false);
+      expect(explorer.getVariables().a.hasAnnotation("number")).toBe(false);
 
-      const parametersFoo = explorer.findFunction("foo").getParameters();
+      const parametersFoo = explorer.getFunctions().foo.getParameters();
       expect(parametersFoo[0].hasAnnotation("number")).toBe(false);
       expect(parametersFoo[1].hasAnnotation("string")).toBe(false);
     });
   });
 });
 
-describe("type props", () => {
-  describe("hasTypeProp", () => {
-    it("returns true if the specified type prop exists", () => {
-      const sourceCode = `
+describe("getTypeProps", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = `
                     type Foo = { x: number; y: string; };
-                    interface Bar { x: number; y: string; }
-                    let baz: { x: number; y: string; };
+                    interface Bar { a: boolean; b: any; }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x")).toBe(true);
-      expect(typeFoo.hasTypeProp("y")).toBe(true);
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    Object.values(typeFoo.getTypeProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
 
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x")).toBe(true);
-      expect(interfaceBar.hasTypeProp("y")).toBe(true);
+    const interfaceBar = explorer.getInterfaces().Bar;
+    Object.values(interfaceBar.getTypeProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
 
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x")).toBe(true);
-      expect(varBaz.hasTypeProp("y")).toBe(true);
-    });
-
-    it("returns false if the specified type prop does not exist", () => {
-      const sourceCode = `
+  it("returns one entry per type prop", () => {
+    const sourceCode = `
                     type Foo = { x: number; y: string; };
-                    interface Bar { x: number; y: string; }
-                    let baz: { x: number; y: string; };
+                    interface Bar { a: boolean; b: any; }
                 `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("z")).toBe(false);
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(Object.keys(typeFoo.getTypeProps())).toHaveLength(2);
 
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("z")).toBe(false);
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(Object.keys(interfaceBar.getTypeProps())).toHaveLength(2);
+  });
 
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("z")).toBe(false);
-    });
+  it("returns an empty object if there are no type props", () => {
+    const sourceCode = `
+                    type Foo = { };
+                    interface Bar { }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(Object.keys(typeFoo.getTypeProps())).toHaveLength(0);
 
-    it("returns false if there are no type props", () => {
-      const sourceCode = `
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(Object.keys(interfaceBar.getTypeProps())).toHaveLength(0);
+  });
+});
+
+describe("hasTypeProps", () => {
+  it("returns false if there are no type props", () => {
+    const sourceCode = `
                     type Foo = { };
                     interface Bar { }
                     let baz: { };
                 `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x")).toBe(false);
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(typeFoo.hasTypeProps([{ name: "x" }])).toBe(false);
 
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x")).toBe(false);
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(interfaceBar.hasTypeProps([{ name: "y" }])).toBe(false);
 
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x")).toBe(false);
-    });
-
-    it("returns true if the specified prop has the specified type annotation", () => {
-      const sourceCode = `
-                    type Foo = { x: number; y: string; };
-                    interface Bar { x: number; y: string; }
-                    let baz: { x: number; y: string; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x", "number")).toBe(true);
-      expect(typeFoo.hasTypeProp("y", "string")).toBe(true);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x", "number")).toBe(true);
-      expect(interfaceBar.hasTypeProp("y", "string")).toBe(true);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x", "number")).toBe(true);
-      expect(varBaz.hasTypeProp("y", "string")).toBe(true);
-    });
-
-    it("returns false if the specified prop has a different type annotation", () => {
-      const sourceCode = `
-                    type Foo = { x: number; y: string; };
-                    interface Bar { x: number; y: string; }
-                    let baz: { x: number; y: string; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x", "string")).toBe(false);
-      expect(typeFoo.hasTypeProp("y", "number")).toBe(false);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x", "string")).toBe(false);
-      expect(interfaceBar.hasTypeProp("y", "number")).toBe(false);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x", "string")).toBe(false);
-      expect(varBaz.hasTypeProp("y", "number")).toBe(false);
-    });
-
-    it("returns true if the specified prop has the specified type annotation and is optional when isOptional is true", () => {
-      const sourceCode = `
-                    type Foo = { x?: number; y?: string; };
-                    interface Bar { x?: number; y?: string; }
-                    let baz: { x?: number; y?: string; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x", "number", true)).toBe(true);
-      expect(typeFoo.hasTypeProp("y", "string", true)).toBe(true);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x", "number", true)).toBe(true);
-      expect(interfaceBar.hasTypeProp("y", "string", true)).toBe(true);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x", "number", true)).toBe(true);
-      expect(varBaz.hasTypeProp("y", "string", true)).toBe(true);
-    });
-
-    it("returns false if the specified prop is optional but isOptional is false", () => {
-      const sourceCode = `
-                    type Foo = { x?: number; y?: string; };
-                    interface Bar { x?: number; y?: string; }
-                    let baz: { x?: number; y?: string; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x", "number", false)).toBe(false);
-      expect(typeFoo.hasTypeProp("y", "string", false)).toBe(false);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x", "number", false)).toBe(false);
-      expect(interfaceBar.hasTypeProp("y", "string", false)).toBe(false);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x", "number", false)).toBe(false);
-      expect(varBaz.hasTypeProp("y", "string", false)).toBe(false);
-    });
-
-    it("ignores the type annotation when the type argument is undefined", () => {
-      const sourceCode = `
-                    type Foo = { x?: number; y: string; };
-                    interface Bar { x: number; y?: string; }
-                    let baz: { x?: number; y: string; };
-                `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(typeFoo.hasTypeProp("x", undefined, true)).toBe(true);
-      expect(typeFoo.hasTypeProp("y", undefined, true)).toBe(false);
-      expect(typeFoo.hasTypeProp("y", undefined, false)).toBe(true);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(interfaceBar.hasTypeProp("x", undefined, false)).toBe(true);
-      expect(interfaceBar.hasTypeProp("x", undefined, true)).toBe(false);
-      expect(interfaceBar.hasTypeProp("y", undefined, true)).toBe(true);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProp("x", undefined, true)).toBe(true);
-      expect(varBaz.hasTypeProp("y", undefined, false)).toBe(true);
-      expect(varBaz.hasTypeProp("y", undefined, true)).toBe(false);
-    });
+    const varBaz = explorer.getVariables().baz;
+    expect(varBaz.hasTypeProps([{ name: "z" }])).toBe(false);
   });
 
-  describe("hasTypeProps", () => {
-    it("returns true if the specified type props exist", () => {
-      const sourceCode = `
+  it("returns false if the argument is an empty array", () => {
+    const sourceCode = `
+                    type Foo = { };
+                    interface Bar { y: string; }
+                    let baz: { z: boolean; };
+                `;
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(typeFoo.hasTypeProps([])).toBe(false);
+
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(interfaceBar.hasTypeProps([])).toBe(false);
+
+    const varBaz = explorer.getVariables().baz;
+    expect(varBaz.hasTypeProps([])).toBe(false);
+  });
+
+  it("returns true if the specified type prop(s) exist", () => {
+    const sourceCode = `
                     type Foo = { x: number; y: string; z: boolean; };
                     interface Bar { x: number; y?: string; }
                     let baz: { x?: number; y: string; };
                 `;
-      const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(
-        typeFoo.hasTypeProps([
-          { name: "x", type: "number" },
-          { name: "y", type: "string" },
-        ]),
-      ).toBe(true);
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(typeFoo.hasTypeProps({ name: "x" })).toBe(true);
+    expect(
+      typeFoo.hasTypeProps([
+        { name: "x", type: "number" },
+        { name: "y", type: "string" },
+      ]),
+    ).toBe(true);
 
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(
-        interfaceBar.hasTypeProps([
-          { name: "x", type: "number" },
-          { name: "y", type: "string", isOptional: true },
-        ]),
-      ).toBe(true);
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(interfaceBar.hasTypeProps({ name: "x" })).toBe(true);
+    expect(
+      interfaceBar.hasTypeProps([
+        { name: "x", type: "number" },
+        { name: "y", type: "string", isOptional: true },
+      ]),
+    ).toBe(true);
 
-      const varBaz = explorer.findVariable("baz");
-      expect(
-        varBaz.hasTypeProps([{ name: "x", isOptional: true }, { name: "y" }]),
-      ).toBe(true);
-    });
+    const varBaz = explorer.getVariables().baz;
+    expect(varBaz.hasTypeProps({ name: "y" })).toBe(true);
+    expect(
+      varBaz.hasTypeProps([{ name: "x", isOptional: true }, { name: "y" }]),
+    ).toBe(true);
+  });
 
-    it("returns false if any of the specified type props do not exist", () => {
-      const sourceCode = `
+  it("returns false if any of the specified type prop(s) does not exist", () => {
+    const sourceCode = `
                     type Foo = { x: number; y: string; z: boolean; };
                     interface Bar { x: number; y?: string; }
                     let baz: { x?: number; y: string; };
                 `;
+    const explorer = new Explorer(sourceCode);
+    const typeFoo = explorer.getTypes().Foo;
+    expect(typeFoo.hasTypeProps({ name: "a" })).toBe(false);
+    expect(
+      typeFoo.hasTypeProps([
+        { name: "x", type: "number" },
+        { name: "a", type: "string" },
+      ]),
+    ).toBe(false);
+
+    const interfaceBar = explorer.getInterfaces().Bar;
+    expect(interfaceBar.hasTypeProps({ name: "a" })).toBe(false);
+    expect(
+      interfaceBar.hasTypeProps([
+        { name: "x", type: "number" },
+        { name: "a", type: "string", isOptional: true },
+      ]),
+    ).toBe(false);
+
+    const varBaz = explorer.getVariables().baz;
+    expect(varBaz.hasTypeProps({ name: "a" })).toBe(false);
+    expect(varBaz.hasTypeProps([{ name: "x", isOptional: false }])).toBe(false);
+  });
+});
+
+describe("querying statements", () => {
+  describe("getVariables in different scopes", () => {
+    it("finds variables in SourceFile scope", () => {
+      const sourceCode = `
+        const a = 1;
+        let b = 2;
+      `;
       const explorer = new Explorer(sourceCode);
-      const typeFoo = explorer.findType("Foo");
-      expect(
-        typeFoo.hasTypeProps([
-          { name: "x", type: "number" },
-          { name: "a", type: "string" },
-        ]),
-      ).toBe(false);
-
-      const interfaceBar = explorer.findInterface("Bar");
-      expect(
-        interfaceBar.hasTypeProps([
-          { name: "x", type: "number" },
-          { name: "a", type: "string", isOptional: true },
-        ]),
-      ).toBe(false);
-
-      const varBaz = explorer.findVariable("baz");
-      expect(varBaz.hasTypeProps([{ name: "x", isOptional: false }])).toBe(
-        false,
-      );
+      const variables = explorer.getVariables();
+      expect(Object.keys(variables)).toHaveLength(2);
+      expect(variables.a.matches("const a = 1;")).toBe(true);
+      expect(variables.b.matches("let b = 2;")).toBe(true);
     });
+
+    it("finds variables in Block scope", () => {
+      const sourceCode = `
+        function foo() {
+          const x = 10;
+          let y = 20;
+        }
+        const bar = () => {
+          const z = 30;
+        };
+      `;
+      const explorer = new Explorer(sourceCode);
+      const functions = explorer.getFunctions(true);
+      const fooVars = functions.foo.getVariables();
+
+      expect(Object.keys(fooVars)).toHaveLength(2);
+      expect(fooVars.x.matches("const x = 10;")).toBe(true);
+      expect(fooVars.y.matches("let y = 20;")).toBe(true);
+
+      const barVars = functions.bar.getVariables();
+      expect(Object.keys(barVars)).toHaveLength(1);
+      expect(barVars.z.matches("const z = 30;")).toBe(true);
+    });
+
+    it.todo("finds variables in ModuleBlock scope", () => {});
+
+    it.todo("finds variables in CaseOrDefaultClause scope", () => {});
   });
 });

@@ -16,8 +16,9 @@ import {
   MethodDeclaration,
   PropertyDeclaration,
   TypeElement,
-  NodeArray,
+  ClassElement,
   isSourceFile,
+  isBlock,
   isVariableStatement,
   isParameter,
   isPropertyDeclaration,
@@ -31,7 +32,16 @@ import {
   isIdentifier,
   isPropertySignature,
   isTypeLiteralNode,
+  isModuleBlock,
+  isCaseOrDefaultClause,
+  Statement,
 } from "typescript";
+
+type TypeProp = {
+  name: string;
+  type?: string;
+  isOptional?: boolean;
+};
 
 function createSource(source: string): SourceFile {
   return createSourceFile(
@@ -41,6 +51,79 @@ function createSource(source: string): SourceFile {
     true,
     ScriptKind.TS,
   );
+}
+
+function findMembers(tree: Node): ReadonlyArray<TypeElement | ClassElement> {
+  // Handle VariableStatement with TypeLiteral annotation
+  if (isVariableStatement(tree)) {
+    const declaration = tree.declarationList.declarations[0];
+    return declaration.type && isTypeLiteralNode(declaration.type)
+      ? declaration.type.members
+      : [];
+  }
+
+  // Handle InterfaceDeclaration, TypeLiteralNode and ClassDeclaration directly
+  if (
+    isInterfaceDeclaration(tree) ||
+    isTypeLiteralNode(tree) ||
+    isClassDeclaration(tree)
+  ) {
+    return tree.members;
+  }
+
+  // Handle TypeAliasDeclaration with TypeLiteral
+  if (isTypeAliasDeclaration(tree)) {
+    return isTypeLiteralNode(tree.type) ? tree.type.members : [];
+  }
+
+  // Handle PropertySignature, PropertyDeclaration and Parameter: if it has a type literal annotation, return its members
+  if (
+    isPropertySignature(tree) ||
+    isPropertyDeclaration(tree) ||
+    isParameter(tree)
+  ) {
+    return tree.type && isTypeLiteralNode(tree.type) ? tree.type.members : [];
+  }
+
+  return [];
+}
+
+function findStatements(tree: Node): ReadonlyArray<Statement> {
+  // Handle SourceFile, Block, ModuleBlock, and CaseOrDefaultClause directly
+  if (
+    isSourceFile(tree) ||
+    isBlock(tree) ||
+    isModuleBlock(tree) ||
+    isCaseOrDefaultClause(tree)
+  ) {
+    return tree.statements;
+  }
+
+  return [];
+}
+
+// Retrieves the body of a function, method, or other construct that has a body
+function getBody(tree: Node): Node | undefined {
+  // Handle FunctionDeclaration, MethodDeclaration, FunctionExpression, ArrowFunction
+  if (
+    isFunctionDeclaration(tree) ||
+    isMethodDeclaration(tree) ||
+    isFunctionExpression(tree) ||
+    isArrowFunction(tree)
+  ) {
+    return tree.body;
+  }
+
+  // Handle VariableStatement with function initializer
+  if (isVariableStatement(tree)) {
+    const { initializer } = tree.declarationList.declarations[0];
+    if (
+      initializer &&
+      (isArrowFunction(initializer) || isFunctionExpression(initializer))
+    ) {
+      return initializer.body;
+    }
+  }
 }
 
 function createTree(
@@ -73,9 +156,7 @@ function createTree(
   }
 
   sourceFile = createSource(code);
-  return sourceFile.statements.length === 1
-    ? sourceFile.statements[0]
-    : sourceFile;
+  return sourceFile;
 }
 
 const removeSemicolons = (nodes: readonly Node[]): Node[] =>
@@ -87,13 +168,29 @@ const areNodesEquivalent = (
 ): boolean => {
   if (node1 === null && node2 === null) return true;
   if (node1 === null || node2 === null) return false;
+
+  // Unwrap single-statement SourceFiles to their statement for comparison
+  const unwrap = (node: Node): Node =>
+    isSourceFile(node) && node.statements.length === 1
+      ? node.statements[0]
+      : node;
+
+  node1 = unwrap(node1);
+  node2 = unwrap(node2);
+
   if (node1.kind !== node2.kind) return false;
 
   const children1 = removeSemicolons(node1.getChildren());
   const children2 = removeSemicolons(node2.getChildren());
 
   if (children1.length === 0 && children2.length === 0) {
-    // Leaf node - compare text content
+    // Leaf node - compare text content with normalized quotes
+    if ("text" in node1 && "text" in node2) {
+      // If the `text` property exists, it is the raw, unquoted value. e.g. if
+      // getText() returns '"a-string"', the `text` property will be 'a-string'.
+      return node1.text === node2.text;
+    }
+
     return node1.getText() === node2.getText();
   }
 
@@ -147,51 +244,38 @@ class Explorer {
     return areNodesEquivalent(this.tree, otherExplorer.tree);
   }
 
-  // Finds all nodes of a specific kind in the tree
+  // Finds all nodes of a specific kind in the current scope.
   getAll(kind: SyntaxKind): Explorer[] {
     if (!this.tree) {
       return [];
     }
 
-    const nodes: Explorer[] = [];
+    const body = getBody(this.tree);
+    // If the body exists, it must be the scope, otherwise we search the current
+    // tree (e.g. for class members)
+    const scope = body ?? this.tree;
 
-    // Check if the tree is a SourceFile or a single node
-    if (isSourceFile(this.tree)) {
-      // Iterate through the statements of the SourceFile
-      this.tree.statements.forEach((statement) => {
-        if (statement.kind === kind) {
-          nodes.push(new Explorer(statement));
-        }
-      });
-    }
+    const members = findMembers(scope);
+    const statements = findStatements(scope);
 
-    // If the root is a single node, check if it matches the kind
-    if (this.tree?.kind === kind) {
-      nodes.push(new Explorer(this.tree));
-    }
+    const explorers = [...members, ...statements]
+      .filter((node) => node.kind === kind)
+      .map((node) => new Explorer(node));
 
-    return nodes;
+    return explorers;
   }
 
   // Finds all variable statements
-  getVariables(): Explorer[] {
-    return this.getAll(SyntaxKind.VariableStatement);
-  }
-
-  // Finds a variable by name, excluding function declarations
-  findVariable(name: string): Explorer {
-    const variables = this.getVariables();
-    const cb = (v: Explorer) =>
-      (
-        (v.tree as VariableStatement).declarationList.declarations[0]
-          .name as Identifier
-      ).text === name;
-    return variables.find(cb) ?? new Explorer();
-  }
-
-  // Checks if a variable with the given name exists in the current tree
-  hasVariable(name: string): boolean {
-    return !this.findVariable(name).isEmpty();
+  getVariables(): { [key: string]: Explorer } {
+    const variables = this.getAll(SyntaxKind.VariableStatement);
+    const result: { [key: string]: Explorer } = {};
+    variables.forEach((variable) => {
+      const declaration = (variable.tree as VariableStatement).declarationList
+        .declarations[0];
+      const name = (declaration.name as Identifier).text;
+      result[name] = variable;
+    });
+    return result;
   }
 
   // Retrieves the type annotation of the current node if it exists, otherwise returns an empty Explorer
@@ -211,10 +295,12 @@ class Explorer {
     }
 
     // Handle Parameter (function/method parameters), PropertyDeclaration (class
-    // properties), and TypeAliasDeclaration (the type itself)
+    // properties), PropertySignature (interface/type literal properties), and
+    // TypeAliasDeclaration (the type itself)
     if (
       isParameter(node) ||
       isPropertyDeclaration(node) ||
+      isPropertySignature(node) ||
       isTypeAliasDeclaration(node)
     ) {
       if (node.type) {
@@ -242,47 +328,38 @@ class Explorer {
   }
 
   // Finds all functions in the current tree. If withVariables is true, it includes function expressions and arrow functions assigned to variables
-  getFunctions(withVariables: boolean = false): Explorer[] {
+  getFunctions(withVariables: boolean = false): { [key: string]: Explorer } {
+    const result: { [key: string]: Explorer } = {};
     const functionDeclarations = this.getAll(SyntaxKind.FunctionDeclaration);
-    if (!withVariables) {
-      return functionDeclarations;
+    functionDeclarations.forEach((func) => {
+      const name = (func.tree as FunctionDeclaration).name?.text;
+      if (name) {
+        result[name] = func;
+      }
+    });
+
+    if (withVariables) {
+      const functionVariables = this.getAll(
+        SyntaxKind.VariableStatement,
+      ).filter((v) => {
+        const declaration = (v.tree as VariableStatement).declarationList
+          .declarations[0];
+        if (!declaration.initializer) return false;
+
+        return (
+          isArrowFunction(declaration.initializer) ||
+          isFunctionExpression(declaration.initializer)
+        );
+      });
+      functionVariables.forEach((v) => {
+        const declaration = (v.tree as VariableStatement).declarationList
+          .declarations[0];
+        const name = (declaration.name as Identifier).text;
+        result[name] = v;
+      });
     }
 
-    const variableStatements = this.getAll(SyntaxKind.VariableStatement);
-    const functionVariables = variableStatements.filter((v) => {
-      const declaration = (v.tree as VariableStatement).declarationList
-        .declarations[0];
-      if (!declaration.initializer) return false;
-
-      return (
-        isArrowFunction(declaration.initializer) ||
-        isFunctionExpression(declaration.initializer)
-      );
-    });
-    return [...functionDeclarations, ...functionVariables];
-  }
-
-  // Finds a function by name, checking function declarations, variable statements with functions, and method declarations
-  // If withVariables is true, it includes function expressions and arrow functions assigned to variables
-  findFunction(name: string, withVariables: boolean = false): Explorer {
-    const functions = this.getFunctions(withVariables);
-    const cb = (f: Explorer) => {
-      if (isFunctionDeclaration(f.tree!)) {
-        return f.tree.name?.text === name;
-      }
-
-      if (isVariableStatement(f.tree!)) {
-        const declaration = f.tree.declarationList.declarations[0];
-        return (declaration.name as Identifier).text === name;
-      }
-    };
-
-    return functions.find(cb) ?? new Explorer();
-  }
-
-  // Checks if a function with the given name exists in the current tree
-  hasFunction(name: string, withVariables: boolean = false): boolean {
-    return !this.findFunction(name, withVariables).isEmpty();
+    return result;
   }
 
   // Checks if a function (function declaration, method, arrow function, or function expression) has a specific return type annotation
@@ -356,111 +433,84 @@ class Explorer {
   }
 
   // Finds all type alias declarations in the current tree
-  getTypes(): Explorer[] {
-    return this.getAll(SyntaxKind.TypeAliasDeclaration);
-  }
-
-  // Finds a type alias declaration by name
-  findType(name: string): Explorer {
-    const types = this.getTypes();
-    const cb = (t: Explorer) =>
-      (t.tree as TypeAliasDeclaration).name.text === name;
-    return types.find(cb) ?? new Explorer();
-  }
-
-  // Checks if a type alias declaration with the given name exists in the current tree
-  hasType(name: string): boolean {
-    return !this.findType(name).isEmpty();
+  getTypes(): { [key: string]: Explorer } {
+    const typeDeclarations = this.getAll(SyntaxKind.TypeAliasDeclaration);
+    const result: { [key: string]: Explorer } = {};
+    typeDeclarations.forEach((t) => {
+      const name = (t.tree as TypeAliasDeclaration).name.text;
+      result[name] = t;
+    });
+    return result;
   }
 
   // Finds all interface declarations in the current tree
-  getInterfaces(): Explorer[] {
-    return this.getAll(SyntaxKind.InterfaceDeclaration);
-  }
-
-  // Finds an interface declaration by name
-  findInterface(name: string): Explorer {
-    const interfaces = this.getInterfaces();
-    const cb = (i: Explorer) =>
-      (i.tree as InterfaceDeclaration).name.text === name;
-    return interfaces.find(cb) ?? new Explorer();
-  }
-
-  // Checks if an interface declaration with the given name exists in the current tree
-  hasInterface(name: string): boolean {
-    return !this.findInterface(name).isEmpty();
+  getInterfaces(): { [key: string]: Explorer } {
+    const interfaceDeclarations = this.getAll(SyntaxKind.InterfaceDeclaration);
+    const result: { [key: string]: Explorer } = {};
+    interfaceDeclarations.forEach((i) => {
+      const name = (i.tree as InterfaceDeclaration).name.text;
+      result[name] = i;
+    });
+    return result;
   }
 
   // Finds all class declarations in the current tree
-  getClasses(): Explorer[] {
-    return this.getAll(SyntaxKind.ClassDeclaration);
-  }
-
-  // Finds a class declaration by name
-  findClass(name: string): Explorer {
-    const classes = this.getClasses();
-    const cb = (c: Explorer) =>
-      (c.tree as ClassDeclaration).name?.text === name;
-    return classes.find(cb) ?? new Explorer();
-  }
-
-  // Checks if a class declaration with the given name exists in the current tree
-  hasClass(name: string): boolean {
-    return !this.findClass(name).isEmpty();
+  getClasses(): { [key: string]: Explorer } {
+    const classDeclarations = this.getAll(SyntaxKind.ClassDeclaration);
+    const result: { [key: string]: Explorer } = {};
+    classDeclarations.forEach((c) => {
+      const name = (c.tree as ClassDeclaration).name?.text;
+      if (name) {
+        result[name] = c;
+      }
+    });
+    return result;
   }
 
   // Finds all method declarations within a class
-  findMethods(): Explorer[] {
+  getMethods(): { [key: string]: Explorer } {
+    const result: { [key: string]: Explorer } = {};
     if (this.tree && isClassDeclaration(this.tree)) {
-      return this.tree.members
-        .filter((member) => isMethodDeclaration(member))
-        .map((method) => new Explorer(method));
+      this.getAll(SyntaxKind.MethodDeclaration).forEach((member) => {
+        const method = member.tree as MethodDeclaration;
+        const methodName = (method.name as Identifier).text;
+        result[methodName] = member;
+      });
     }
 
-    return [];
-  }
-
-  // Finds a method declaration by name within a class
-  findMethod(name: string): Explorer {
-    const methods = this.findMethods();
-    const cb = (m: Explorer) =>
-      ((m.tree as MethodDeclaration).name as Identifier).text === name;
-    return methods.find(cb) ?? new Explorer();
-  }
-
-  // Checks if a method declaration with the given name exists in the current tree
-  hasMethod(name: string): boolean {
-    return !this.findMethod(name).isEmpty();
+    return result;
   }
 
   // Finds all properties in a class
-  findClassProps(): Explorer[] {
+  getClassProps(): { [key: string]: Explorer } {
     if (!this.tree || !isClassDeclaration(this.tree)) {
-      return [];
+      return {};
     }
 
-    const properties: Explorer[] = [];
+    const result: { [key: string]: Explorer } = {};
 
-    this.tree.members.forEach((member) => {
-      if (isPropertyDeclaration(member)) {
-        properties.push(new Explorer(member));
-      }
+    this.getAll(SyntaxKind.PropertyDeclaration).forEach((property) => {
+      const prop = property.tree as PropertyDeclaration;
+      const name = (prop.name as Identifier).text;
+      result[name] = new Explorer(prop);
     });
 
-    return properties;
+    return result;
   }
 
-  // Finds a specific property in a class by name
-  findClassProp(name: string): Explorer {
-    const properties = this.findClassProps();
-    const cb = (p: Explorer) =>
-      ((p.tree as PropertyDeclaration).name as Identifier).text === name;
-    return properties.find(cb) ?? new Explorer();
-  }
+  getTypeProps(): { [key: string]: Explorer } {
+    if (!this.tree) {
+      return {};
+    }
 
-  // Checks if a class has a property with the given name
-  hasClassProp(name: string): boolean {
-    return !this.findClassProp(name).isEmpty();
+    const result: { [key: string]: Explorer } = {};
+    this.getAll(SyntaxKind.PropertySignature).forEach((member) => {
+      const prop = member.tree as PropertyDeclaration;
+      const name = (prop.name as Identifier).text;
+      result[name] = member;
+    });
+
+    return result;
   }
 
   // Checks if a property with the given name (and optionally type and optionality) exists in the current tree, which can be an interface, type literal, or variable statement with a type literal annotation
@@ -469,45 +519,13 @@ class Explorer {
       return false;
     }
 
-    function findMembers(tree: Node): NodeArray<TypeElement> | undefined {
-      // Handle VariableStatement with TypeLiteral annotation
-      if (isVariableStatement(tree)) {
-        const declaration = tree.declarationList.declarations[0];
-        return declaration.type && isTypeLiteralNode(declaration.type)
-          ? declaration.type.members
-          : undefined;
-      }
-
-      // Handle InterfaceDeclaration
-      if (isInterfaceDeclaration(tree)) {
-        return tree.members;
-      }
-
-      // Handle TypeAliasDeclaration with TypeLiteral
-      if (isTypeAliasDeclaration(tree)) {
-        return isTypeLiteralNode(tree.type) ? tree.type.members : undefined;
-      }
-
-      // Handle TypeLiteral directly
-      if (isTypeLiteralNode(tree)) {
-        return tree.members;
-      }
-
-      // Handle Parameter (for destructured parameters)
-      if (isParameter(tree)) {
-        return tree.type && isTypeLiteralNode(tree.type)
-          ? tree.type.members
-          : undefined;
-      }
-    }
-
     const members = findMembers(this.tree);
 
     if (!members) {
       return false;
     }
 
-    const member = Array.from(members).find((m) => {
+    const member = members.find((m) => {
       if (m.name && isIdentifier(m.name)) {
         return m.name.text === name;
       }
@@ -548,13 +566,66 @@ class Explorer {
     return true;
   }
 
-  // Checks if all specified properties exist in the current tree, which can be an interface, type literal, or variable statement with a type literal annotation
-  hasTypeProps(
-    props: { name: string; type?: string; isOptional?: boolean }[],
-  ): boolean {
-    return props.every((prop) =>
-      this.hasTypeProp(prop.name, prop.type, prop.isOptional),
-    );
+  // Checks if all specified properties exist in the current tree, which can be an interface, type alias, type literal, or variable statement with a type literal annotation
+  hasTypeProps(props: TypeProp | TypeProp[]): boolean {
+    if (!this.tree) {
+      return false;
+    }
+
+    if (
+      !isInterfaceDeclaration(this.tree) &&
+      !isTypeLiteralNode(this.tree) &&
+      !isTypeAliasDeclaration(this.tree) &&
+      !isVariableStatement(this.tree)
+    ) {
+      return false;
+    }
+
+    if (!Array.isArray(props)) {
+      props = [props];
+    }
+
+    const members = this.getTypeProps();
+    if (Object.keys(members).length === 0 || props.length === 0) {
+      return false;
+    }
+
+    function hasProp(prop: TypeProp): boolean {
+      const member = members[prop.name];
+      if (!member) {
+        return false;
+      }
+
+      // Check type if specified
+      if (prop.type !== undefined) {
+        if (!member.tree || !isPropertySignature(member.tree)) {
+          return false;
+        }
+
+        const memberType = new Explorer(member.tree.type);
+        if (
+          !memberType.matches(new Explorer(prop.type, SyntaxKind.TypeReference))
+        ) {
+          return false;
+        }
+      }
+
+      // Check optionality if specified
+      if (prop.isOptional !== undefined) {
+        if (!member.tree || !isPropertySignature(member.tree)) {
+          return false;
+        }
+
+        const memberIsOptional = member.tree.questionToken !== undefined;
+        if (memberIsOptional !== prop.isOptional) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    return props.every(hasProp);
   }
 }
 
