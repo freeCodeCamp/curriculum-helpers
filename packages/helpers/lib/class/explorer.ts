@@ -170,21 +170,18 @@ const areNodesEquivalent = (
   if (node1 === null || node2 === null) return false;
 
   // Unwrap single-statement SourceFiles to their statement for comparison
-  let current1 = node1;
-  let current2 = node2;
+  const unwrap = (node: Node): Node =>
+    isSourceFile(node) && node.statements.length === 1
+      ? node.statements[0]
+      : node;
 
-  if (isSourceFile(current1) && current1.statements.length === 1) {
-    current1 = current1.statements[0];
-  }
+  node1 = unwrap(node1);
+  node2 = unwrap(node2);
 
-  if (isSourceFile(current2) && current2.statements.length === 1) {
-    current2 = current2.statements[0];
-  }
+  if (node1.kind !== node2.kind) return false;
 
-  if (current1.kind !== current2.kind) return false;
-
-  const children1 = removeSemicolons(current1.getChildren());
-  const children2 = removeSemicolons(current2.getChildren());
+  const children1 = removeSemicolons(node1.getChildren());
+  const children2 = removeSemicolons(node2.getChildren());
 
   if (children1.length === 0 && children2.length === 0) {
     // Leaf node - compare text content with normalized quotes
@@ -528,7 +525,7 @@ class Explorer {
       return false;
     }
 
-    const member = Array.from(members).find((m) => {
+    const member = members.find((m) => {
       if (m.name && isIdentifier(m.name)) {
         return m.name.text === name;
       }
@@ -628,7 +625,7 @@ class Explorer {
       return true;
     }
 
-    return props.every((prop) => hasProp(prop));
+    return props.every(hasProp);
   }
 }
 
