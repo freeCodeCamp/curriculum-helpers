@@ -732,13 +732,21 @@ describe("querying statements", () => {
           const x = 10;
           let y = 20;
         }
+        const bar = () => {
+          const z = 30;
+        };
       `;
       const explorer = new Explorer(sourceCode);
-      const variables = explorer.getFunctions().foo.getVariables();
+      const functions = explorer.getFunctions(true);
+      const fooVars = functions.foo.getVariables();
 
-      expect(Object.keys(variables)).toHaveLength(2);
-      expect(variables.x.matches("const x = 10;")).toBe(true);
-      expect(variables.y.matches("let y = 20;")).toBe(true);
+      expect(Object.keys(fooVars)).toHaveLength(2);
+      expect(fooVars.x.matches("const x = 10;")).toBe(true);
+      expect(fooVars.y.matches("let y = 20;")).toBe(true);
+
+      const barVars = functions.bar.getVariables();
+      expect(Object.keys(barVars)).toHaveLength(1);
+      expect(barVars.z.matches("const z = 30;")).toBe(true);
     });
 
     it.todo("finds variables in ModuleBlock scope", () => {});
