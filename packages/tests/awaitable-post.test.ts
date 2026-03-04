@@ -20,23 +20,6 @@ describe("post", () => {
     expect(result).toEqual(postData);
   });
 
-  it("should strip functions from objects so that they are cloneable", async () => {
-    const prePostData = {
-      type: "LOG",
-      data: { message: "Hello" },
-      callback: () => console.log("Sent!"), // Function included
-    };
-
-    const postPostData = {
-      type: "LOG",
-      data: { message: "Hello" },
-    };
-
-    const mockWorker = new MockWorker();
-    const result = await post({ messenger: mockWorker, message: prePostData });
-    expect(result).toEqual(postPostData);
-  });
-
   it("should handle multiple messages", async () => {
     const mockWorker = new MockWorker();
     const postData1 = { id: 1, title: "First Post" };
