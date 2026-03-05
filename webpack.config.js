@@ -5,7 +5,7 @@ const formatExceptionBaseConfig = {
   entry: {
     "format-exception": path.resolve(
       __dirname,
-      "packages/helpers/python/index.ts",
+      "packages/helpers/python/index.js",
     ),
   },
   module: {
@@ -15,12 +15,6 @@ const formatExceptionBaseConfig = {
         type: "asset/source",
       },
     ],
-  },
-  resolve: {
-    extensions: [".ts", ".js"],
-    extensionAlias: {
-      ".ts": [".js", ".ts"],
-    },
   },
 };
 
