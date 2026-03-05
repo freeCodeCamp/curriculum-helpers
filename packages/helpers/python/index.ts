@@ -1,3 +1,3 @@
 import formatExceptionCode from "./format_exception.py";
 
-export default formatExceptionCode;
+export const formatException = formatExceptionCode;
