@@ -1,9 +1,12 @@
 const path = require("path");
 const webpack = require("webpack");
 
-const baseConfig = {
+const formatExceptionBaseConfig = {
   entry: {
-    index: path.resolve(__dirname, "packages/helpers/lib/index.ts"),
+    "format-exception": path.resolve(
+      __dirname,
+      "packages/helpers/python/index.ts",
+    ),
   },
   module: {
     rules: [
@@ -29,11 +32,11 @@ const baseConfig = {
   },
 };
 
-const nodeConfig = (env = {}) => {
+const formatExceptionNodeConfig = (env = {}) => {
   const isDev = env.development;
   return {
-    ...baseConfig,
-    name: "helpers-commonjs",
+    ...formatExceptionBaseConfig,
+    name: "format-exception-commonjs",
     mode: isDev ? "development" : "production",
     devtool: !isDev ? "source-map" : "inline-source-map",
     target: "node",
@@ -41,17 +44,17 @@ const nodeConfig = (env = {}) => {
       library: {
         type: "commonjs",
       },
-      filename: "index.cjs",
+      filename: "[name].cjs",
       path: path.resolve(__dirname, "dist/curriculum-helpers"),
     },
   };
 };
 
-const browserConfig = (env = {}) => {
+const formatExceptionBrowserConfig = (env = {}) => {
   const isDev = env.development;
   return {
-    ...baseConfig,
-    name: "helpers-browser",
+    ...formatExceptionBaseConfig,
+    name: "format-exception-browser",
     mode: isDev ? "development" : "production",
     devtool: !isDev ? "source-map" : "inline-source-map",
     target: "web",
@@ -62,7 +65,7 @@ const browserConfig = (env = {}) => {
       library: {
         type: "module",
       },
-      filename: "index.mjs",
+      filename: "[name].mjs",
       path: path.resolve(__dirname, "dist/curriculum-helpers"),
     },
   };
@@ -178,4 +181,8 @@ const testRunnerConfigs = entrypointSources.map(({ name, path, isWorker }) => {
   return testRunnerConfig(entry, name, isWorker);
 });
 
-module.exports = [nodeConfig, browserConfig, ...testRunnerConfigs];
+module.exports = [
+  formatExceptionNodeConfig,
+  formatExceptionBrowserConfig,
+  ...testRunnerConfigs,
+];

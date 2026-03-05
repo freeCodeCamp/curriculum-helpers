@@ -52,6 +52,12 @@ jobs:
       # Checkout the Repo
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
+      # Just to run the script
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        with:
+          version: 10
+
       # Install Python
       - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -59,4 +65,4 @@ jobs:
           python-version: 3.x
 
       - name: Run Tests
-        run: python ./packages/helpers/python/py_helpers.test.py
+        run: pnpm run test:python

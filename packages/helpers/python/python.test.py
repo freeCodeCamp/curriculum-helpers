@@ -1,7 +1,8 @@
 import unittest
 import ast
 import sys
-from py_helpers import Node, drop_until, build_message, format_exception
+from py_helpers import Node
+from format_exception import drop_until, build_message, format_exception
 
 
 class TestConstructor(unittest.TestCase):
