@@ -59,4 +59,4 @@ jobs:
           python-version: 3.x
 
       - name: Run Tests
-        run: python ./packages/helpers/python/py_helpers.test.py
+        run: pnpm run test:python
