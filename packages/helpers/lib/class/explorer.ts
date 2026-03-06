@@ -10,6 +10,7 @@ import {
   SyntaxKind,
   Identifier,
   ArrowFunction,
+  isArrayLiteralExpression,
   FunctionExpression,
   InterfaceDeclaration,
   ClassDeclaration,
@@ -131,14 +132,32 @@ function getBody(tree: Node): Node | undefined {
   }
 }
 
+// Check if a node is a literal expression (numeric, string, boolean, null, etc.)
+function isLiteralExpression(node: Node): boolean {
+  return (
+    node.kind === SyntaxKind.NumericLiteral ||
+    node.kind === SyntaxKind.StringLiteral ||
+    node.kind === SyntaxKind.NoSubstitutionTemplateLiteral ||
+    node.kind === SyntaxKind.TrueKeyword ||
+    node.kind === SyntaxKind.FalseKeyword ||
+    node.kind === SyntaxKind.NullKeyword ||
+    node.kind === SyntaxKind.UndefinedKeyword
+  );
+}
+
+type SyntaxKinds =
+  | SyntaxKind.TypeReference
+  | SyntaxKind.MethodDeclaration
+  | SyntaxKind.Parameter
+  | SyntaxKind.PropertyDeclaration
+  | SyntaxKind.ObjectLiteralExpression
+  | SyntaxKind.ArrayLiteralExpression
+  | SyntaxKind.NumericLiteral
+  | SyntaxKind.Unknown;
+
 function createTree(
   code: string,
-  kind:
-    | SyntaxKind.TypeReference
-    | SyntaxKind.MethodDeclaration
-    | SyntaxKind.Parameter
-    | SyntaxKind.PropertyDeclaration
-    | SyntaxKind.Unknown = SyntaxKind.Unknown,
+  kind: SyntaxKinds = SyntaxKind.Unknown,
 ): Node | null {
   if (!code.trim()) {
     return null;
@@ -179,6 +198,17 @@ function createTree(
     const varStatement = sourceFile.statements[0] as VariableStatement;
     const declaration = varStatement.declarationList.declarations[0];
     return declaration.type || null;
+  }
+
+  if (
+    kind === SyntaxKind.ObjectLiteralExpression ||
+    kind === SyntaxKind.ArrayLiteralExpression ||
+    kind === SyntaxKind.NumericLiteral
+  ) {
+    sourceFile = createSource(`const _ = ${code};`);
+    const varStatement = sourceFile.statements[0] as VariableStatement;
+    const declaration = varStatement.declarationList.declarations[0];
+    return declaration.initializer || null;
   }
 
   sourceFile = createSource(code);
@@ -236,12 +266,7 @@ class Explorer {
 
   constructor(
     tree: Node | string = "",
-    syntaxKind:
-      | SyntaxKind.TypeReference
-      | SyntaxKind.MethodDeclaration
-      | SyntaxKind.Parameter
-      | SyntaxKind.PropertyDeclaration
-      | SyntaxKind.Unknown = SyntaxKind.Unknown,
+    syntaxKind: SyntaxKinds = SyntaxKind.Unknown,
   ) {
     this.tree = typeof tree === "string" ? createTree(tree, syntaxKind) : tree;
   }
@@ -259,17 +284,34 @@ class Explorer {
     let otherExplorer: Explorer;
 
     if (typeof other === "string") {
+      // Handle empty case: both are empty
+      if (!this.tree && !other.trim()) {
+        return true;
+      }
+
+      if (!this.tree) {
+        return false;
+      }
+
       // If current node is a Parameter, wrap the string in a function parameter for proper parsing
-      if (this.tree && isParameter(this.tree)) {
+      if (isParameter(this.tree)) {
         otherExplorer = new Explorer(other, SyntaxKind.Parameter);
       }
       // If current node is a PropertyDeclaration, wrap the string in a class for proper parsing
-      else if (this.tree && isPropertyDeclaration(this.tree)) {
+      else if (isPropertyDeclaration(this.tree)) {
         otherExplorer = new Explorer(other, SyntaxKind.PropertyDeclaration);
       }
       // If current node is a MethodDeclaration, wrap the string in a class for proper parsing
-      else if (this.tree && isMethodDeclaration(this.tree)) {
+      else if (isMethodDeclaration(this.tree)) {
         otherExplorer = new Explorer(other, SyntaxKind.MethodDeclaration);
+      }
+      // If current node is an ObjectLiteralExpression, ArrayLiteralExpression, or LiteralExpression, wrap the string in a variable declaration for proper parsing
+      else if (
+        isObjectLiteralExpression(this.tree) ||
+        isArrayLiteralExpression(this.tree) ||
+        isLiteralExpression(this.tree)
+      ) {
+        otherExplorer = new Explorer(other, SyntaxKind.ObjectLiteralExpression);
       } else {
         otherExplorer = new Explorer(other);
       }

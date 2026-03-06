@@ -148,18 +148,27 @@ describe("getVariables", () => {
 
 describe("getValue", () => {
   it("returns an Explorer object for the initializer of a variable", () => {
-    const sourceCode = "const a = 1; const b = { x: 10 };";
+    const sourceCode =
+      "const a = 1; const b = { x: 10 }; const c = 'hello'; const d = [1, 2, 3];";
     const explorer = new Explorer(sourceCode);
-    const variables = explorer.getVariables();
-    const valueA = variables.a.getValue();
+    const { a, b, c, d } = explorer.getVariables();
+    const valueA = a.getValue();
     expect(valueA).toBeInstanceOf(Explorer);
     expect(valueA.toString()).toBe("1");
 
-    const valueB = variables.b.getValue();
+    const valueB = b.getValue();
     expect(valueB).toBeInstanceOf(Explorer);
-    expect(valueB.toString()).toBe("{ x: 10 }");
+    expect(valueB.matches("{ x: 10 }")).toBe(true);
 
-    expect(variables.b.getObjectProps().x.getValue().toString()).toBe("10");
+    expect(b.getObjectProps().x.getValue().matches("10")).toBe(true);
+
+    const valueC = c.getValue();
+    expect(valueC).toBeInstanceOf(Explorer);
+    expect(valueC.matches("'hello'")).toBe(true);
+
+    const valueD = d.getValue();
+    expect(valueD).toBeInstanceOf(Explorer);
+    expect(valueD.matches("[1, 2, 3]")).toBe(true);
   });
 
   it("returns an empty Explorer if the variable has no initializer", () => {
