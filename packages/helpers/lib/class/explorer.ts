@@ -38,6 +38,7 @@ import {
   isObjectLiteralExpression,
   isPropertyAssignment,
   isAsExpression,
+  isUnionTypeNode,
   Statement,
 } from "typescript";
 
@@ -373,6 +374,37 @@ class Explorer {
     }
 
     return new Explorer();
+  }
+
+  // Checks if the current node has a union type annotation that includes all specified types ignoring order
+  isUnionOf(types: string[]): boolean {
+    const currentAnnotation = this.getAnnotation();
+    if (currentAnnotation.isEmpty()) {
+      return false;
+    }
+
+    const annotationNode = currentAnnotation.tree;
+    if (!annotationNode || !isUnionTypeNode(annotationNode)) {
+      return false;
+    }
+
+    // Extract the current union type members
+    const currentMembers = annotationNode.types;
+    if (currentMembers.length !== types.length) {
+      return false;
+    }
+
+    // Check if all current members match some member in the provided types array
+    return currentMembers.every((currentMember) =>
+      types.some((typeString) => {
+        const typeExplorer = new Explorer(typeString, SyntaxKind.TypeReference);
+        if (typeExplorer.isEmpty()) {
+          return false;
+        }
+
+        return currentMember.getText() === typeExplorer.tree?.getText();
+      }),
+    );
   }
 
   // Checks if the current node has a type annotation that matches the provided annotation string

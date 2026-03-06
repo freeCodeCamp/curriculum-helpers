@@ -597,6 +597,58 @@ describe("annotations", () => {
       expect(parametersFoo[1].hasAnnotation("string")).toBe(false);
     });
   });
+
+  describe("isUnionOf", () => {
+    it("returns true if the type is a union of the specified types", () => {
+      const sourceCode = `
+                    const a: number | string = 1;
+                    const b: "foo" | "bar" | "baz" = "foo";
+                    type MyType = number | string | boolean;
+                    interface MyInterface { prop: number | string | boolean; }
+                `;
+      const explorer = new Explorer(sourceCode);
+      expect(explorer.getVariables().a.isUnionOf(["number", "string"])).toBe(
+        true,
+      );
+      expect(
+        explorer.getVariables().b.isUnionOf(['"bar"', '"foo"', '"baz"']),
+      ).toBe(true);
+      expect(
+        explorer.getTypes().MyType.isUnionOf(["number", "boolean", "string"]),
+      ).toBe(true);
+      expect(
+        explorer
+          .getInterfaces()
+          .MyInterface.getTypeProps()
+          .prop.isUnionOf(["number", "boolean", "string"]),
+      ).toBe(true);
+    });
+
+    it("returns false if the type is not a union of the specified types", () => {
+      const sourceCode = `
+                    const a: number | string = 1;
+                    const b: "foo" | "bar" | "baz" = "foo";
+                    type MyType = number | string | boolean;
+                    interface MyInterface { prop: number | string | boolean; }
+                `;
+      const explorer = new Explorer(sourceCode);
+      expect(explorer.getVariables().a.isUnionOf(["number", "boolean"])).toBe(
+        false,
+      );
+      expect(
+        explorer.getVariables().b.isUnionOf(['"bar"', '"foo"', '"qux"']),
+      ).toBe(false);
+      expect(explorer.getTypes().MyType.isUnionOf(["number", "string"])).toBe(
+        false,
+      );
+      expect(
+        explorer
+          .getInterfaces()
+          .MyInterface.getTypeProps()
+          .prop.isUnionOf(["number", "string"]),
+      ).toBe(false);
+    });
+  });
 });
 
 describe("getObjectProps", () => {
