@@ -242,19 +242,18 @@ describe("getParameters", () => {
     const functions = explorer.getFunctions(true);
     const parametersFoo = functions.foo.getParameters();
     expect(parametersFoo).toHaveLength(2);
-    // TODO: handles comparison of parameters in matches().
-    // This doesn't ignore whitespace
-    expect(parametersFoo[0].toString()).toBe("x: number");
-    expect(parametersFoo[1].toString()).toBe("y: string");
+
+    expect(parametersFoo[0].matches("x: number")).toBe(true);
+    expect(parametersFoo[1].matches("y: string")).toBe(true);
 
     const parametersBar = functions.bar.getParameters();
     expect(parametersBar).toHaveLength(1);
-    expect(parametersBar[0].toString()).toBe("a: boolean");
+    expect(parametersBar[0].matches("a: boolean")).toBe(true);
 
     const parametersBaz = functions.baz.getParameters();
     expect(parametersBaz).toHaveLength(2);
-    expect(parametersBaz[0].toString()).toBe("b: any");
-    expect(parametersBaz[1].toString()).toBe("c: string");
+    expect(parametersBaz[0].matches("b: any")).toBe(true);
+    expect(parametersBaz[1].matches("c: string")).toBe(true);
   });
 
   it("returns an empty array if the function has no parameters", () => {
@@ -515,8 +514,14 @@ describe("findClassProps", () => {
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(1);
-    // TODO: fix matches to handle
-    // expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(true);
+    expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(
+      true,
+    );
+
+    expect(Object.keys(classes.Bar.getClassProps())).toHaveLength(1);
+    expect(classes.Bar.getClassProps().prop2.matches("prop2: string;")).toBe(
+      true,
+    );
   });
 });
 
@@ -532,7 +537,6 @@ describe("annotations", () => {
       const explorer = new Explorer(sourceCode);
       const varAnnotation = explorer.getVariables().a.getAnnotation();
       expect(varAnnotation).toBeInstanceOf(Explorer);
-      // TODO: handles comparison of annotations in matches(). This doesn't ignore whitespace
       expect(varAnnotation.toString()).toBe("number");
     });
   });
@@ -805,5 +809,85 @@ describe("querying statements", () => {
     it.todo("finds variables in ModuleBlock scope", () => {});
 
     it.todo("finds variables in CaseOrDefaultClause scope", () => {});
+  });
+});
+
+describe("hasCast", () => {
+  it("returns true if the variable is initialized with a type assertion", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast()).toBe(true);
+  });
+
+  it("returns false if the variable is not initialized with a type assertion", () => {
+    const explorer = new Explorer("const a = 1;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast()).toBe(false);
+  });
+
+  it("returns true if the variable is cast to the specified type ", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast("number")).toBe(true);
+    // TODO: handle values cast with angle bracket syntax in hasCast().
+  });
+
+  it("returns false if the variable is cast to a different type than the specified one", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast("string")).toBe(false);
+  });
+});
+
+describe("doesExtend", () => {
+  it("returns true if the class/interface extends the specified base class", () => {
+    const explorer = new Explorer(
+      "class Foo extends Bar, Baz { }; interface Baz extends Bar, Baz { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Bar")).toBe(true);
+    expect(classes.Foo.doesExtend("Baz")).toBe(true);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Bar")).toBe(true);
+    expect(interfaces.Baz.doesExtend("Baz")).toBe(true);
+  });
+
+  it("returns false if the class/interface does not extend the specified base class", () => {
+    const explorer = new Explorer(
+      "class Foo extends Bar { }; interface Baz extends Bar { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Baz")).toBe(false);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Foo")).toBe(false);
+  });
+
+  it("returns false if the class/interface does not have an extends clause", () => {
+    const explorer = new Explorer("class Foo { }; interface Baz { }");
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Bar")).toBe(false);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Bar")).toBe(false);
+  });
+});
+
+describe("doesImplement", () => {
+  it("returns true if the class implements the specified interface", () => {
+    const explorer = new Explorer(
+      "class Foo implements Bar { }; class Baz implements Bar, Other { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesImplement("Bar")).toBe(true);
+
+    expect(classes.Baz.doesImplement(["Bar", "Other"])).toBe(true);
+  });
+
+  it("returns false if the class does not implement the specified interface", () => {
+    const explorer = new Explorer("class Foo implements Other { }");
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesImplement("Bar")).toBe(false);
   });
 });

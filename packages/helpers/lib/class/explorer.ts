@@ -37,6 +37,7 @@ import {
   isCaseOrDefaultClause,
   isObjectLiteralExpression,
   isPropertyAssignment,
+  isAsExpression,
   Statement,
 } from "typescript";
 
@@ -134,6 +135,8 @@ function createTree(
   kind:
     | SyntaxKind.TypeReference
     | SyntaxKind.MethodDeclaration
+    | SyntaxKind.Parameter
+    | SyntaxKind.PropertyDeclaration
     | SyntaxKind.Unknown = SyntaxKind.Unknown,
 ): Node | null {
   if (!code.trim()) {
@@ -149,6 +152,25 @@ function createTree(
       isMethodDeclaration(member),
     );
     return methodDecl || null;
+  }
+
+  if (kind === SyntaxKind.Parameter) {
+    sourceFile = createSource(`function _(${code}) {}`);
+    const funcDecl = sourceFile.statements[0] as FunctionDeclaration;
+    if (isFunctionDeclaration(funcDecl) && funcDecl.parameters.length > 0) {
+      return funcDecl.parameters[0];
+    }
+
+    return null;
+  }
+
+  if (kind === SyntaxKind.PropertyDeclaration) {
+    sourceFile = createSource(`class _ { ${code} }`);
+    const classDecl = sourceFile.statements[0] as ClassDeclaration;
+    const propDecl = classDecl.members.find((member) =>
+      isPropertyDeclaration(member),
+    );
+    return propDecl || null;
   }
 
   if (kind === SyntaxKind.TypeReference) {
@@ -216,6 +238,8 @@ class Explorer {
     syntaxKind:
       | SyntaxKind.TypeReference
       | SyntaxKind.MethodDeclaration
+      | SyntaxKind.Parameter
+      | SyntaxKind.PropertyDeclaration
       | SyntaxKind.Unknown = SyntaxKind.Unknown,
   ) {
     this.tree = typeof tree === "string" ? createTree(tree, syntaxKind) : tree;
@@ -234,8 +258,16 @@ class Explorer {
     let otherExplorer: Explorer;
 
     if (typeof other === "string") {
+      // If current node is a Parameter, wrap the string in a function parameter for proper parsing
+      if (this.tree && isParameter(this.tree)) {
+        otherExplorer = new Explorer(other, SyntaxKind.Parameter);
+      }
+      // If current node is a PropertyDeclaration, wrap the string in a class for proper parsing
+      else if (this.tree && isPropertyDeclaration(this.tree)) {
+        otherExplorer = new Explorer(other, SyntaxKind.PropertyDeclaration);
+      }
       // If current node is a MethodDeclaration, wrap the string in a class for proper parsing
-      if (this.tree && isMethodDeclaration(this.tree)) {
+      else if (this.tree && isMethodDeclaration(this.tree)) {
         otherExplorer = new Explorer(other, SyntaxKind.MethodDeclaration);
       } else {
         otherExplorer = new Explorer(other);
@@ -696,6 +728,136 @@ class Explorer {
     }
 
     return props.every(hasProp);
+  }
+
+  // Checks if the current node is a type assertion (cast using 'as')
+  // Optionally verify the cast type matches the provided type string
+  hasCast(expectedType?: string): boolean {
+    if (this.isEmpty()) {
+      return false;
+    }
+
+    const node = this.tree!;
+
+    // Check if the node is an AsExpression (type assertion with 'as' keyword)
+    if (isAsExpression(node)) {
+      if (expectedType === undefined) {
+        return true;
+      }
+
+      // Check if the cast type matches the expected type
+      const castType = node.type;
+      if (castType) {
+        const castTypeExplorer = new Explorer(
+          castType,
+          SyntaxKind.TypeReference,
+        );
+        const expectedTypeExplorer = new Explorer(
+          expectedType,
+          SyntaxKind.TypeReference,
+        );
+        return castTypeExplorer.matches(expectedTypeExplorer);
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  // Checks if a class or interface extends the specified base class or interface(s)
+  doesExtend(basesToCheck: string | string[]): boolean {
+    if (!this.tree) {
+      return false;
+    }
+
+    const node = this.tree;
+    const baseClause =
+      (isClassDeclaration(node) || isInterfaceDeclaration(node)) &&
+      node.heritageClauses
+        ? node.heritageClauses
+        : null;
+
+    if (!baseClause) {
+      return false;
+    }
+
+    if (!Array.isArray(basesToCheck)) {
+      basesToCheck = [basesToCheck];
+    }
+
+    // Check each heritage clause for extends
+    for (const clause of baseClause) {
+      if (clause.token !== SyntaxKind.ExtendsKeyword) {
+        continue;
+      }
+
+      const typeNames = clause.types.reduce((names: string[], type) => {
+        // Get the type name - handle simple identifiers and qualified names
+        if (isIdentifier(type.expression)) {
+          names.push(type.expression.text);
+        } else if (type.expression.kind === SyntaxKind.QualifiedName) {
+          // For qualified names like "namespace.ClassName", get the full text
+          names.push(type.expression.getText());
+        }
+
+        return names;
+      }, []);
+
+      // Check if all requested bases are in the extends clause
+      if (basesToCheck.every((b) => typeNames.includes(b))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Checks if a class implements the specified interface(s)
+  doesImplement(basesToCheck: string | string[]): boolean {
+    if (!this.tree) {
+      return false;
+    }
+
+    const node = this.tree;
+    const baseClause =
+      isClassDeclaration(node) && node.heritageClauses
+        ? node.heritageClauses
+        : null;
+
+    if (!baseClause) {
+      return false;
+    }
+
+    if (!Array.isArray(basesToCheck)) {
+      basesToCheck = [basesToCheck];
+    }
+
+    // Check each heritage clause for implements
+    for (const clause of baseClause) {
+      if (clause.token !== SyntaxKind.ImplementsKeyword) {
+        continue;
+      }
+
+      const typeNames = clause.types.reduce((names: string[], type) => {
+        // Get the type name - handle simple identifiers and qualified names
+        if (isIdentifier(type.expression)) {
+          names.push(type.expression.text);
+        } else if (type.expression.kind === SyntaxKind.QualifiedName) {
+          // For qualified names like "namespace.ClassName", get the full text
+          names.push(type.expression.getText());
+        }
+
+        return names;
+      }, []);
+
+      // Check if all requested bases are in the implements clause
+      if (basesToCheck.every((b) => typeNames.includes(b))) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
 
