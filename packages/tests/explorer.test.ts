@@ -545,12 +545,22 @@ describe("annotations", () => {
     it("returns true if the specified annotation exists", () => {
       const sourceCode = `
                     const a: number = 1;
+                    const b: { x: number; y: string; } = { x: 10, y: "hello" };
                     function foo(x: number, y: string): void { }
                     interface Bar { x: number; }
                     class Baz { spam: "spam" = "spam"; }
                 `;
       const explorer = new Explorer(sourceCode);
-      expect(explorer.getVariables().a.hasAnnotation("number")).toBe(true);
+      const { a, b } = explorer.getVariables();
+      expect(a.hasAnnotation("number")).toBe(true);
+
+      expect(b.hasAnnotation("{ x: number; y: string; }")).toBe(true);
+      expect(b.getAnnotation().getTypeProps().x.hasAnnotation("number")).toBe(
+        true,
+      );
+      expect(b.getAnnotation().getTypeProps().y.hasAnnotation("string")).toBe(
+        true,
+      );
 
       const parametersFoo = explorer.getFunctions().foo.getParameters();
       expect(parametersFoo[0].hasAnnotation("number")).toBe(true);

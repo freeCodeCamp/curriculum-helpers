@@ -314,7 +314,7 @@ class Explorer {
     return result;
   }
 
-  // Retrieves the assigned value of a variable, property, parameter, enum member, or binding element
+  // Retrieves the assigned value of a variable, property, parameter, or property assignment
   getValue(): Explorer {
     if (this.isEmpty()) {
       return new Explorer();
@@ -340,8 +340,6 @@ class Explorer {
 
     return new Explorer();
   }
-
-  // ...existing code...
 
   // Retrieves the type annotation of the current node if it exists, otherwise returns an empty Explorer
   getAnnotation(): Explorer {
