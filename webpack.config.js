@@ -139,6 +139,7 @@ const testRunnerConfig =
         path: isDev
           ? __dirname + "/__fixtures__/dist"
           : __dirname + "/dist/test-runner",
+        chunkFilename: "[name].[contenthash].js",
       },
       target: isWorker ? "webworker" : "web",
       module: {
