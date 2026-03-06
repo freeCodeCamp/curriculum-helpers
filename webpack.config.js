@@ -139,8 +139,8 @@ const testRunnerConfig =
         path: isDev
           ? __dirname + "/__fixtures__/dist"
           : __dirname + "/dist/test-runner",
-        ...(isWorker && { chunkLoading: "import-scripts" }),
       },
+      target: isWorker ? "webworker" : "web",
       module: {
         rules: [
           {
