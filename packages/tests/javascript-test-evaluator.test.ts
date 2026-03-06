@@ -40,6 +40,7 @@ const x = 2;
           message: "expected 2 to equal 1",
           expected: 1,
           actual: 2,
+          name: "AssertionError",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("AssertionError: expected"),
         },
@@ -68,6 +69,7 @@ const x = 1;
       expect(result).toStrictEqual({
         err: {
           message: "test error",
+          name: "Error",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: test error"),
         },
@@ -82,6 +84,7 @@ const x = 1;
       expect(result).toStrictEqual({
         err: {
           message: "expected 'actual' to equal 'expected'",
+          name: "AssertionError",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("AssertionError: expected"),
           expected: "expected",
@@ -99,6 +102,7 @@ const x = 1;
       expect(result).toStrictEqual({
         err: {
           message: "expected 1 to equal 2",
+          name: "AssertionError",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("AssertionError: expected"),
           expected: 2,
@@ -196,6 +200,32 @@ assert.equal(x, 1)`;
 
       expect(result).toStrictEqual({
         pass: true,
+      });
+    });
+
+    it("error response should include the name of IndexOfBoundsError when thrown in user code", async () => {
+      evaluator.init({
+        code: {},
+        source: `
+x = 0;`,
+      });
+
+      const test = "assert.equal(x, 0)";
+      const result = await evaluator.runTest(test);
+
+      expect(result).toStrictEqual({
+        err: {
+          message: "x is not defined",
+          name: "ReferenceError",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          stack: expect.stringMatching("ReferenceError: x"),
+        },
+        logs: [
+          {
+            level: "error",
+            msg: "ReferenceError: x is not defined",
+          },
+        ],
       });
     });
   });
