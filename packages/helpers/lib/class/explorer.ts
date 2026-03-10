@@ -41,6 +41,7 @@ import {
   isAsExpression,
   isUnionTypeNode,
   Statement,
+  ReturnStatement,
 } from "typescript";
 
 type TypeProp = {
@@ -545,7 +546,7 @@ class Explorer {
     return false;
   }
 
-  // Retrieves the parameters of a function, whether it's a function declaration or a variable statement initialized with a function
+  // Retrieves the parameters of a function or method
   getParameters(): Explorer[] {
     if (!this.tree) {
       return [];
@@ -565,7 +566,50 @@ class Explorer {
       }
     }
 
+    if (isMethodDeclaration(this.tree)) {
+      return this.tree.parameters.map((param) => new Explorer(param));
+    }
+
     return [];
+  }
+
+  // Checks the return value of a function, method, or arrow function against a provided string representation of the expected return value
+  hasReturn(value: string): boolean {
+    if (this.isEmpty()) {
+      return false;
+    }
+
+    const node = this.tree!;
+
+    const body = getBody(node);
+    if (!body) {
+      return false;
+    }
+
+    // If body is a Block, get its statements to find return statements at outer scope
+    if (isBlock(body)) {
+      const statements = findStatements(body);
+      for (const statement of statements) {
+        if (statement.kind === SyntaxKind.ReturnStatement) {
+          const returnStmt = statement as ReturnStatement;
+          if (returnStmt.expression) {
+            const returnExplorer = new Explorer(returnStmt.expression);
+            // Use ObjectLiteralExpression as the context to properly wrap expressions like function calls
+            const valueExplorer = new Explorer(
+              value,
+              SyntaxKind.ObjectLiteralExpression,
+            );
+            return returnExplorer.matches(valueExplorer);
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // If body is an expression (arrow function without braces), compare directly
+    const bodyExplorer = new Explorer(body);
+    return bodyExplorer.matches(value);
   }
 
   // Finds all type alias declarations in the current tree

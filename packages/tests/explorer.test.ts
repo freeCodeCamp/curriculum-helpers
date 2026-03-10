@@ -241,11 +241,12 @@ describe("getFunctions", () => {
 });
 
 describe("getParameters", () => {
-  it("returns an array of Explorer objects for the parameters of a function", () => {
+  it("returns an array of Explorer objects for the parameters of a function or method", () => {
     const sourceCode = `
                     function foo(x: number, y: string) { return 42; }
                     const bar = (a: boolean) => 24;
                     const baz = function(b: any, c: string) { return 42; };
+                    class Spam { method(d: number) { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
@@ -263,9 +264,20 @@ describe("getParameters", () => {
     expect(parametersBaz).toHaveLength(2);
     expect(parametersBaz[0].matches("b: any")).toBe(true);
     expect(parametersBaz[1].matches("c: string")).toBe(true);
+
+    expect(
+      explorer.getClasses().Spam.getMethods().method.getParameters(),
+    ).toHaveLength(1);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.getParameters()[0]
+        .matches("d: number"),
+    ).toBe(true);
   });
 
-  it("returns an empty array if the function has no parameters", () => {
+  it("returns an empty array if the function or method has no parameters", () => {
     const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => 24;
@@ -281,39 +293,82 @@ describe("getParameters", () => {
 });
 
 describe("hasReturnAnnotation", () => {
-  it("returns true if the function has the specified return type annotation", () => {
+  it("returns true if the function or method has the specified return type annotation", () => {
     const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
                     const baz = function(): boolean { return true; };
+                    class Spam { method(): number { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("number")).toBe(true);
     expect(functions.bar.hasReturnAnnotation("string")).toBe(true);
     expect(functions.baz.hasReturnAnnotation("boolean")).toBe(true);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("number"),
+    ).toBe(true);
   });
 
-  it("returns false if the function does not have the specified return type annotation", () => {
+  it("returns false if the function or method does not have the specified return type annotation", () => {
     const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
+                    class Spam { method(): number { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("string")).toBe(false);
     expect(functions.bar.hasReturnAnnotation("number")).toBe(false);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("string"),
+    ).toBe(false);
   });
 
-  it("returns false if the function has no return type annotation", () => {
+  it("returns false if the function or method has no return type annotation", () => {
     const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => "hello";
+                    class Spam { method() { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("number")).toBe(false);
     expect(functions.bar.hasReturnAnnotation("string")).toBe(false);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("number"),
+    ).toBe(false);
+  });
+});
+
+describe("hasReturn", () => {
+  it("returns true if the function or method has a top-level return value matching the specified string", () => {
+    const sourceCode = `function foo() { return 42; }
+                    const bar = () => "hello";
+                    const baz = function() { return true; };
+                    class Spam { method() { return 42; } }
+                    const nested1 = () => { function inner() { return "nested"; } return inner(); };
+                    const nested2 = () => { if (true) { return "nested"; } return "not nested"; };
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { foo, bar, baz, nested1, nested2 } = explorer.getFunctions(true);
+    expect(foo.hasReturn("42")).toBe(true);
+    expect(bar.hasReturn('"hello"')).toBe(true);
+    expect(baz.hasReturn("true")).toBe(true);
+    expect(nested1.hasReturn("inner()")).toBe(true);
+    expect(nested2.hasReturn('"not nested"')).toBe(true);
+
+    const { method } = explorer.getClasses().Spam.getMethods();
+    expect(method.hasReturn("42")).toBe(true);
   });
 });
 
