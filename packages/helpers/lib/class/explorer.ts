@@ -46,6 +46,7 @@ import {
   isPropertyAccessExpression,
   isExpressionStatement,
   isConstructorDeclaration,
+  isNonNullExpression,
 } from "typescript";
 
 type TypeProp = {
@@ -160,6 +161,7 @@ type SyntaxKinds =
   | SyntaxKind.ArrayLiteralExpression
   | SyntaxKind.NumericLiteral
   | SyntaxKind.Constructor
+  | SyntaxKind.NonNullExpression
   | SyntaxKind.Unknown;
 
 function createTree(
@@ -219,7 +221,8 @@ function createTree(
   if (
     kind === SyntaxKind.ObjectLiteralExpression ||
     kind === SyntaxKind.ArrayLiteralExpression ||
-    kind === SyntaxKind.NumericLiteral
+    kind === SyntaxKind.NumericLiteral ||
+    kind === SyntaxKind.NonNullExpression
   ) {
     sourceFile = createSource(`const _ = ${code};`);
     const varStatement = sourceFile.statements[0] as VariableStatement;
@@ -329,7 +332,8 @@ class Explorer {
       else if (
         isObjectLiteralExpression(this.tree) ||
         isArrayLiteralExpression(this.tree) ||
-        isLiteralExpression(this.tree)
+        isLiteralExpression(this.tree) ||
+        isNonNullExpression(this.tree)
       ) {
         otherExplorer = new Explorer(other, SyntaxKind.ObjectLiteralExpression);
       } else {
@@ -1036,6 +1040,52 @@ class Explorer {
     }
 
     return false;
+  }
+
+  // Checks if the property has a private modifier
+  isPrivate(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.PrivateKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a protected modifier
+  isProtected(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.ProtectedKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a public modifier
+  isPublic(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.PublicKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a readonly modifier
+  isReadOnly(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.ReadonlyKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the expression has a non-null assertion (!)
+  hasNonNullAssertion(): boolean {
+    if (!this.tree) return false;
+    return isNonNullExpression(this.tree);
   }
 }
 

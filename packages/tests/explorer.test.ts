@@ -589,20 +589,126 @@ describe("getClassProps", () => {
 
   it("finds only properties in the current class", () => {
     const sourceCode = `
-                      class Foo { prop1: number; }
+                      class Foo { private prop1: number; }
                       class Bar { prop2: string; }
                   `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(1);
-    expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(
-      true,
-    );
+    expect(
+      classes.Foo.getClassProps().prop1.matches("private prop1: number;"),
+    ).toBe(true);
 
     expect(Object.keys(classes.Bar.getClassProps())).toHaveLength(1);
     expect(classes.Bar.getClassProps().prop2.matches("prop2: string;")).toBe(
       true,
     );
+  });
+});
+
+describe("isPrivate", () => {
+  it("returns true if the method, property is private", () => {
+    const sourceCode = `
+                    class Foo {
+                      private prop1: number;
+                      private method1() {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPrivate()).toBe(true);
+    expect(Foo.getMethods().method1.isPrivate()).toBe(true);
+  });
+
+  it("returns false if the method or property is not private", () => {
+    const sourceCode = `
+                    class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPrivate()).toBe(false);
+    expect(Foo.getMethods().method1.isPrivate()).toBe(false);
+  });
+});
+
+describe("isProtected", () => {
+  it("returns true if the method, property is protected", () => {
+    const sourceCode = `class Foo {
+                      protected prop1: number;
+                      protected method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isProtected()).toBe(true);
+    expect(Foo.getMethods().method1.isProtected()).toBe(true);
+  });
+
+  it("returns false if the method or property is not protected", () => {
+    const sourceCode = `class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isProtected()).toBe(false);
+    expect(Foo.getMethods().method1.isProtected()).toBe(false);
+  });
+});
+
+describe("isPublic", () => {
+  it("returns true if the method, property is public", () => {
+    const sourceCode = `class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPublic()).toBe(true);
+    expect(Foo.getMethods().method1.isPublic()).toBe(true);
+  });
+
+  it("returns false if the method or property is not public", () => {
+    const sourceCode = `class Foo {
+                      prop1: number;
+                      private method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPublic()).toBe(false);
+    expect(Foo.getMethods().method1.isPublic()).toBe(false);
+  });
+});
+
+describe("isReadOnly", () => {
+  it("returns true if the property is readonly", () => {
+    const sourceCode = `class Foo {
+                      private readonly prop1: number;
+                    }
+                    interface Bar {
+                      readonly prop2: string;
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isReadOnly()).toBe(true);
+    const { Bar } = explorer.getInterfaces();
+    expect(Bar.getTypeProps().prop2.isReadOnly()).toBe(true);
+  });
+
+  it("returns false if the property is not readonly", () => {
+    const sourceCode = `class Foo {
+                      private prop1: number;
+                    }
+                    interface Bar {
+                      prop2: string;
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isReadOnly()).toBe(false);
+    const { Bar } = explorer.getInterfaces();
+    expect(Bar.getTypeProps().prop2.isReadOnly()).toBe(false);
   });
 });
 
@@ -979,6 +1085,21 @@ describe("hasCast", () => {
     const explorer = new Explorer("const a = 1 as number;");
     const variables = explorer.getVariables();
     expect(variables.a.getValue().hasCast("string")).toBe(false);
+  });
+});
+
+describe("hasNonNullAssertion", () => {
+  it("returns true if the variable is initialized with a non-null assertion", () => {
+    const explorer = new Explorer("const a = someValue!;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasNonNullAssertion()).toBe(true);
+    expect(variables.a.getValue().matches("someValue!")).toBe(true);
+  });
+
+  it("returns false if the variable is not initialized with a non-null assertion", () => {
+    const explorer = new Explorer("const a = someValue;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasNonNullAssertion()).toBe(false);
   });
 });
 
