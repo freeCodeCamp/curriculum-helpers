@@ -47,6 +47,21 @@ import {
   isExpressionStatement,
   isConstructorDeclaration,
   isNonNullExpression,
+  isExpression,
+  isTypeReferenceNode,
+  isIntersectionTypeNode,
+  isArrayTypeNode,
+  isTupleTypeNode,
+  isFunctionTypeNode,
+  isLiteralTypeNode,
+  isParenthesizedTypeNode,
+  isConditionalTypeNode,
+  isMappedTypeNode,
+  isTemplateLiteralTypeNode,
+  isIndexedAccessTypeNode,
+  isTypeOperatorNode,
+  isRestTypeNode,
+  isOptionalTypeNode,
 } from "typescript";
 
 type TypeProp = {
@@ -139,99 +154,122 @@ function getBody(tree: Node): Node | undefined {
   }
 }
 
-// Check if a node is a literal expression (numeric, string, boolean, null, etc.)
-function isLiteralExpression(node: Node): boolean {
-  return (
-    node.kind === SyntaxKind.NumericLiteral ||
-    node.kind === SyntaxKind.StringLiteral ||
-    node.kind === SyntaxKind.NoSubstitutionTemplateLiteral ||
-    node.kind === SyntaxKind.TrueKeyword ||
-    node.kind === SyntaxKind.FalseKeyword ||
-    node.kind === SyntaxKind.NullKeyword ||
-    node.kind === SyntaxKind.UndefinedKeyword
-  );
+type ParseContext =
+  | "source"
+  | "method"
+  | "constructor"
+  | "parameter"
+  | "propertyDeclaration"
+  | "typeReference"
+  | "expression";
+
+const CONTEXT_GUARDS: ReadonlyArray<
+  [ParseContext, ReadonlyArray<(node: Node) => boolean>]
+> = [
+  ["constructor", [isConstructorDeclaration]],
+  ["method", [isMethodDeclaration]],
+  ["propertyDeclaration", [isPropertyDeclaration]],
+  ["parameter", [isParameter]],
+  // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
+  // Without these, matches() falls through to "source" and comparison always fails.
+  [
+    "typeReference",
+    [
+      isTypeReferenceNode,
+      isUnionTypeNode,
+      isIntersectionTypeNode,
+      isArrayTypeNode,
+      isTupleTypeNode,
+      isFunctionTypeNode,
+      isTypeLiteralNode,
+      isLiteralTypeNode,
+      isParenthesizedTypeNode,
+      isConditionalTypeNode,
+      isMappedTypeNode,
+      isTemplateLiteralTypeNode,
+      isIndexedAccessTypeNode,
+      isTypeOperatorNode,
+      isRestTypeNode,
+      isOptionalTypeNode,
+    ],
+  ],
+  [
+    "expression",
+    [
+      isObjectLiteralExpression,
+      isArrayLiteralExpression,
+      isNonNullExpression,
+      isAsExpression,
+      isPropertyAccessExpression,
+      isBinaryExpression,
+      isArrowFunction,
+      isFunctionExpression,
+      // Catch-all for remaining expression kinds (CallExpression, NewExpression, etc.)
+      isExpression,
+    ],
+  ],
+];
+
+function inferContext(node: Node): ParseContext {
+  for (const [context, guards] of CONTEXT_GUARDS) {
+    if (guards.some((guard) => guard(node))) {
+      return context;
+    }
+  }
+
+  return "source";
 }
 
-type SyntaxKinds =
-  | SyntaxKind.TypeReference
-  | SyntaxKind.MethodDeclaration
-  | SyntaxKind.Parameter
-  | SyntaxKind.PropertyDeclaration
-  | SyntaxKind.ObjectLiteralExpression
-  | SyntaxKind.ArrayLiteralExpression
-  | SyntaxKind.NumericLiteral
-  | SyntaxKind.Constructor
-  | SyntaxKind.NonNullExpression
-  | SyntaxKind.Unknown;
-
-function createTree(
-  code: string,
-  kind: SyntaxKinds = SyntaxKind.Unknown,
-): Node | null {
+function createTree(code: string, context: ParseContext): Node | null {
   if (!code.trim()) {
     return null;
   }
 
-  let sourceFile: SourceFile;
-
-  if (kind === SyntaxKind.MethodDeclaration) {
-    sourceFile = createSource(`class _ { ${code} }`);
-    const classDecl = sourceFile.statements[0] as ClassDeclaration;
-    const methodDecl = classDecl.members.find((member) =>
-      isMethodDeclaration(member),
-    );
-    return methodDecl || null;
-  }
-
-  if (kind === SyntaxKind.Constructor) {
-    sourceFile = createSource(`class _ { ${code} }`);
-    const classDecl = sourceFile.statements[0] as ClassDeclaration;
-    const constructorDecl = classDecl.members.find((member) =>
-      isConstructorDeclaration(member),
-    );
-    return constructorDecl || null;
-  }
-
-  if (kind === SyntaxKind.Parameter) {
-    sourceFile = createSource(`function _(${code}) {}`);
-    const funcDecl = sourceFile.statements[0] as FunctionDeclaration;
-    if (isFunctionDeclaration(funcDecl) && funcDecl.parameters.length > 0) {
-      return funcDecl.parameters[0];
+  switch (context) {
+    case "method": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isMethodDeclaration) ?? null;
     }
 
-    return null;
-  }
+    case "constructor": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isConstructorDeclaration) ?? null;
+    }
 
-  if (kind === SyntaxKind.PropertyDeclaration) {
-    sourceFile = createSource(`class _ { ${code} }`);
-    const classDecl = sourceFile.statements[0] as ClassDeclaration;
-    const propDecl = classDecl.members.find((member) =>
-      isPropertyDeclaration(member),
-    );
-    return propDecl || null;
-  }
+    case "parameter": {
+      const sf = createSource(`function _(${code}) {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.parameters[0] ?? null;
+    }
 
-  if (kind === SyntaxKind.TypeReference) {
-    sourceFile = createSource(`let _: ${code};`);
-    const varStatement = sourceFile.statements[0] as VariableStatement;
-    const declaration = varStatement.declarationList.declarations[0];
-    return declaration.type || null;
-  }
+    case "propertyDeclaration": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isPropertyDeclaration) ?? null;
+    }
 
-  if (
-    kind === SyntaxKind.ObjectLiteralExpression ||
-    kind === SyntaxKind.ArrayLiteralExpression ||
-    kind === SyntaxKind.NumericLiteral ||
-    kind === SyntaxKind.NonNullExpression
-  ) {
-    sourceFile = createSource(`const _ = ${code};`);
-    const varStatement = sourceFile.statements[0] as VariableStatement;
-    const declaration = varStatement.declarationList.declarations[0];
-    return declaration.initializer || null;
-  }
+    case "typeReference": {
+      const sf = createSource(`let _: ${code};`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      return declaration.type ?? null;
+    }
 
-  sourceFile = createSource(code);
-  return sourceFile;
+    case "expression": {
+      const sf = createSource(`const _ = ${code};`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      return declaration.initializer ?? null;
+    }
+
+    case "source":
+      return createSource(code);
+
+    default:
+      return null;
+  }
 }
 
 const removeSemicolons = (nodes: readonly Node[]): Node[] =>
@@ -282,12 +320,16 @@ const areNodesEquivalent = (
 
 class Explorer {
   private tree: Node | null;
+  private context: ParseContext;
 
-  constructor(
-    tree: Node | string = "",
-    syntaxKind: SyntaxKinds = SyntaxKind.Unknown,
-  ) {
-    this.tree = typeof tree === "string" ? createTree(tree, syntaxKind) : tree;
+  constructor(tree: Node | string = "", context: ParseContext = "source") {
+    if (typeof tree === "string") {
+      this.tree = createTree(tree, context);
+      this.context = context;
+    } else {
+      this.tree = tree;
+      this.context = inferContext(tree);
+    }
   }
 
   isEmpty(): boolean {
@@ -300,8 +342,6 @@ class Explorer {
 
   // Compares the current tree with another tree, ignoring semicolons and whitespace
   matches(other: string | Explorer): boolean {
-    let otherExplorer: Explorer;
-
     if (typeof other === "string") {
       // Handle empty case: both are empty
       if (!this.tree && !other.trim()) {
@@ -312,38 +352,12 @@ class Explorer {
         return false;
       }
 
-      // If current node is a Parameter, wrap the string in a function parameter for proper parsing
-      if (isParameter(this.tree)) {
-        otherExplorer = new Explorer(other, SyntaxKind.Parameter);
-      }
-      // If current node is a PropertyDeclaration, wrap the string in a class for proper parsing
-      else if (isPropertyDeclaration(this.tree)) {
-        otherExplorer = new Explorer(other, SyntaxKind.PropertyDeclaration);
-      }
-      // If current node is a MethodDeclaration, wrap the string in a class for proper parsing
-      else if (isMethodDeclaration(this.tree)) {
-        otherExplorer = new Explorer(other, SyntaxKind.MethodDeclaration);
-      }
-      // If current node is a ConstructorDeclaration, wrap the string in a class for proper parsing
-      else if (isConstructorDeclaration(this.tree)) {
-        otherExplorer = new Explorer(other, SyntaxKind.Constructor);
-      }
-      // If current node is an ObjectLiteralExpression, ArrayLiteralExpression, or LiteralExpression, wrap the string in a variable declaration for proper parsing
-      else if (
-        isObjectLiteralExpression(this.tree) ||
-        isArrayLiteralExpression(this.tree) ||
-        isLiteralExpression(this.tree) ||
-        isNonNullExpression(this.tree)
-      ) {
-        otherExplorer = new Explorer(other, SyntaxKind.ObjectLiteralExpression);
-      } else {
-        otherExplorer = new Explorer(other);
-      }
-    } else {
-      otherExplorer = other;
+      // Reuse the stored context so the RHS string is wrapped the same way
+      // this node was parsed — no manual if/else chain needed
+      return areNodesEquivalent(this.tree, createTree(other, this.context));
     }
 
-    return areNodesEquivalent(this.tree, otherExplorer.tree);
+    return areNodesEquivalent(this.tree, other.tree);
   }
 
   // Finds all nodes of a specific kind in the current scope.
@@ -461,7 +475,7 @@ class Explorer {
     // Check if all current members match some member in the provided types array
     return currentMembers.every((currentMember) =>
       types.some((typeString) => {
-        const typeExplorer = new Explorer(typeString, SyntaxKind.TypeReference);
+        const typeExplorer = new Explorer(typeString, "typeReference");
         if (typeExplorer.isEmpty()) {
           return false;
         }
@@ -478,12 +492,7 @@ class Explorer {
       return false;
     }
 
-    const annotationNode = createTree(annotation, SyntaxKind.TypeReference);
-    if (annotationNode === null) {
-      return false;
-    }
-
-    const annotationExplorer = new Explorer(annotationNode);
+    const annotationExplorer = new Explorer(annotation, "typeReference");
     return currentAnnotation.matches(annotationExplorer);
   }
 
@@ -559,10 +568,7 @@ class Explorer {
     // Check return type if we found a function node
     if (functionNode?.type) {
       const returnAnnotation = new Explorer(functionNode.type);
-      const explorerAnnotation = new Explorer(
-        annotation,
-        SyntaxKind.TypeReference,
-      );
+      const explorerAnnotation = new Explorer(annotation, "typeReference");
       return returnAnnotation.matches(explorerAnnotation);
     }
 
@@ -617,12 +623,7 @@ class Explorer {
           const returnStmt = statement as ReturnStatement;
           if (returnStmt.expression) {
             const returnExplorer = new Explorer(returnStmt.expression);
-            // Use ObjectLiteralExpression as the context to properly wrap expressions like function calls
-            const valueExplorer = new Explorer(
-              value,
-              SyntaxKind.ObjectLiteralExpression,
-            );
-            return returnExplorer.matches(valueExplorer);
+            return returnExplorer.matches(value);
           }
         }
       }
@@ -829,7 +830,7 @@ class Explorer {
         }
 
         const memberType = new Explorer(member.type);
-        if (!memberType.matches(new Explorer(type, SyntaxKind.TypeReference))) {
+        if (!memberType.matches(new Explorer(type, "typeReference"))) {
           return false;
         }
       } else {
@@ -887,9 +888,7 @@ class Explorer {
         }
 
         const memberType = new Explorer(member.tree.type);
-        if (
-          !memberType.matches(new Explorer(prop.type, SyntaxKind.TypeReference))
-        ) {
+        if (!memberType.matches(new Explorer(prop.type, "typeReference"))) {
           return false;
         }
       }
@@ -930,13 +929,10 @@ class Explorer {
       // Check if the cast type matches the expected type
       const castType = node.type;
       if (castType) {
-        const castTypeExplorer = new Explorer(
-          castType,
-          SyntaxKind.TypeReference,
-        );
+        const castTypeExplorer = new Explorer(castType);
         const expectedTypeExplorer = new Explorer(
           expectedType,
-          SyntaxKind.TypeReference,
+          "typeReference",
         );
         return castTypeExplorer.matches(expectedTypeExplorer);
       }
