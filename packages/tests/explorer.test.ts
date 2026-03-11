@@ -55,6 +55,46 @@ describe("matches", () => {
 
     const explorer4 = new Explorer();
     expect(explorer4.matches("")).toBe(true);
+
+    // Parameters
+    const [x] = new Explorer("function foo(x: number) {}")
+      .getFunctions()
+      .foo.getParameters();
+    expect(x.matches("x: number")).toBe(true);
+
+    // Class members
+    const { Foo } = new Explorer(
+      "class Foo { private count: number = 0; greet(name: string): void {} }",
+    ).getClasses();
+    expect(Foo.getClassProps().count.matches("private count: number = 0")).toBe(
+      true,
+    );
+    expect(Foo.getMethods().greet.matches("greet(name: string): void {}")).toBe(
+      true,
+    );
+
+    // Type annotations
+    const { a, b, c } = new Explorer(
+      "const a: number | string = 1; const b: { x: number } = { x: 1 }; const c: string[] = [];",
+    ).getVariables();
+    expect(a.getAnnotation().matches("number | string")).toBe(true);
+    expect(b.getAnnotation().matches("{ x: number }")).toBe(true);
+    expect(c.getAnnotation().matches("string[]")).toBe(true);
+
+    // Expressions
+    const { obj, arr, lit, nn } = new Explorer(
+      "const obj = { x: 1 }; const arr = [1, 2]; const lit = 42; const nn = val!;",
+    ).getVariables();
+    expect(obj.getValue().matches("{ x: 1 }")).toBe(true);
+    expect(arr.getValue().matches("[1, 2]")).toBe(true);
+    expect(lit.getValue().matches("42")).toBe(true);
+    expect(nn.getValue().matches("val!")).toBe(true);
+
+    // Cast
+    const { casted } = new Explorer(
+      "const casted = someValue as string;",
+    ).getVariables();
+    expect(casted.getValue().matches("someValue as string")).toBe(true);
   });
 
   it("returns false when comparing non-equivalent nodes", () => {
