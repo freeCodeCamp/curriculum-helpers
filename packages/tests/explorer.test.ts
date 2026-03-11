@@ -526,8 +526,30 @@ class Bar { method2() {} }
   });
 });
 
-describe("findClassProps", () => {
+describe("getConstructor", () => {
+  it("returns an Explorer object for the constructor of a class", () => {
+    const sourceCode =
+      "class Foo { constructor(a, b) { this.a = a; this.b = b; } }";
+    const explorer = new Explorer(sourceCode);
+    const constructor = explorer.getClasses().Foo.getConstructor();
+    expect(constructor).toBeInstanceOf(Explorer);
+    expect(
+      constructor.matches("constructor(a, b) { this.a = a; this.b = b; }"),
+    ).toBe(true);
+  });
+});
+
+describe("getClassProps", () => {
   it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "class Foo { prop1: number; prop2: string; }";
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    Object.values(Foo.getClassProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("finds properties assigned in the constructor when includeConstructor is true", () => {
     const sourceCode = `
                     class Rectangle {
                       constructor(height, width) {
@@ -535,16 +557,11 @@ describe("findClassProps", () => {
                         this.width = width;
                       }
                     }
-                    class Foo { prop1: number; prop2: string; }
                 `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
-    Object.values(classes.Rectangle.getClassProps()).forEach((p) =>
-      expect(p).toBeInstanceOf(Explorer),
-    );
-    Object.values(classes.Foo.getClassProps()).forEach((p) =>
-      expect(p).toBeInstanceOf(Explorer),
-    );
+    const props = classes.Rectangle.getClassProps(true);
+    Object.values(props).forEach((p) => expect(p).toBeInstanceOf(Explorer));
   });
 
   it("returns one entry per property", () => {
@@ -559,7 +576,7 @@ describe("findClassProps", () => {
                 `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
-    // TODO: fix method to handle expect(Object.keys(classes.Rectangle.getClassProps())).toHaveLength(2);
+    expect(Object.keys(classes.Rectangle.getClassProps(true))).toHaveLength(2);
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(2);
   });
 

@@ -42,6 +42,10 @@ import {
   isUnionTypeNode,
   Statement,
   ReturnStatement,
+  isBinaryExpression,
+  isPropertyAccessExpression,
+  isExpressionStatement,
+  isConstructorDeclaration,
 } from "typescript";
 
 type TypeProp = {
@@ -116,7 +120,8 @@ function getBody(tree: Node): Node | undefined {
     isFunctionDeclaration(tree) ||
     isMethodDeclaration(tree) ||
     isFunctionExpression(tree) ||
-    isArrowFunction(tree)
+    isArrowFunction(tree) ||
+    isConstructorDeclaration(tree)
   ) {
     return tree.body;
   }
@@ -154,6 +159,7 @@ type SyntaxKinds =
   | SyntaxKind.ObjectLiteralExpression
   | SyntaxKind.ArrayLiteralExpression
   | SyntaxKind.NumericLiteral
+  | SyntaxKind.Constructor
   | SyntaxKind.Unknown;
 
 function createTree(
@@ -173,6 +179,15 @@ function createTree(
       isMethodDeclaration(member),
     );
     return methodDecl || null;
+  }
+
+  if (kind === SyntaxKind.Constructor) {
+    sourceFile = createSource(`class _ { ${code} }`);
+    const classDecl = sourceFile.statements[0] as ClassDeclaration;
+    const constructorDecl = classDecl.members.find((member) =>
+      isConstructorDeclaration(member),
+    );
+    return constructorDecl || null;
   }
 
   if (kind === SyntaxKind.Parameter) {
@@ -305,6 +320,10 @@ class Explorer {
       // If current node is a MethodDeclaration, wrap the string in a class for proper parsing
       else if (isMethodDeclaration(this.tree)) {
         otherExplorer = new Explorer(other, SyntaxKind.MethodDeclaration);
+      }
+      // If current node is a ConstructorDeclaration, wrap the string in a class for proper parsing
+      else if (isConstructorDeclaration(this.tree)) {
+        otherExplorer = new Explorer(other, SyntaxKind.Constructor);
       }
       // If current node is an ObjectLiteralExpression, ArrayLiteralExpression, or LiteralExpression, wrap the string in a variable declaration for proper parsing
       else if (
@@ -661,8 +680,18 @@ class Explorer {
     return result;
   }
 
+  // Finds and returns the constructor of a class as an Explorer object
+  getConstructor(): Explorer | null {
+    if (!this.tree || !isClassDeclaration(this.tree)) {
+      return null;
+    }
+
+    const constructors = this.getAll(SyntaxKind.Constructor);
+    return constructors.length > 0 ? constructors[0] : null;
+  }
+
   // Finds all properties in a class
-  getClassProps(): { [key: string]: Explorer } {
+  getClassProps(includeConstructor = false): { [key: string]: Explorer } {
     if (!this.tree || !isClassDeclaration(this.tree)) {
       return {};
     }
@@ -674,6 +703,39 @@ class Explorer {
       const name = (prop.name as Identifier).text;
       result[name] = new Explorer(prop);
     });
+
+    if (includeConstructor) {
+      const constructor = this.getConstructor();
+      if (constructor && !constructor.isEmpty()) {
+        const constructorNode = constructor.tree as Node;
+        const body = getBody(constructorNode);
+        if (body && isBlock(body)) {
+          body.statements.forEach((stmt: Node) => {
+            if (isExpressionStatement(stmt)) {
+              const expr = stmt.expression;
+              // Check for property assignments: this.propertyName = value
+              if (
+                isBinaryExpression(expr) &&
+                isPropertyAccessExpression(expr.left)
+              ) {
+                const propAccess = expr.left;
+                // Ensure it's accessing a property on 'this'
+                if (
+                  propAccess.expression.kind === SyntaxKind.ThisKeyword &&
+                  isIdentifier(propAccess.name)
+                ) {
+                  const propName = propAccess.name.text;
+                  // Only add if not already defined as a PropertyDeclaration
+                  if (!(propName in result)) {
+                    result[propName] = new Explorer(propAccess);
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+    }
 
     return result;
   }
