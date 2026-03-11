@@ -62,6 +62,10 @@ import {
   isTypeOperatorNode,
   isRestTypeNode,
   isOptionalTypeNode,
+  isTypeParameterDeclaration,
+  isCallExpression,
+  isNewExpression,
+  isTypeNode,
 } from "typescript";
 
 type TypeProp = {
@@ -159,6 +163,7 @@ type ParseContext =
   | "method"
   | "constructor"
   | "parameter"
+  | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
   | "expression";
@@ -170,6 +175,7 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["method", [isMethodDeclaration]],
   ["propertyDeclaration", [isPropertyDeclaration]],
   ["parameter", [isParameter]],
+  ["typeParameter", [isTypeParameterDeclaration]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -191,6 +197,8 @@ const CONTEXT_GUARDS: ReadonlyArray<
       isTypeOperatorNode,
       isRestTypeNode,
       isOptionalTypeNode,
+      // Catch-all for keyword types (StringKeyword, NumberKeyword, etc.)
+      isTypeNode,
     ],
   ],
   [
@@ -242,6 +250,12 @@ function createTree(code: string, context: ParseContext): Node | null {
       const sf = createSource(`function _(${code}) {}`);
       const funcDecl = sf.statements[0] as FunctionDeclaration;
       return funcDecl.parameters[0] ?? null;
+    }
+
+    case "typeParameter": {
+      const sf = createSource(`function _<${code}>() {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.typeParameters?.[0] ?? null;
     }
 
     case "propertyDeclaration": {
@@ -597,6 +611,56 @@ class Explorer {
 
     if (isMethodDeclaration(this.tree)) {
       return this.tree.parameters.map((param) => new Explorer(param));
+    }
+
+    return [];
+  }
+
+  // Retrieves the type parameters (<T>, <T extends U>) of a function, method, class, or interface
+  getTypeParameters(): Explorer[] {
+    if (!this.tree) {
+      return [];
+    }
+
+    if (
+      isFunctionDeclaration(this.tree) ||
+      isMethodDeclaration(this.tree) ||
+      isClassDeclaration(this.tree) ||
+      isInterfaceDeclaration(this.tree) ||
+      isTypeAliasDeclaration(this.tree)
+    ) {
+      return this.tree.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+    }
+
+    if (isArrowFunction(this.tree) || isFunctionExpression(this.tree)) {
+      return this.tree.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+    }
+
+    if (isVariableStatement(this.tree)) {
+      const { initializer } = this.tree.declarationList.declarations[0];
+      if (
+        initializer &&
+        (isArrowFunction(initializer) || isFunctionExpression(initializer))
+      ) {
+        return initializer.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+      }
+    }
+
+    return [];
+  }
+
+  // Retrieves the type arguments (<string>, <K, V>) of a type reference or call expression
+  getTypeArguments(): Explorer[] {
+    if (!this.tree) {
+      return [];
+    }
+
+    if (
+      isTypeReferenceNode(this.tree) ||
+      isCallExpression(this.tree) ||
+      isNewExpression(this.tree)
+    ) {
+      return this.tree.typeArguments?.map((ta) => new Explorer(ta)) ?? [];
     }
 
     return [];

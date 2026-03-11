@@ -1195,3 +1195,116 @@ describe("doesImplement", () => {
     expect(classes.Foo.doesImplement("Bar")).toBe(false);
   });
 });
+
+describe("getTypeParameters", () => {
+  it("returns an array of Explorer objects for the type parameters of a function", () => {
+    const explorer = new Explorer(
+      "function identity<T>(arg: T): T { return arg; }",
+    );
+    const typeParams = explorer.getFunctions().identity.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters with constraints", () => {
+    const explorer = new Explorer(
+      "function foo<T extends string, U extends number>(a: T, b: U) {}",
+    );
+    const typeParams = explorer.getFunctions().foo.getTypeParameters();
+    expect(typeParams).toHaveLength(2);
+    expect(typeParams[0].matches("T extends string")).toBe(true);
+    expect(typeParams[1].matches("U extends number")).toBe(true);
+  });
+
+  it("returns type parameters for a class declaration", () => {
+    const explorer = new Explorer("class Box<T> { value: T; }");
+    const typeParams = explorer.getClasses().Box.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for an interface declaration", () => {
+    const explorer = new Explorer("interface Pair<K, V> { key: K; value: V; }");
+    const typeParams = explorer.getInterfaces().Pair.getTypeParameters();
+    expect(typeParams).toHaveLength(2);
+    expect(typeParams[0].matches("K")).toBe(true);
+    expect(typeParams[1].matches("V")).toBe(true);
+  });
+
+  it("returns type parameters for a type alias", () => {
+    const explorer = new Explorer("type Maybe<T> = T | null;");
+    const typeParams = explorer.getTypes().Maybe.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for an arrow function assigned to a variable", () => {
+    const explorer = new Explorer("const identity = <T>(arg: T): T => arg;");
+    const typeParams = explorer
+      .getVariables()
+      .identity.getValue()
+      .getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for a method", () => {
+    const explorer = new Explorer(
+      "class Foo { transform<T>(value: T): T { return value; } }",
+    );
+    const typeParams = explorer
+      .getClasses()
+      .Foo.getMethods()
+      .transform.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns an empty array if there are no type parameters", () => {
+    const explorer = new Explorer("function foo(x: number) { return x; }");
+    expect(explorer.getFunctions().foo.getTypeParameters()).toHaveLength(0);
+
+    const explorer2 = new Explorer("class Bar { }");
+    expect(explorer2.getClasses().Bar.getTypeParameters()).toHaveLength(0);
+  });
+});
+
+describe("getTypeArguments", () => {
+  it("returns an array of Explorer objects for type arguments of a type reference", () => {
+    const explorer = new Explorer("const a: Map<string, number> = new Map();");
+    const typeArgs = explorer
+      .getVariables()
+      .a.getAnnotation()
+      .getTypeArguments();
+    expect(typeArgs).toHaveLength(2);
+    expect(typeArgs[0].matches("string")).toBe(true);
+    expect(typeArgs[1].matches("number")).toBe(true);
+  });
+
+  it("returns type arguments for a call expression", () => {
+    const explorer = new Explorer("const a = identity<number>(42);");
+    const typeArgs = explorer.getVariables().a.getValue().getTypeArguments();
+    expect(typeArgs).toHaveLength(1);
+    expect(typeArgs[0].matches("number")).toBe(true);
+  });
+
+  it("returns type arguments for a new expression", () => {
+    const explorer = new Explorer("const a = new Map<string, number>();");
+    const typeArgs = explorer.getVariables().a.getValue().getTypeArguments();
+    expect(typeArgs).toHaveLength(2);
+    expect(typeArgs[0].matches("string")).toBe(true);
+    expect(typeArgs[1].matches("number")).toBe(true);
+  });
+
+  it("returns an empty array if there are no type arguments", () => {
+    const explorer = new Explorer("const a: Map = new Map();");
+    expect(
+      explorer.getVariables().a.getAnnotation().getTypeArguments(),
+    ).toHaveLength(0);
+  });
+
+  it("returns an empty array for an empty Explorer", () => {
+    const explorer = new Explorer();
+    expect(explorer.getTypeArguments()).toHaveLength(0);
+  });
+});
