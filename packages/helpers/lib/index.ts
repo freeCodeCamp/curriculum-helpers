@@ -2,7 +2,9 @@ import { strip } from "./strip";
 import astHelpers from "../python/py_helpers.py";
 
 export const Explorer = async (code: string) =>
-  new (await import("./class/explorer")).Explorer(code);
+  new (
+    await import(/* webpackChunkName: "explorer" */ "./class/explorer")
+  ).Explorer(code);
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
