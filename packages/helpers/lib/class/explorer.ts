@@ -10,6 +10,7 @@ import {
   SyntaxKind,
   Identifier,
   ArrowFunction,
+  isArrayLiteralExpression,
   FunctionExpression,
   InterfaceDeclaration,
   ClassDeclaration,
@@ -17,6 +18,7 @@ import {
   PropertyDeclaration,
   TypeElement,
   ClassElement,
+  ObjectLiteralExpression,
   isSourceFile,
   isBlock,
   isVariableStatement,
@@ -34,7 +36,36 @@ import {
   isTypeLiteralNode,
   isModuleBlock,
   isCaseOrDefaultClause,
+  isObjectLiteralExpression,
+  isPropertyAssignment,
+  isAsExpression,
+  isUnionTypeNode,
   Statement,
+  ReturnStatement,
+  isBinaryExpression,
+  isPropertyAccessExpression,
+  isExpressionStatement,
+  isConstructorDeclaration,
+  isNonNullExpression,
+  isExpression,
+  isTypeReferenceNode,
+  isIntersectionTypeNode,
+  isArrayTypeNode,
+  isTupleTypeNode,
+  isFunctionTypeNode,
+  isLiteralTypeNode,
+  isParenthesizedTypeNode,
+  isConditionalTypeNode,
+  isMappedTypeNode,
+  isTemplateLiteralTypeNode,
+  isIndexedAccessTypeNode,
+  isTypeOperatorNode,
+  isRestTypeNode,
+  isOptionalTypeNode,
+  isTypeParameterDeclaration,
+  isCallExpression,
+  isNewExpression,
+  isTypeNode,
 } from "typescript";
 
 type TypeProp = {
@@ -109,7 +140,8 @@ function getBody(tree: Node): Node | undefined {
     isFunctionDeclaration(tree) ||
     isMethodDeclaration(tree) ||
     isFunctionExpression(tree) ||
-    isArrowFunction(tree)
+    isArrowFunction(tree) ||
+    isConstructorDeclaration(tree)
   ) {
     return tree.body;
   }
@@ -126,37 +158,132 @@ function getBody(tree: Node): Node | undefined {
   }
 }
 
-function createTree(
-  code: string,
-  kind:
-    | SyntaxKind.TypeReference
-    | SyntaxKind.MethodDeclaration
-    | SyntaxKind.Unknown = SyntaxKind.Unknown,
-): Node | null {
+type ParseContext =
+  | "source"
+  | "method"
+  | "constructor"
+  | "parameter"
+  | "typeParameter"
+  | "propertyDeclaration"
+  | "typeReference"
+  | "expression";
+
+const CONTEXT_GUARDS: ReadonlyArray<
+  [ParseContext, ReadonlyArray<(node: Node) => boolean>]
+> = [
+  ["constructor", [isConstructorDeclaration]],
+  ["method", [isMethodDeclaration]],
+  ["propertyDeclaration", [isPropertyDeclaration]],
+  ["parameter", [isParameter]],
+  ["typeParameter", [isTypeParameterDeclaration]],
+  // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
+  // Without these, matches() falls through to "source" and comparison always fails.
+  [
+    "typeReference",
+    [
+      isTypeReferenceNode,
+      isUnionTypeNode,
+      isIntersectionTypeNode,
+      isArrayTypeNode,
+      isTupleTypeNode,
+      isFunctionTypeNode,
+      isTypeLiteralNode,
+      isLiteralTypeNode,
+      isParenthesizedTypeNode,
+      isConditionalTypeNode,
+      isMappedTypeNode,
+      isTemplateLiteralTypeNode,
+      isIndexedAccessTypeNode,
+      isTypeOperatorNode,
+      isRestTypeNode,
+      isOptionalTypeNode,
+      // Catch-all for keyword types (StringKeyword, NumberKeyword, etc.)
+      isTypeNode,
+    ],
+  ],
+  [
+    "expression",
+    [
+      isObjectLiteralExpression,
+      isArrayLiteralExpression,
+      isNonNullExpression,
+      isAsExpression,
+      isPropertyAccessExpression,
+      isBinaryExpression,
+      isArrowFunction,
+      isFunctionExpression,
+      // Catch-all for remaining expression kinds (CallExpression, NewExpression, etc.)
+      isExpression,
+    ],
+  ],
+];
+
+function inferContext(node: Node): ParseContext {
+  for (const [context, guards] of CONTEXT_GUARDS) {
+    if (guards.some((guard) => guard(node))) {
+      return context;
+    }
+  }
+
+  return "source";
+}
+
+function createTree(code: string, context: ParseContext): Node | null {
   if (!code.trim()) {
     return null;
   }
 
-  let sourceFile: SourceFile;
+  switch (context) {
+    case "method": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isMethodDeclaration) ?? null;
+    }
 
-  if (kind === SyntaxKind.MethodDeclaration) {
-    sourceFile = createSource(`class _ { ${code} }`);
-    const classDecl = sourceFile.statements[0] as ClassDeclaration;
-    const methodDecl = classDecl.members.find((member) =>
-      isMethodDeclaration(member),
-    );
-    return methodDecl || null;
+    case "constructor": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isConstructorDeclaration) ?? null;
+    }
+
+    case "parameter": {
+      const sf = createSource(`function _(${code}) {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.parameters[0] ?? null;
+    }
+
+    case "typeParameter": {
+      const sf = createSource(`function _<${code}>() {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.typeParameters?.[0] ?? null;
+    }
+
+    case "propertyDeclaration": {
+      const sf = createSource(`class _ { ${code} }`);
+      const classDecl = sf.statements[0] as ClassDeclaration;
+      return classDecl.members.find(isPropertyDeclaration) ?? null;
+    }
+
+    case "typeReference": {
+      const sf = createSource(`let _: ${code};`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      return declaration.type ?? null;
+    }
+
+    case "expression": {
+      const sf = createSource(`const _ = ${code};`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      return declaration.initializer ?? null;
+    }
+
+    case "source":
+      return createSource(code);
+
+    default:
+      return null;
   }
-
-  if (kind === SyntaxKind.TypeReference) {
-    sourceFile = createSource(`let _: ${code};`);
-    const varStatement = sourceFile.statements[0] as VariableStatement;
-    const declaration = varStatement.declarationList.declarations[0];
-    return declaration.type || null;
-  }
-
-  sourceFile = createSource(code);
-  return sourceFile;
 }
 
 const removeSemicolons = (nodes: readonly Node[]): Node[] =>
@@ -207,15 +334,16 @@ const areNodesEquivalent = (
 
 class Explorer {
   private tree: Node | null;
+  private context: ParseContext;
 
-  constructor(
-    tree: Node | string = "",
-    syntaxKind:
-      | SyntaxKind.TypeReference
-      | SyntaxKind.MethodDeclaration
-      | SyntaxKind.Unknown = SyntaxKind.Unknown,
-  ) {
-    this.tree = typeof tree === "string" ? createTree(tree, syntaxKind) : tree;
+  constructor(tree: Node | string = "", context: ParseContext = "source") {
+    if (typeof tree === "string") {
+      this.tree = createTree(tree, context);
+      this.context = context;
+    } else {
+      this.tree = tree;
+      this.context = inferContext(tree);
+    }
   }
 
   isEmpty(): boolean {
@@ -228,20 +356,22 @@ class Explorer {
 
   // Compares the current tree with another tree, ignoring semicolons and whitespace
   matches(other: string | Explorer): boolean {
-    let otherExplorer: Explorer;
-
     if (typeof other === "string") {
-      // If current node is a MethodDeclaration, wrap the string in a class for proper parsing
-      if (this.tree && isMethodDeclaration(this.tree)) {
-        otherExplorer = new Explorer(other, SyntaxKind.MethodDeclaration);
-      } else {
-        otherExplorer = new Explorer(other);
+      // Handle empty case: both are empty
+      if (!this.tree && !other.trim()) {
+        return true;
       }
-    } else {
-      otherExplorer = other;
+
+      if (!this.tree) {
+        return false;
+      }
+
+      // Reuse the stored context so the RHS string is wrapped the same way
+      // this node was parsed — no manual if/else chain needed
+      return areNodesEquivalent(this.tree, createTree(other, this.context));
     }
 
-    return areNodesEquivalent(this.tree, otherExplorer.tree);
+    return areNodesEquivalent(this.tree, other.tree);
   }
 
   // Finds all nodes of a specific kind in the current scope.
@@ -278,6 +408,33 @@ class Explorer {
     return result;
   }
 
+  // Retrieves the assigned value of a variable, property, parameter, or property assignment
+  getValue(): Explorer {
+    if (this.isEmpty()) {
+      return new Explorer();
+    }
+
+    const node = this.tree!;
+
+    // Handle VariableStatement
+    if (isVariableStatement(node)) {
+      const { initializer } = node.declarationList.declarations[0];
+      return initializer ? new Explorer(initializer) : new Explorer();
+    }
+
+    // Handle PropertyDeclaration (class properties), PropertySignature (interface/type properties), and Parameter (function/method parameters)
+    if (isPropertyDeclaration(node) || isParameter(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle PropertyAssignment (object literal properties)
+    if (isPropertyAssignment(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    return new Explorer();
+  }
+
   // Retrieves the type annotation of the current node if it exists, otherwise returns an empty Explorer
   getAnnotation(): Explorer {
     if (this.isEmpty()) {
@@ -311,6 +468,37 @@ class Explorer {
     return new Explorer();
   }
 
+  // Checks if the current node has a union type annotation that includes all specified types ignoring order
+  isUnionOf(types: string[]): boolean {
+    const currentAnnotation = this.getAnnotation();
+    if (currentAnnotation.isEmpty()) {
+      return false;
+    }
+
+    const annotationNode = currentAnnotation.tree;
+    if (!annotationNode || !isUnionTypeNode(annotationNode)) {
+      return false;
+    }
+
+    // Extract the current union type members
+    const currentMembers = annotationNode.types;
+    if (currentMembers.length !== types.length) {
+      return false;
+    }
+
+    // Check if all current members match some member in the provided types array
+    return currentMembers.every((currentMember) =>
+      types.some((typeString) => {
+        const typeExplorer = new Explorer(typeString, "typeReference");
+        if (typeExplorer.isEmpty()) {
+          return false;
+        }
+
+        return areNodesEquivalent(currentMember, typeExplorer.tree);
+      }),
+    );
+  }
+
   // Checks if the current node has a type annotation that matches the provided annotation string
   hasAnnotation(annotation: string): boolean {
     const currentAnnotation = this.getAnnotation();
@@ -318,12 +506,7 @@ class Explorer {
       return false;
     }
 
-    const annotationNode = createTree(annotation, SyntaxKind.TypeReference);
-    if (annotationNode === null) {
-      return false;
-    }
-
-    const annotationExplorer = new Explorer(annotationNode);
+    const annotationExplorer = new Explorer(annotation, "typeReference");
     return currentAnnotation.matches(annotationExplorer);
   }
 
@@ -399,17 +582,14 @@ class Explorer {
     // Check return type if we found a function node
     if (functionNode?.type) {
       const returnAnnotation = new Explorer(functionNode.type);
-      const explorerAnnotation = new Explorer(
-        annotation,
-        SyntaxKind.TypeReference,
-      );
+      const explorerAnnotation = new Explorer(annotation, "typeReference");
       return returnAnnotation.matches(explorerAnnotation);
     }
 
     return false;
   }
 
-  // Retrieves the parameters of a function, whether it's a function declaration or a variable statement initialized with a function
+  // Retrieves the parameters of a function or method
   getParameters(): Explorer[] {
     if (!this.tree) {
       return [];
@@ -429,7 +609,95 @@ class Explorer {
       }
     }
 
+    if (isMethodDeclaration(this.tree)) {
+      return this.tree.parameters.map((param) => new Explorer(param));
+    }
+
     return [];
+  }
+
+  // Retrieves the type parameters (<T>, <T extends U>) of a function, method, class, or interface
+  getTypeParameters(): Explorer[] {
+    if (!this.tree) {
+      return [];
+    }
+
+    if (
+      isFunctionDeclaration(this.tree) ||
+      isMethodDeclaration(this.tree) ||
+      isClassDeclaration(this.tree) ||
+      isInterfaceDeclaration(this.tree) ||
+      isTypeAliasDeclaration(this.tree)
+    ) {
+      return this.tree.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+    }
+
+    if (isArrowFunction(this.tree) || isFunctionExpression(this.tree)) {
+      return this.tree.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+    }
+
+    if (isVariableStatement(this.tree)) {
+      const { initializer } = this.tree.declarationList.declarations[0];
+      if (
+        initializer &&
+        (isArrowFunction(initializer) || isFunctionExpression(initializer))
+      ) {
+        return initializer.typeParameters?.map((tp) => new Explorer(tp)) ?? [];
+      }
+    }
+
+    return [];
+  }
+
+  // Retrieves the type arguments (<string>, <K, V>) of a type reference or call expression
+  getTypeArguments(): Explorer[] {
+    if (!this.tree) {
+      return [];
+    }
+
+    if (
+      isTypeReferenceNode(this.tree) ||
+      isCallExpression(this.tree) ||
+      isNewExpression(this.tree)
+    ) {
+      return this.tree.typeArguments?.map((ta) => new Explorer(ta)) ?? [];
+    }
+
+    return [];
+  }
+
+  // Checks the return value of a function, method, or arrow function against a provided string representation of the expected return value
+  hasReturn(value: string): boolean {
+    if (this.isEmpty()) {
+      return false;
+    }
+
+    const node = this.tree!;
+
+    const body = getBody(node);
+    if (!body) {
+      return false;
+    }
+
+    // If body is a Block, get its statements to find return statements at outer scope
+    if (isBlock(body)) {
+      const statements = findStatements(body);
+      for (const statement of statements) {
+        if (statement.kind === SyntaxKind.ReturnStatement) {
+          const returnStmt = statement as ReturnStatement;
+          if (returnStmt.expression) {
+            const returnExplorer = new Explorer(returnStmt.expression);
+            return returnExplorer.matches(value);
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // If body is an expression (arrow function without braces), compare directly
+    const bodyExplorer = new Explorer(body);
+    return bodyExplorer.matches(value);
   }
 
   // Finds all type alias declarations in the current tree
@@ -481,8 +749,18 @@ class Explorer {
     return result;
   }
 
+  // Finds and returns the constructor of a class as an Explorer object
+  getConstructor(): Explorer | null {
+    if (!this.tree || !isClassDeclaration(this.tree)) {
+      return null;
+    }
+
+    const constructors = this.getAll(SyntaxKind.Constructor);
+    return constructors.length > 0 ? constructors[0] : null;
+  }
+
   // Finds all properties in a class
-  getClassProps(): { [key: string]: Explorer } {
+  getClassProps(includeConstructor = false): { [key: string]: Explorer } {
     if (!this.tree || !isClassDeclaration(this.tree)) {
       return {};
     }
@@ -494,6 +772,39 @@ class Explorer {
       const name = (prop.name as Identifier).text;
       result[name] = new Explorer(prop);
     });
+
+    if (includeConstructor) {
+      const constructor = this.getConstructor();
+      if (constructor && !constructor.isEmpty()) {
+        const constructorNode = constructor.tree as Node;
+        const body = getBody(constructorNode);
+        if (body && isBlock(body)) {
+          body.statements.forEach((stmt: Node) => {
+            if (isExpressionStatement(stmt)) {
+              const expr = stmt.expression;
+              // Check for property assignments: this.propertyName = value
+              if (
+                isBinaryExpression(expr) &&
+                isPropertyAccessExpression(expr.left)
+              ) {
+                const propAccess = expr.left;
+                // Ensure it's accessing a property on 'this'
+                if (
+                  propAccess.expression.kind === SyntaxKind.ThisKeyword &&
+                  isIdentifier(propAccess.name)
+                ) {
+                  const propName = propAccess.name.text;
+                  // Only add if not already defined as a PropertyDeclaration
+                  if (!(propName in result)) {
+                    result[propName] = new Explorer(stmt);
+                  }
+                }
+              }
+            }
+          });
+        }
+      }
+    }
 
     return result;
   }
@@ -508,6 +819,44 @@ class Explorer {
       const prop = member.tree as PropertyDeclaration;
       const name = (prop.name as Identifier).text;
       result[name] = member;
+    });
+
+    return result;
+  }
+
+  // Finds all properties in an object literal and returns them as Explorer instances
+  getObjectProps(): { [key: string]: Explorer } {
+    if (!this.tree) {
+      return {};
+    }
+
+    let objectLiteral: ObjectLiteralExpression | undefined;
+
+    // If the current tree is an object literal, use it directly
+    if (isObjectLiteralExpression(this.tree)) {
+      objectLiteral = this.tree;
+    }
+
+    // If it's a variable statement with an object literal initializer, get the object
+    if (isVariableStatement(this.tree)) {
+      const { initializer } = this.tree.declarationList.declarations[0];
+      if (initializer && isObjectLiteralExpression(initializer)) {
+        objectLiteral = initializer;
+      }
+    }
+
+    if (!objectLiteral) {
+      return {};
+    }
+
+    const result: { [key: string]: Explorer } = {};
+    objectLiteral.properties.forEach((property) => {
+      if (isPropertyAssignment(property)) {
+        if (property.name && isIdentifier(property.name)) {
+          const name = property.name.text;
+          result[name] = new Explorer(property);
+        }
+      }
     });
 
     return result;
@@ -545,7 +894,7 @@ class Explorer {
         }
 
         const memberType = new Explorer(member.type);
-        if (!memberType.matches(new Explorer(type, SyntaxKind.TypeReference))) {
+        if (!memberType.matches(new Explorer(type, "typeReference"))) {
           return false;
         }
       } else {
@@ -603,9 +952,7 @@ class Explorer {
         }
 
         const memberType = new Explorer(member.tree.type);
-        if (
-          !memberType.matches(new Explorer(prop.type, SyntaxKind.TypeReference))
-        ) {
+        if (!memberType.matches(new Explorer(prop.type, "typeReference"))) {
           return false;
         }
       }
@@ -626,6 +973,179 @@ class Explorer {
     }
 
     return props.every(hasProp);
+  }
+
+  // Checks if the current node is a type assertion (cast using 'as')
+  // Optionally verify the cast type matches the provided type string
+  hasCast(expectedType?: string): boolean {
+    if (this.isEmpty()) {
+      return false;
+    }
+
+    const node = this.tree!;
+
+    // Check if the node is an AsExpression (type assertion with 'as' keyword)
+    if (isAsExpression(node)) {
+      if (expectedType === undefined) {
+        return true;
+      }
+
+      // Check if the cast type matches the expected type
+      const castType = node.type;
+      if (castType) {
+        const castTypeExplorer = new Explorer(castType);
+        const expectedTypeExplorer = new Explorer(
+          expectedType,
+          "typeReference",
+        );
+        return castTypeExplorer.matches(expectedTypeExplorer);
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  // Checks if a class or interface extends the specified base class or interface(s)
+  doesExtend(basesToCheck: string | string[]): boolean {
+    if (!this.tree) {
+      return false;
+    }
+
+    const node = this.tree;
+    const baseClause =
+      (isClassDeclaration(node) || isInterfaceDeclaration(node)) &&
+      node.heritageClauses
+        ? node.heritageClauses
+        : null;
+
+    if (!baseClause) {
+      return false;
+    }
+
+    if (!Array.isArray(basesToCheck)) {
+      basesToCheck = [basesToCheck];
+    }
+
+    // Check each heritage clause for extends
+    for (const clause of baseClause) {
+      if (clause.token !== SyntaxKind.ExtendsKeyword) {
+        continue;
+      }
+
+      const typeNames = clause.types.reduce((names: string[], type) => {
+        // Get the type name - handle simple identifiers and qualified names
+        if (isIdentifier(type.expression)) {
+          names.push(type.expression.text);
+        } else if (type.expression.kind === SyntaxKind.QualifiedName) {
+          // For qualified names like "namespace.ClassName", get the full text
+          names.push(type.expression.getText());
+        }
+
+        return names;
+      }, []);
+
+      // Check if all requested bases are in the extends clause
+      if (basesToCheck.every((b) => typeNames.includes(b))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Checks if a class implements the specified interface(s)
+  doesImplement(basesToCheck: string | string[]): boolean {
+    if (!this.tree) {
+      return false;
+    }
+
+    const node = this.tree;
+    const baseClause =
+      isClassDeclaration(node) && node.heritageClauses
+        ? node.heritageClauses
+        : null;
+
+    if (!baseClause) {
+      return false;
+    }
+
+    if (!Array.isArray(basesToCheck)) {
+      basesToCheck = [basesToCheck];
+    }
+
+    // Check each heritage clause for implements
+    for (const clause of baseClause) {
+      if (clause.token !== SyntaxKind.ImplementsKeyword) {
+        continue;
+      }
+
+      const typeNames = clause.types.reduce((names: string[], type) => {
+        // Get the type name - handle simple identifiers and qualified names
+        if (isIdentifier(type.expression)) {
+          names.push(type.expression.text);
+        } else if (type.expression.kind === SyntaxKind.QualifiedName) {
+          // For qualified names like "namespace.ClassName", get the full text
+          names.push(type.expression.getText());
+        }
+
+        return names;
+      }, []);
+
+      // Check if all requested bases are in the implements clause
+      if (basesToCheck.every((b) => typeNames.includes(b))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Checks if the property has a private modifier
+  isPrivate(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.PrivateKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a protected modifier
+  isProtected(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.ProtectedKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a public modifier
+  isPublic(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.PublicKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the property has a readonly modifier
+  isReadOnly(): boolean {
+    if (!this.tree) return false;
+    return (
+      (this.tree as Node & { modifiers?: Node[] }).modifiers?.some(
+        (modifier) => modifier.kind === SyntaxKind.ReadonlyKeyword,
+      ) ?? false
+    );
+  }
+
+  // Checks if the expression has a non-null assertion (!)
+  hasNonNullAssertion(): boolean {
+    if (!this.tree) return false;
+    return isNonNullExpression(this.tree);
   }
 }
 

@@ -55,6 +55,46 @@ describe("matches", () => {
 
     const explorer4 = new Explorer();
     expect(explorer4.matches("")).toBe(true);
+
+    // Parameters
+    const [x] = new Explorer("function foo(x: number) {}")
+      .getFunctions()
+      .foo.getParameters();
+    expect(x.matches("x: number")).toBe(true);
+
+    // Class members
+    const { Foo } = new Explorer(
+      "class Foo { private count: number = 0; greet(name: string): void {} }",
+    ).getClasses();
+    expect(Foo.getClassProps().count.matches("private count: number = 0")).toBe(
+      true,
+    );
+    expect(Foo.getMethods().greet.matches("greet(name: string): void {}")).toBe(
+      true,
+    );
+
+    // Type annotations
+    const { a, b, c } = new Explorer(
+      "const a: number | string = 1; const b: { x: number } = { x: 1 }; const c: string[] = [];",
+    ).getVariables();
+    expect(a.getAnnotation().matches("number | string")).toBe(true);
+    expect(b.getAnnotation().matches("{ x: number }")).toBe(true);
+    expect(c.getAnnotation().matches("string[]")).toBe(true);
+
+    // Expressions
+    const { obj, arr, lit, nn } = new Explorer(
+      "const obj = { x: 1 }; const arr = [1, 2]; const lit = 42; const nn = val!;",
+    ).getVariables();
+    expect(obj.getValue().matches("{ x: 1 }")).toBe(true);
+    expect(arr.getValue().matches("[1, 2]")).toBe(true);
+    expect(lit.getValue().matches("42")).toBe(true);
+    expect(nn.getValue().matches("val!")).toBe(true);
+
+    // Cast
+    const { casted } = new Explorer(
+      "const casted = someValue as string;",
+    ).getVariables();
+    expect(casted.getValue().matches("someValue as string")).toBe(true);
   });
 
   it("returns false when comparing non-equivalent nodes", () => {
@@ -146,6 +186,41 @@ describe("getVariables", () => {
   });
 });
 
+describe("getValue", () => {
+  it("returns an Explorer object for the initializer of a variable", () => {
+    const sourceCode =
+      "const a = 1; const b = { x: 10 }; const c = 'hello'; const d = [1, 2, 3];";
+    const explorer = new Explorer(sourceCode);
+    const { a, b, c, d } = explorer.getVariables();
+    const valueA = a.getValue();
+    expect(valueA).toBeInstanceOf(Explorer);
+    expect(valueA.toString()).toBe("1");
+
+    const valueB = b.getValue();
+    expect(valueB).toBeInstanceOf(Explorer);
+    expect(valueB.matches("{ x: 10 }")).toBe(true);
+
+    expect(b.getObjectProps().x.getValue().matches("10")).toBe(true);
+
+    const valueC = c.getValue();
+    expect(valueC).toBeInstanceOf(Explorer);
+    expect(valueC.matches("'hello'")).toBe(true);
+
+    const valueD = d.getValue();
+    expect(valueD).toBeInstanceOf(Explorer);
+    expect(valueD.matches("[1, 2, 3]")).toBe(true);
+  });
+
+  it("returns an empty Explorer if the variable has no initializer", () => {
+    const sourceCode = "const a;";
+    const explorer = new Explorer(sourceCode);
+    const variables = explorer.getVariables();
+    const valueA = variables.a.getValue();
+    expect(valueA).toBeInstanceOf(Explorer);
+    expect(valueA.isEmpty()).toBe(true);
+  });
+});
+
 describe("getFunctions", () => {
   it("returns an object with Explorer objects as values", () => {
     const sourceCode =
@@ -206,32 +281,43 @@ describe("getFunctions", () => {
 });
 
 describe("getParameters", () => {
-  it("returns an array of Explorer objects for the parameters of a function", () => {
+  it("returns an array of Explorer objects for the parameters of a function or method", () => {
     const sourceCode = `
                     function foo(x: number, y: string) { return 42; }
                     const bar = (a: boolean) => 24;
                     const baz = function(b: any, c: string) { return 42; };
+                    class Spam { method(d: number) { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     const parametersFoo = functions.foo.getParameters();
     expect(parametersFoo).toHaveLength(2);
-    // TODO: handles comparison of parameters in matches().
-    // This doesn't ignore whitespace
-    expect(parametersFoo[0].toString()).toBe("x: number");
-    expect(parametersFoo[1].toString()).toBe("y: string");
+
+    expect(parametersFoo[0].matches("x: number")).toBe(true);
+    expect(parametersFoo[1].matches("y: string")).toBe(true);
 
     const parametersBar = functions.bar.getParameters();
     expect(parametersBar).toHaveLength(1);
-    expect(parametersBar[0].toString()).toBe("a: boolean");
+    expect(parametersBar[0].matches("a: boolean")).toBe(true);
 
     const parametersBaz = functions.baz.getParameters();
     expect(parametersBaz).toHaveLength(2);
-    expect(parametersBaz[0].toString()).toBe("b: any");
-    expect(parametersBaz[1].toString()).toBe("c: string");
+    expect(parametersBaz[0].matches("b: any")).toBe(true);
+    expect(parametersBaz[1].matches("c: string")).toBe(true);
+
+    expect(
+      explorer.getClasses().Spam.getMethods().method.getParameters(),
+    ).toHaveLength(1);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.getParameters()[0]
+        .matches("d: number"),
+    ).toBe(true);
   });
 
-  it("returns an empty array if the function has no parameters", () => {
+  it("returns an empty array if the function or method has no parameters", () => {
     const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => 24;
@@ -247,39 +333,82 @@ describe("getParameters", () => {
 });
 
 describe("hasReturnAnnotation", () => {
-  it("returns true if the function has the specified return type annotation", () => {
+  it("returns true if the function or method has the specified return type annotation", () => {
     const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
                     const baz = function(): boolean { return true; };
+                    class Spam { method(): number { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("number")).toBe(true);
     expect(functions.bar.hasReturnAnnotation("string")).toBe(true);
     expect(functions.baz.hasReturnAnnotation("boolean")).toBe(true);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("number"),
+    ).toBe(true);
   });
 
-  it("returns false if the function does not have the specified return type annotation", () => {
+  it("returns false if the function or method does not have the specified return type annotation", () => {
     const sourceCode = `
                     function foo(): number { return 42; }
                     const bar = (): string => "hello";
+                    class Spam { method(): number { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("string")).toBe(false);
     expect(functions.bar.hasReturnAnnotation("number")).toBe(false);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("string"),
+    ).toBe(false);
   });
 
-  it("returns false if the function has no return type annotation", () => {
+  it("returns false if the function or method has no return type annotation", () => {
     const sourceCode = `
                     function foo() { return 42; }
                     const bar = () => "hello";
+                    class Spam { method() { return 42; } }
                 `;
     const explorer = new Explorer(sourceCode);
     const functions = explorer.getFunctions(true);
     expect(functions.foo.hasReturnAnnotation("number")).toBe(false);
     expect(functions.bar.hasReturnAnnotation("string")).toBe(false);
+    expect(
+      explorer
+        .getClasses()
+        .Spam.getMethods()
+        .method.hasReturnAnnotation("number"),
+    ).toBe(false);
+  });
+});
+
+describe("hasReturn", () => {
+  it("returns true if the function or method has a top-level return value matching the specified string", () => {
+    const sourceCode = `function foo() { return 42; }
+                    const bar = () => "hello";
+                    const baz = function() { return true; };
+                    class Spam { method() { return 42; } }
+                    const nested1 = () => { function inner() { return "nested"; } return inner(); };
+                    const nested2 = () => { if (true) { return "nested"; } return "not nested"; };
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { foo, bar, baz, nested1, nested2 } = explorer.getFunctions(true);
+    expect(foo.hasReturn("42")).toBe(true);
+    expect(bar.hasReturn('"hello"')).toBe(true);
+    expect(baz.hasReturn("true")).toBe(true);
+    expect(nested1.hasReturn("inner()")).toBe(true);
+    expect(nested2.hasReturn('"not nested"')).toBe(true);
+
+    const { method } = explorer.getClasses().Spam.getMethods();
+    expect(method.hasReturn("42")).toBe(true);
   });
 });
 
@@ -437,8 +566,30 @@ class Bar { method2() {} }
   });
 });
 
-describe("findClassProps", () => {
+describe("getConstructor", () => {
+  it("returns an Explorer object for the constructor of a class", () => {
+    const sourceCode =
+      "class Foo { constructor(a, b) { this.a = a; this.b = b; } }";
+    const explorer = new Explorer(sourceCode);
+    const constructor = explorer.getClasses().Foo.getConstructor();
+    expect(constructor).toBeInstanceOf(Explorer);
+    expect(
+      constructor.matches("constructor(a, b) { this.a = a; this.b = b; }"),
+    ).toBe(true);
+  });
+});
+
+describe("getClassProps", () => {
   it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "class Foo { prop1: number; prop2: string; }";
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    Object.values(Foo.getClassProps()).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("finds properties assigned in the constructor when includeConstructor is true", () => {
     const sourceCode = `
                     class Rectangle {
                       constructor(height, width) {
@@ -446,16 +597,12 @@ describe("findClassProps", () => {
                         this.width = width;
                       }
                     }
-                    class Foo { prop1: number; prop2: string; }
                 `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
-    Object.values(classes.Rectangle.getClassProps()).forEach((p) =>
-      expect(p).toBeInstanceOf(Explorer),
-    );
-    Object.values(classes.Foo.getClassProps()).forEach((p) =>
-      expect(p).toBeInstanceOf(Explorer),
-    );
+    const props = classes.Rectangle.getClassProps(true);
+    expect(props.height.matches("this.height = height;")).toBe(true);
+    expect(props.width.matches("this.width = width;")).toBe(true);
   });
 
   it("returns one entry per property", () => {
@@ -470,7 +617,7 @@ describe("findClassProps", () => {
                 `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
-    // TODO: fix method to handle expect(Object.keys(classes.Rectangle.getClassProps())).toHaveLength(2);
+    expect(Object.keys(classes.Rectangle.getClassProps(true))).toHaveLength(2);
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(2);
   });
 
@@ -483,14 +630,126 @@ describe("findClassProps", () => {
 
   it("finds only properties in the current class", () => {
     const sourceCode = `
-                      class Foo { prop1: number; }
+                      class Foo { private prop1: number; }
                       class Bar { prop2: string; }
                   `;
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
     expect(Object.keys(classes.Foo.getClassProps())).toHaveLength(1);
-    // TODO: fix matches to handle
-    // expect(classes.Foo.getClassProps().prop1.matches("prop1: number;")).toBe(true);
+    expect(
+      classes.Foo.getClassProps().prop1.matches("private prop1: number;"),
+    ).toBe(true);
+
+    expect(Object.keys(classes.Bar.getClassProps())).toHaveLength(1);
+    expect(classes.Bar.getClassProps().prop2.matches("prop2: string;")).toBe(
+      true,
+    );
+  });
+});
+
+describe("isPrivate", () => {
+  it("returns true if the method, property is private", () => {
+    const sourceCode = `
+                    class Foo {
+                      private prop1: number;
+                      private method1() {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPrivate()).toBe(true);
+    expect(Foo.getMethods().method1.isPrivate()).toBe(true);
+  });
+
+  it("returns false if the method or property is not private", () => {
+    const sourceCode = `
+                    class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPrivate()).toBe(false);
+    expect(Foo.getMethods().method1.isPrivate()).toBe(false);
+  });
+});
+
+describe("isProtected", () => {
+  it("returns true if the method, property is protected", () => {
+    const sourceCode = `class Foo {
+                      protected prop1: number;
+                      protected method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isProtected()).toBe(true);
+    expect(Foo.getMethods().method1.isProtected()).toBe(true);
+  });
+
+  it("returns false if the method or property is not protected", () => {
+    const sourceCode = `class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isProtected()).toBe(false);
+    expect(Foo.getMethods().method1.isProtected()).toBe(false);
+  });
+});
+
+describe("isPublic", () => {
+  it("returns true if the method, property is public", () => {
+    const sourceCode = `class Foo {
+                      public prop1: number;
+                      public method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPublic()).toBe(true);
+    expect(Foo.getMethods().method1.isPublic()).toBe(true);
+  });
+
+  it("returns false if the method or property is not public", () => {
+    const sourceCode = `class Foo {
+                      prop1: number;
+                      private method1() {}
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isPublic()).toBe(false);
+    expect(Foo.getMethods().method1.isPublic()).toBe(false);
+  });
+});
+
+describe("isReadOnly", () => {
+  it("returns true if the property is readonly", () => {
+    const sourceCode = `class Foo {
+                      private readonly prop1: number;
+                    }
+                    interface Bar {
+                      readonly prop2: string;
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isReadOnly()).toBe(true);
+    const { Bar } = explorer.getInterfaces();
+    expect(Bar.getTypeProps().prop2.isReadOnly()).toBe(true);
+  });
+
+  it("returns false if the property is not readonly", () => {
+    const sourceCode = `class Foo {
+                      private prop1: number;
+                    }
+                    interface Bar {
+                      prop2: string;
+                    }`;
+    const explorer = new Explorer(sourceCode);
+    const { Foo } = explorer.getClasses();
+    expect(Foo.getClassProps().prop1.isReadOnly()).toBe(false);
+    const { Bar } = explorer.getInterfaces();
+    expect(Bar.getTypeProps().prop2.isReadOnly()).toBe(false);
   });
 });
 
@@ -506,7 +765,6 @@ describe("annotations", () => {
       const explorer = new Explorer(sourceCode);
       const varAnnotation = explorer.getVariables().a.getAnnotation();
       expect(varAnnotation).toBeInstanceOf(Explorer);
-      // TODO: handles comparison of annotations in matches(). This doesn't ignore whitespace
       expect(varAnnotation.toString()).toBe("number");
     });
   });
@@ -515,12 +773,22 @@ describe("annotations", () => {
     it("returns true if the specified annotation exists", () => {
       const sourceCode = `
                     const a: number = 1;
+                    const b: { x: number; y: string; } = { x: 10, y: "hello" };
                     function foo(x: number, y: string): void { }
                     interface Bar { x: number; }
                     class Baz { spam: "spam" = "spam"; }
                 `;
       const explorer = new Explorer(sourceCode);
-      expect(explorer.getVariables().a.hasAnnotation("number")).toBe(true);
+      const { a, b } = explorer.getVariables();
+      expect(a.hasAnnotation("number")).toBe(true);
+
+      expect(b.hasAnnotation("{ x: number; y: string; }")).toBe(true);
+      expect(b.getAnnotation().getTypeProps().x.hasAnnotation("number")).toBe(
+        true,
+      );
+      expect(b.getAnnotation().getTypeProps().y.hasAnnotation("string")).toBe(
+        true,
+      );
 
       const parametersFoo = explorer.getFunctions().foo.getParameters();
       expect(parametersFoo[0].hasAnnotation("number")).toBe(true);
@@ -566,6 +834,93 @@ describe("annotations", () => {
       expect(parametersFoo[0].hasAnnotation("number")).toBe(false);
       expect(parametersFoo[1].hasAnnotation("string")).toBe(false);
     });
+  });
+
+  describe("isUnionOf", () => {
+    it("returns true if the type is a union of the specified types", () => {
+      const sourceCode = `
+                    const a: number | string = 1;
+                    const b: "foo" | "bar" | "baz" = "foo";
+                    type MyType = number | string | boolean;
+                    interface MyInterface { prop: number | string | boolean; }
+                `;
+      const explorer = new Explorer(sourceCode);
+      expect(explorer.getVariables().a.isUnionOf(["number", "string"])).toBe(
+        true,
+      );
+      expect(
+        explorer.getVariables().b.isUnionOf(['"bar"', '"foo"', '"baz"']),
+      ).toBe(true);
+      expect(
+        explorer.getTypes().MyType.isUnionOf(["number", "boolean", "string"]),
+      ).toBe(true);
+      expect(
+        explorer
+          .getInterfaces()
+          .MyInterface.getTypeProps()
+          .prop.isUnionOf(["number", "boolean", "string"]),
+      ).toBe(true);
+    });
+
+    it("handles extra whitespace", () => {
+      const sourceCode = `const a: Array<string> | number = [];`;
+      const explorer = new Explorer(sourceCode);
+      expect(
+        explorer.getVariables().a.isUnionOf(["Array< string >", "number"]),
+      ).toBe(true);
+    });
+
+    it("returns false if the type is not a union of the specified types", () => {
+      const sourceCode = `
+                    const a: number | string = 1;
+                    const b: "foo" | "bar" | "baz" = "foo";
+                    type MyType = number | string | boolean;
+                    interface MyInterface { prop: number | string | boolean; }
+                `;
+      const explorer = new Explorer(sourceCode);
+      expect(explorer.getVariables().a.isUnionOf(["number", "boolean"])).toBe(
+        false,
+      );
+      expect(
+        explorer.getVariables().b.isUnionOf(['"bar"', '"foo"', '"qux"']),
+      ).toBe(false);
+      expect(explorer.getTypes().MyType.isUnionOf(["number", "string"])).toBe(
+        false,
+      );
+      expect(
+        explorer
+          .getInterfaces()
+          .MyInterface.getTypeProps()
+          .prop.isUnionOf(["number", "string"]),
+      ).toBe(false);
+    });
+  });
+});
+
+describe("getObjectProps", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode =
+      "const obj: {[name: string]: number} = { x: 10, y: 20 };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    Object.values(objectProps).forEach((p) =>
+      expect(p).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("returns one entry per property", () => {
+    const sourceCode =
+      "const obj: {[name: string]: number} = { x: 10, y: 20 };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    expect(Object.keys(objectProps)).toHaveLength(2);
+  });
+
+  it("returns an empty object if there are no properties", () => {
+    const sourceCode = "const obj: {[name: string]: number} = { };";
+    const explorer = new Explorer(sourceCode);
+    const objectProps = explorer.getVariables().obj.getObjectProps();
+    expect(Object.keys(objectProps)).toHaveLength(0);
   });
 });
 
@@ -752,5 +1107,213 @@ describe("querying statements", () => {
     it.todo("finds variables in ModuleBlock scope", () => {});
 
     it.todo("finds variables in CaseOrDefaultClause scope", () => {});
+  });
+});
+
+describe("hasCast", () => {
+  it("returns true if the variable is initialized with a type assertion", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast()).toBe(true);
+  });
+
+  it("returns false if the variable is not initialized with a type assertion", () => {
+    const explorer = new Explorer("const a = 1;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast()).toBe(false);
+  });
+
+  it("returns true if the variable is cast to the specified type ", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast("number")).toBe(true);
+    // TODO: handle values cast with angle bracket syntax in hasCast().
+  });
+
+  it("returns false if the variable is cast to a different type than the specified one", () => {
+    const explorer = new Explorer("const a = 1 as number;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasCast("string")).toBe(false);
+  });
+});
+
+describe("hasNonNullAssertion", () => {
+  it("returns true if the variable is initialized with a non-null assertion", () => {
+    const explorer = new Explorer("const a = someValue!;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasNonNullAssertion()).toBe(true);
+    expect(variables.a.getValue().matches("someValue!")).toBe(true);
+  });
+
+  it("returns false if the variable is not initialized with a non-null assertion", () => {
+    const explorer = new Explorer("const a = someValue;");
+    const variables = explorer.getVariables();
+    expect(variables.a.getValue().hasNonNullAssertion()).toBe(false);
+  });
+});
+
+describe("doesExtend", () => {
+  it("returns true if the class/interface extends the specified base class", () => {
+    const explorer = new Explorer(
+      "class Foo extends Bar, Baz { }; interface Baz extends Bar, Baz { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Bar")).toBe(true);
+    expect(classes.Foo.doesExtend("Baz")).toBe(true);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Bar")).toBe(true);
+    expect(interfaces.Baz.doesExtend("Baz")).toBe(true);
+  });
+
+  it("returns false if the class/interface does not extend the specified base class", () => {
+    const explorer = new Explorer(
+      "class Foo extends Bar { }; interface Baz extends Bar { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Baz")).toBe(false);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Foo")).toBe(false);
+  });
+
+  it("returns false if the class/interface does not have an extends clause", () => {
+    const explorer = new Explorer("class Foo { }; interface Baz { }");
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesExtend("Bar")).toBe(false);
+
+    const interfaces = explorer.getInterfaces();
+    expect(interfaces.Baz.doesExtend("Bar")).toBe(false);
+  });
+});
+
+describe("doesImplement", () => {
+  it("returns true if the class implements the specified interface", () => {
+    const explorer = new Explorer(
+      "class Foo implements Bar { }; class Baz implements Bar, Other { }",
+    );
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesImplement("Bar")).toBe(true);
+
+    expect(classes.Baz.doesImplement(["Bar", "Other"])).toBe(true);
+  });
+
+  it("returns false if the class does not implement the specified interface", () => {
+    const explorer = new Explorer("class Foo implements Other { }");
+    const classes = explorer.getClasses();
+    expect(classes.Foo.doesImplement("Bar")).toBe(false);
+  });
+});
+
+describe("getTypeParameters", () => {
+  it("returns an array of Explorer objects for the type parameters of a function", () => {
+    const explorer = new Explorer(
+      "function identity<T>(arg: T): T { return arg; }",
+    );
+    const typeParams = explorer.getFunctions().identity.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters with constraints", () => {
+    const explorer = new Explorer(
+      "function foo<T extends string, U extends number>(a: T, b: U) {}",
+    );
+    const typeParams = explorer.getFunctions().foo.getTypeParameters();
+    expect(typeParams).toHaveLength(2);
+    expect(typeParams[0].matches("T extends string")).toBe(true);
+    expect(typeParams[1].matches("U extends number")).toBe(true);
+  });
+
+  it("returns type parameters for a class declaration", () => {
+    const explorer = new Explorer("class Box<T> { value: T; }");
+    const typeParams = explorer.getClasses().Box.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for an interface declaration", () => {
+    const explorer = new Explorer("interface Pair<K, V> { key: K; value: V; }");
+    const typeParams = explorer.getInterfaces().Pair.getTypeParameters();
+    expect(typeParams).toHaveLength(2);
+    expect(typeParams[0].matches("K")).toBe(true);
+    expect(typeParams[1].matches("V")).toBe(true);
+  });
+
+  it("returns type parameters for a type alias", () => {
+    const explorer = new Explorer("type Maybe<T> = T | null;");
+    const typeParams = explorer.getTypes().Maybe.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for an arrow function assigned to a variable", () => {
+    const explorer = new Explorer("const identity = <T>(arg: T): T => arg;");
+    const typeParams = explorer
+      .getVariables()
+      .identity.getValue()
+      .getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns type parameters for a method", () => {
+    const explorer = new Explorer(
+      "class Foo { transform<T>(value: T): T { return value; } }",
+    );
+    const typeParams = explorer
+      .getClasses()
+      .Foo.getMethods()
+      .transform.getTypeParameters();
+    expect(typeParams).toHaveLength(1);
+    expect(typeParams[0].matches("T")).toBe(true);
+  });
+
+  it("returns an empty array if there are no type parameters", () => {
+    const explorer = new Explorer("function foo(x: number) { return x; }");
+    expect(explorer.getFunctions().foo.getTypeParameters()).toHaveLength(0);
+
+    const explorer2 = new Explorer("class Bar { }");
+    expect(explorer2.getClasses().Bar.getTypeParameters()).toHaveLength(0);
+  });
+});
+
+describe("getTypeArguments", () => {
+  it("returns an array of Explorer objects for type arguments of a type reference", () => {
+    const explorer = new Explorer("const a: Map<string, number> = new Map();");
+    const typeArgs = explorer
+      .getVariables()
+      .a.getAnnotation()
+      .getTypeArguments();
+    expect(typeArgs).toHaveLength(2);
+    expect(typeArgs[0].matches("string")).toBe(true);
+    expect(typeArgs[1].matches("number")).toBe(true);
+  });
+
+  it("returns type arguments for a call expression", () => {
+    const explorer = new Explorer("const a = identity<number>(42);");
+    const typeArgs = explorer.getVariables().a.getValue().getTypeArguments();
+    expect(typeArgs).toHaveLength(1);
+    expect(typeArgs[0].matches("number")).toBe(true);
+  });
+
+  it("returns type arguments for a new expression", () => {
+    const explorer = new Explorer("const a = new Map<string, number>();");
+    const typeArgs = explorer.getVariables().a.getValue().getTypeArguments();
+    expect(typeArgs).toHaveLength(2);
+    expect(typeArgs[0].matches("string")).toBe(true);
+    expect(typeArgs[1].matches("number")).toBe(true);
+  });
+
+  it("returns an empty array if there are no type arguments", () => {
+    const explorer = new Explorer("const a: Map = new Map();");
+    expect(
+      explorer.getVariables().a.getAnnotation().getTypeArguments(),
+    ).toHaveLength(0);
+  });
+
+  it("returns an empty array for an empty Explorer", () => {
+    const explorer = new Explorer();
+    expect(explorer.getTypeArguments()).toHaveLength(0);
   });
 });
