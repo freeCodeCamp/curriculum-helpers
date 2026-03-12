@@ -757,7 +757,7 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
           });
           return runner.runTest(`
 const explorer = await __helpers.Explorer(code);
-const vars = explorer.getVariables();
+const vars = explorer.variables;
 
 assert.exists(vars.x);
 assert.isUndefined(vars.y);
