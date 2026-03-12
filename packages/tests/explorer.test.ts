@@ -601,7 +601,8 @@ describe("getClassProps", () => {
     const explorer = new Explorer(sourceCode);
     const classes = explorer.getClasses();
     const props = classes.Rectangle.getClassProps(true);
-    Object.values(props).forEach((p) => expect(p).toBeInstanceOf(Explorer));
+    expect(props.height.matches("this.height = height;")).toBe(true);
+    expect(props.width.matches("this.width = width;")).toBe(true);
   });
 
   it("returns one entry per property", () => {
@@ -858,6 +859,14 @@ describe("annotations", () => {
           .getInterfaces()
           .MyInterface.getTypeProps()
           .prop.isUnionOf(["number", "boolean", "string"]),
+      ).toBe(true);
+    });
+
+    it("handles extra whitespace", () => {
+      const sourceCode = `const a: Array<string> | number = [];`;
+      const explorer = new Explorer(sourceCode);
+      expect(
+        explorer.getVariables().a.isUnionOf(["Array< string >", "number"]),
       ).toBe(true);
     });
 

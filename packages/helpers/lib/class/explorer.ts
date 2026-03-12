@@ -494,7 +494,7 @@ class Explorer {
           return false;
         }
 
-        return currentMember.getText() === typeExplorer.tree?.getText();
+        return areNodesEquivalent(currentMember, typeExplorer.tree);
       }),
     );
   }
@@ -796,7 +796,7 @@ class Explorer {
                   const propName = propAccess.name.text;
                   // Only add if not already defined as a PropertyDeclaration
                   if (!(propName in result)) {
-                    result[propName] = new Explorer(propAccess);
+                    result[propName] = new Explorer(stmt);
                   }
                 }
               }
