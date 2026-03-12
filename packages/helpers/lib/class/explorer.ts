@@ -875,59 +875,6 @@ class Explorer {
     return result;
   }
 
-  // Checks if a property with the given name (and optionally type and optionality) exists in the current tree, which can be an interface, type literal, or variable statement with a type literal annotation
-  hasTypeProp(name: string, type?: string, isOptional?: boolean): boolean {
-    if (!this.tree) {
-      return false;
-    }
-
-    const members = findMembers(this.tree);
-
-    if (!members) {
-      return false;
-    }
-
-    const member = members.find((m) => {
-      if (m.name && isIdentifier(m.name)) {
-        return m.name.text === name;
-      }
-
-      return false;
-    });
-
-    if (!member) {
-      return false;
-    }
-
-    // Check type if specified
-    if (type !== undefined) {
-      if (isPropertySignature(member)) {
-        if (!member.type) {
-          return false;
-        }
-
-        const memberType = new Explorer(member.type);
-        if (!memberType.matches(new Explorer(type, "typeReference"))) {
-          return false;
-        }
-      } else {
-        return false;
-      }
-    }
-
-    // Check optionality if specified
-    if (isOptional !== undefined) {
-      if (isPropertySignature(member)) {
-        const memberIsOptional = member.questionToken !== undefined;
-        if (memberIsOptional !== isOptional) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
   // Checks if all specified properties exist in the current tree, which can be an interface, type alias, type literal, or variable statement with a type literal annotation
   hasTypeProps(props: TypeProp | TypeProp[]): boolean {
     if (!this.tree) {
