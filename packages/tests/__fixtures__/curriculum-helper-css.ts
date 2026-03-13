@@ -305,6 +305,18 @@ body {
 .card:hover {
   background-color: khaki;
 }
+ 
+`;
+export const cssWithUniversal = `
+  span[class~="one"] *:first-of-type {
+    border-color: #d61;
+  }
+`;
+
+export const cssWithoutUniversal = `
+  span[class~="one"] > p:first-of-type {
+    color: red;
+  }
 `;
 
 const testValues = {
