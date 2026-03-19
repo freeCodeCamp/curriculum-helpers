@@ -1,6 +1,6 @@
 {
   "name": "@freecodecamp/curriculum-helpers",
-  "version": "7.2.0",
+  "version": "9.0.0",
   "description": "Helper functions to test challenges in freeCodecamp's curriculum",
   "homepage": "https://freecodecamp.org",
   "author": {
@@ -13,14 +13,14 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/types/helpers/lib/index.d.ts",
-      "require": "./dist/curriculum-helpers/index.cjs",
-      "default": "./dist/curriculum-helpers/index.mjs"
+      "types": "./dist/types/helpers/python/index.d.ts",
+      "require": "./dist/curriculum-helpers/format-exception.cjs",
+      "default": "./dist/curriculum-helpers/format-exception.mjs"
     },
-    "./helpers.js": {
-      "types": "./dist/types/helpers/lib/index.d.ts",
-      "require": "./dist/curriculum-helpers/index.cjs",
-      "default": "./dist/curriculum-helpers/index.mjs"
+    "./format-exception.js": {
+      "types": "./dist/types/helpers/python/index.d.ts",
+      "require": "./dist/curriculum-helpers/format-exception.cjs",
+      "default": "./dist/curriculum-helpers/format-exception.mjs"
     },
     "./test-runner.js": {
       "types": "./dist/types/main/src/index.d.ts",
@@ -95,6 +95,7 @@
     "test": "vitest",
     "test:unit": "vitest --config vitest.unit.config.mjs",
     "test:integration": "vitest --config vitest.integration.config.mjs",
+    "test:python": "python ./packages/helpers/python/python.test.py",
     "prepare": "husky install",
     "prepublishOnly": "pnpm clean:build && pnpm build",
     "webpack": "webpack"
