@@ -67,8 +67,10 @@ export class DOMTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
-    const hasExpected = Object.hasOwn(error, "expected");
-    const hasActual = Object.hasOwn(error, "actual");
+    const hasExpected =
+      Object.hasOwn(error, "expected") && error.expected !== undefined;
+    const hasActual =
+      Object.hasOwn(error, "actual") && error.actual !== undefined;
 
     return {
       err: {
