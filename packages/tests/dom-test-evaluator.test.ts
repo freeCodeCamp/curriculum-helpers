@@ -60,6 +60,19 @@ describe("DOMTestEvaluator", () => {
       });
     });
 
+    it("should preserve falsy expected and actual values in error responses", async () => {
+      const test = "assert.strictEqual(false, 0, 'test error')";
+
+      const result = await evaluator.runTest(test);
+
+      expect(result).toMatchObject({
+        err: {
+          expected: 0,
+          actual: false,
+        },
+      });
+    });
+
     it("should test against the enclosing document", async () => {
       resetDocument();
       document.body.appendChild(document.createElement("div"));

@@ -39,12 +39,15 @@ export class JavascriptTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
+    const hasExpected = Object.hasOwn(error, "expected");
+    const hasActual = Object.hasOwn(error, "actual");
+
     return {
       err: {
         message: error.message,
         stack: error.stack,
-        ...(!!error.expected && { expected: error.expected }),
-        ...(!!error.actual && { actual: error.actual }),
+        ...(hasExpected && { expected: error.expected }),
+        ...(hasActual && { actual: error.actual }),
       },
     };
   }

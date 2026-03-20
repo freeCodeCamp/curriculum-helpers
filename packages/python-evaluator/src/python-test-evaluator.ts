@@ -49,14 +49,20 @@ class PythonTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
-    const expected = serialize((error as { expected: unknown }).expected);
-    const actual = serialize((error as { actual: unknown }).actual);
+    const hasExpected = Object.hasOwn(error, "expected");
+    const hasActual = Object.hasOwn(error, "actual");
+    const expected = hasExpected
+      ? serialize((error as { expected: unknown }).expected)
+      : undefined;
+    const actual = hasActual
+      ? serialize((error as { actual: unknown }).actual)
+      : undefined;
     return {
       err: {
         message: error.message,
         stack: error.stack,
-        ...(!!expected && { expected }),
-        ...(!!actual && { actual }),
+        ...(hasExpected && { expected }),
+        ...(hasActual && { actual }),
         type: error.type,
       },
     };
