@@ -114,7 +114,7 @@ regex.test(
 - `source: string` — The object the method is called on.
 - `method: string` — The method name (dot notation only).
 - `params: string[]` — The callback parameter names, in order.
-- `returns?: RegExp` — Optional. When provided, the regex also enforces the callback return expression.
+- `returns?: RegExp` — Optional. When provided, the regex also enforces the callback return expression. Non-stateful flags (`d`, `i`, `m`, `s`, `u`, `v`) are preserved; stateful flags (`g`, `y`) are ignored.
 
 **Note:** Extra non-callback arguments (e.g. the initial value `, 0` in `reduce`) are not validated by this helper and should be asserted separately if needed.
 

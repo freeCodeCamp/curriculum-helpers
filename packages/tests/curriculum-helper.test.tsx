@@ -760,6 +760,13 @@ describe("callbackCallRegex", () => {
     );
   });
 
+  it("fails when target is only a suffix of another identifier", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("myresult = numbers.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
   it("fails when source is different", () => {
     const regex = callbackCallRegex(baseOptions);
     expect(regex.test("result = other.reduce((acc, el) => acc + el)")).toBe(
@@ -807,6 +814,40 @@ describe("callbackCallRegex", () => {
     expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
       false,
     );
+  });
+
+  it("scopes alternation in returns to the callback return expression", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /acc \+ el|somethingElse/,
+    });
+
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+    expect(regex.test("somethingElse")).toBe(false);
+    expect(
+      regex.test(
+        "result = numbers.reduce((acc, el) => acc - el); somethingElse",
+      ),
+    ).toBe(false);
+  });
+
+  it("preserves non-stateful returns flags", () => {
+    expect(() =>
+      callbackCallRegex({
+        ...baseOptions,
+        returns: /\p{L}+/u,
+      }),
+    ).not.toThrow();
+
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /\p{L}+/u,
+    });
+
+    expect(regex.flags).toContain("u");
+    expect(regex.test("result = numbers.reduce((acc, el) => café)")).toBe(true);
   });
 
   it("matches a function callback with returns", () => {

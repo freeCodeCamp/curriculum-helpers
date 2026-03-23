@@ -703,14 +703,28 @@ export function callbackCallRegex(options: {
   returns?: RegExp;
 }): RegExp {
   const { target, source, method, params, returns } = options;
+  const identifierChar = "[\\w$]";
 
-  const targetPart = `(?:(?:const|let|var)\\s+)?${escapeRegExp(target)}\\s*=\\s*`;
-  const methodPart = `${escapeRegExp(source)}\\.${escapeRegExp(method)}\\(\\s*`;
+  const targetPart = `(?:(?:const|let|var)\\s+)?(?<!${identifierChar})${escapeRegExp(
+    target,
+  )}(?!${identifierChar})\\s*=\\s*`;
+  const methodPart = `(?<!${identifierChar})${escapeRegExp(
+    source,
+  )}(?!${identifierChar})\\.${escapeRegExp(method)}\\(\\s*`;
   const callbackSignature = functionRegex(null, params, { includeBody: false });
 
   if (returns !== undefined) {
-    const bodyPart = `\\s*(?:return\\s+)?${returns.source}\\s*[;]?\\s*\\}?`;
-    return concatRegex(targetPart, methodPart, callbackSignature, bodyPart);
+    const bodyPart = `\\s*(?:return\\s+)?(?:${returns.source})\\s*[;]?\\s*\\}?`;
+    // Preserve non-stateful flags from `returns` so flag-dependent patterns keep
+    // working when embedded in the assembled regex.
+    const returnsFlags = returns.flags.replace(/[gy]/g, "");
+    const { source } = concatRegex(
+      targetPart,
+      methodPart,
+      callbackSignature,
+      bodyPart,
+    );
+    return new RegExp(source, returnsFlags);
   }
 
   return concatRegex(targetPart, methodPart, callbackSignature);
