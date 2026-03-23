@@ -70,6 +70,54 @@ let match =
 match[1]; // "myFunc = arg1 => arg1; console.log();\n // captured, unfortunately"
 ```
 
+## callbackCallRegex
+
+Generates a regex to match a method call with a callback assigned to a target variable. Useful for asserting that a learner used a specific array method with the right callback shape.
+
+```javascript
+const regex = callbackCallRegex({
+  target: "sumSquaredDifferences",
+  source: "numbers",
+  method: "reduce",
+  params: ["acc", "el"],
+  returns: "acc + el ** 2",
+});
+
+// Matches arrow expression
+regex.test(
+  "sumSquaredDifferences = numbers.reduce((acc, el) => acc + el ** 2)",
+);
+// true
+
+// Matches arrow block
+regex.test(
+  "sumSquaredDifferences = numbers.reduce((acc, el) => { return acc + el ** 2; })",
+);
+// true
+
+// Matches function expression
+regex.test(
+  "sumSquaredDifferences = numbers.reduce(function (acc, el) { return acc + el ** 2; })",
+);
+// true
+
+// Also works with const/let/var declarations
+regex.test(
+  "const sumSquaredDifferences = numbers.reduce((acc, el) => acc + el ** 2)",
+);
+// true
+```
+
+### Options
+
+- `target: string` — The variable being assigned to.
+- `source: string` — The object the method is called on.
+- `method: string` — The method name (dot notation only).
+- `params: string[]` — The callback parameter names, in order.
+- `returns?: string | RegExp` — Optional. When provided, the regex also enforces the callback return expression. A `string` value will be escaped; pass a `RegExp` for complex patterns.
+
+**Note:** Extra non-callback arguments (e.g. the initial value `, 0` in `reduce`) are not validated by this helper and should be asserted separately if needed.
+
 ## prepTestComponent
 
 Renders a React component into a DOM element and returns a Promise containing the DOM element. The arguments are, respectively, the component to render and an (optional) object containing the props to pass to the component.
