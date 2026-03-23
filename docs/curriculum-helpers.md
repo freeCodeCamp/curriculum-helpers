@@ -80,7 +80,7 @@ const regex = callbackCallRegex({
   source: "numbers",
   method: "reduce",
   params: ["acc", "el"],
-  returns: "acc + el ** 2",
+  returns: /acc \+ el \*\* 2/,
 });
 
 // Matches arrow expression
@@ -114,7 +114,7 @@ regex.test(
 - `source: string` — The object the method is called on.
 - `method: string` — The method name (dot notation only).
 - `params: string[]` — The callback parameter names, in order.
-- `returns?: string | RegExp` — Optional. When provided, the regex also enforces the callback return expression. A `string` value will be escaped; pass a `RegExp` for complex patterns.
+- `returns?: RegExp` — Optional. When provided, the regex also enforces the callback return expression.
 
 **Note:** Extra non-callback arguments (e.g. the initial value `, 0` in `reduce`) are not validated by this helper and should be asserted separately if needed.
 

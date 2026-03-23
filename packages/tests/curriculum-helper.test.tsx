@@ -731,21 +731,21 @@ describe("callbackCallRegex", () => {
   });
 
   it("matches arrow expression callback", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
       true,
     );
   });
 
   it("matches arrow block callback", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(
       regex.test("result = numbers.reduce((acc, el) => { return acc + el; })"),
     ).toBe(true);
   });
 
   it("matches function callback", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(
       regex.test(
         "result = numbers.reduce(function (acc, el) { return acc + el; })",
@@ -787,7 +787,7 @@ describe("callbackCallRegex", () => {
   });
 
   it("fails when return expression does not match returns", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
       false,
     );
@@ -810,7 +810,7 @@ describe("callbackCallRegex", () => {
   });
 
   it("matches a function callback with returns", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(
       regex.test(
         "result = numbers.reduce(function (acc, el) { return acc + el; })",
@@ -823,10 +823,10 @@ describe("callbackCallRegex", () => {
     ).toBe(false);
   });
 
-  it("escapes special regex characters in a string returns value", () => {
+  it("matches a complex return expression using a RegExp", () => {
     const regex = callbackCallRegex({
       ...baseOptions,
-      returns: "acc + el ** 2",
+      returns: /acc \+ el \*\* 2/,
     });
     expect(
       regex.test("result = numbers.reduce((acc, el) => acc + el ** 2)"),
@@ -837,7 +837,7 @@ describe("callbackCallRegex", () => {
   });
 
   it("matches with let and var declarations", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(
       regex.test("let result = numbers.reduce((acc, el) => acc + el)"),
     ).toBe(true);
@@ -847,14 +847,14 @@ describe("callbackCallRegex", () => {
   });
 
   it("works with extra whitespace in the callback signature", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     expect(
       regex.test("result = numbers.reduce(  ( acc , el )  =>  acc + el  )"),
     ).toBe(true);
   });
 
   it("works with multiline/whitespace-heavy code", () => {
-    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
     const code = `const result = numbers.reduce(
       (acc, el) => {
         return acc + el;
@@ -877,6 +877,24 @@ describe("callbackCallRegex", () => {
         "result = numbers.reduce(function (acc, el) { return anything; })",
       ),
     ).toBe(true);
+  });
+
+  it("matches an empty callback when params is []", () => {
+    const regex = callbackCallRegex({
+      target: "result",
+      source: "numbers",
+      method: "forEach",
+      params: [],
+    });
+    expect(regex.test("result = numbers.forEach(() => doSomething())")).toBe(
+      true,
+    );
+    expect(
+      regex.test("result = numbers.forEach(function () { doSomething(); })"),
+    ).toBe(true);
+    expect(
+      regex.test("result = numbers.forEach((el) => doSomething(el))"),
+    ).toBe(false);
   });
 });
 

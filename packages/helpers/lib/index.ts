@@ -700,7 +700,7 @@ export function callbackCallRegex(options: {
   source: string;
   method: string;
   params: string[];
-  returns?: string | RegExp;
+  returns?: RegExp;
 }): RegExp {
   const { target, source, method, params, returns } = options;
 
@@ -709,9 +709,7 @@ export function callbackCallRegex(options: {
   const callbackSignature = functionRegex(null, params, { includeBody: false });
 
   if (returns !== undefined) {
-    const returnsSource =
-      returns instanceof RegExp ? returns.source : escapeRegExp(returns);
-    const bodyPart = `\\s*(?:return\\s+)?${returnsSource}\\s*[;]?\\s*\\}?`;
+    const bodyPart = `\\s*(?:return\\s+)?${returns.source}\\s*[;]?\\s*\\}?`;
     return concatRegex(targetPart, methodPart, callbackSignature, bodyPart);
   }
 
