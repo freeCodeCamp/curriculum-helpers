@@ -793,6 +793,59 @@ describe("callbackCallRegex", () => {
     );
   });
 
+  it("accepts a RegExp for returns", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /acc\s*\+\s*el/,
+    });
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+    expect(regex.test("result = numbers.reduce((acc, el) => acc  +  el)")).toBe(
+      true,
+    );
+    expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
+      false,
+    );
+  });
+
+  it("matches a function callback with returns", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return acc + el; })",
+      ),
+    ).toBe(true);
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return acc - el; })",
+      ),
+    ).toBe(false);
+  });
+
+  it("escapes special regex characters in a string returns value", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: "acc + el ** 2",
+    });
+    expect(
+      regex.test("result = numbers.reduce((acc, el) => acc + el ** 2)"),
+    ).toBe(true);
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("matches with let and var declarations", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
+    expect(
+      regex.test("let result = numbers.reduce((acc, el) => acc + el)"),
+    ).toBe(true);
+    expect(
+      regex.test("var result = numbers.reduce((acc, el) => acc + el)"),
+    ).toBe(true);
+  });
+
   it("works with extra whitespace in the callback signature", () => {
     const regex = callbackCallRegex({ ...baseOptions, returns: "acc + el" });
     expect(
