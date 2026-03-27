@@ -8,6 +8,8 @@ const {
   letFunction,
   arrowFunction,
   destructuredArgsFunctionDeclaration,
+  noParameterFunctionDeclaration,
+  noParameterFunctionSpacesDeclaration,
 } = jsTestValues;
 
 describe("js-help", () => {
@@ -44,6 +46,16 @@ describe("js-help", () => {
       expect(parameters[2].name).toBe("c");
       expect(parameters[2].defaultValue).toBe("1");
       expect(parameters[3].name).toBe("...rest");
+    });
+    it("returns empty parameter array from function declaration with no parameters", () => {
+      const parameters = getFunctionParams(noParameterFunctionDeclaration);
+      expect(parameters.length).toBe(0);
+    });
+    it("returns empty parameter array from function declaration with no parameters and spaces", () => {
+      const parameters = getFunctionParams(
+        noParameterFunctionSpacesDeclaration,
+      );
+      expect(parameters.length).toBe(0);
     });
   });
 
