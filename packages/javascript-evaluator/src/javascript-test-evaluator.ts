@@ -45,6 +45,7 @@ export class JavascriptTestEvaluator implements TestEvaluator {
         stack: error.stack,
         ...(!!error.expected && { expected: error.expected }),
         ...(!!error.actual && { actual: error.actual }),
+        name: error.name,
       },
     };
   }

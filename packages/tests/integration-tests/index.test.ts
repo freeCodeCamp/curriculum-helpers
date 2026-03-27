@@ -141,6 +141,7 @@ describe("Test Runner", () => {
       expect(result).toEqual({
         err: {
           message: "test error",
+          name: "Error",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: test error"),
         },
@@ -237,6 +238,7 @@ describe("Test Runner", () => {
       expect(result).toEqual({
         err: {
           message: "test error",
+          name: "Error",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: test error"),
         },
@@ -584,6 +586,7 @@ new Promise((resolve) => {
       expect(result).toEqual({
         err: {
           message: "afterEach error",
+          name: "Error",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: afterEach error"),
         },
@@ -1058,6 +1061,7 @@ const getFive = () => 5;
         err: {
           actual: "test",
           expected: "tes",
+          name: "AssertionError",
           message: "expected 'test' to equal 'tes'",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching(
@@ -1133,6 +1137,7 @@ const getFive = () => 5;
       expect(results[0]).toEqual({
         err: {
           actual: "NodeList []",
+          name: "AssertionError",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching(
             // Yes, there's a discrepancy between the error message and the
@@ -1169,6 +1174,7 @@ const getFive = () => 5;
           message: expect.stringMatching(
             /The element has no supported sources.|Failed to load because no supported source was found./,
           ),
+          name: "NotSupportedError",
         },
       });
     });
@@ -1491,6 +1497,7 @@ checkBtn.click();
         err: {
           actual: "Symbol(foo)",
           expected: "Symbol(bar)",
+          name: "AssertionError",
           message: "expected Symbol(foo) to equal Symbol(bar)",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching(
