@@ -1,6 +1,7 @@
 const jsCodeWithSingleAndMultLineComments = `
 function nonMutatingPush(original, newItem) {
-  /* This is a
+  /* This is a 
+    multi-line comment  
     multi-line comment
     that should be removed. */
   return original.push(newItem);
@@ -27,7 +28,7 @@ function nonMutatingPush(original, newItem) {
 
 const jsCodeWithUrlUnchanged = `
 function nonMutatingPush(original, newItem) {
-  var url = 'https://freecodecamp.org';
+  var url = 'https://freecodecamp.org'; 
   return original.push(newItem);
 }`;
 
