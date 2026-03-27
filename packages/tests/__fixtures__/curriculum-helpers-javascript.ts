@@ -1,7 +1,8 @@
 const jsCodeWithSingleAndMultLineComments = `
 function nonMutatingPush(original, newItem) {
   /* This is a 
-    multi-line comment 
+    multi-line comment  
+    multi-line comment
     that should be removed. */
   return original.push(newItem);
 }
@@ -67,6 +68,10 @@ const arrowFunction = `const myFunc = name => console.log("Name")`;
 
 const destructuredArgsFunctionDeclaration = `function printFruits({a, b},c = 1, ...rest) {`;
 
+const noParameterFunctionDeclaration = `function myFunction() {`;
+
+const noParameterFunctionSpacesDeclaration = `function myFunction( ) {`;
+
 const testValues = {
   jsCodeWithSingleAndMultLineComments,
   jsCodeWithSingleAndMultLineCommentsRemoved,
@@ -81,6 +86,8 @@ const testValues = {
   letFunction,
   arrowFunction,
   destructuredArgsFunctionDeclaration,
+  noParameterFunctionDeclaration,
+  noParameterFunctionSpacesDeclaration,
 };
 
 export default testValues;

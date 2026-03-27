@@ -658,7 +658,7 @@ export function getFunctionParams(code: string) {
     code.match(functionVariableRegex) ||
     code.match(arrowFunctionRegex);
 
-  if (paramMatch) {
+  if (paramMatch && paramMatch.length > 1 && paramMatch[1].trim() !== "") {
     // Find the captured group containing the parameters
     const paramString =
       paramMatch[1] || paramMatch[2] || paramMatch[3] || paramMatch[4];
