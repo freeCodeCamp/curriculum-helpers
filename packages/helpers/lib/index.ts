@@ -490,11 +490,30 @@ export class CSSHelp {
       .map((x) => x.style);
   }
 
+  private _selectorHasUniversal(selector: string): boolean {
+    return /(^|\s|\+|>|~)\*/.test(selector);
+  }
+
   getStyle(selector: string): ExtendedStyleDeclaration | null {
-    const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector,
-    )?.style as ExtendedStyleDeclaration | undefined;
-    if (!style) return null;
+    const wantsUniversal = this._selectorHasUniversal(selector);
+
+    const rule = this._getStyleRules().find((ele) => {
+      if (!ele?.selectorText) return false;
+
+      const ruleHasUniversal = this._selectorHasUniversal(ele.selectorText);
+
+      // Block universal selector leakage: if the CSS rule uses * but
+      // the queried selector does not, skip this rule to prevent
+      // overly broad selectors from matching specific ones.
+      if (ruleHasUniversal && !wantsUniversal) return false;
+
+      return ele.selectorText === selector;
+    });
+
+    if (!rule) return null;
+
+    const style = rule.style as ExtendedStyleDeclaration;
+
     style.getPropVal = (prop: string, strip = false) =>
       strip
         ? style.getPropertyValue(prop).replace(/\s+/g, "")
