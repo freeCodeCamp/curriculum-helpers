@@ -307,6 +307,15 @@ body {
 }
 `;
 
+export const cssStringWithUniversal = `
+span[class~="one"] *:first-of-type {
+  background-image: linear-gradient(#f93, #f93);
+}
+span.one div:first-of-type {
+  color: green;
+}
+`;
+
 const testValues = {
   cssFullExample,
   cssCodeWithCommentsRemoved,
