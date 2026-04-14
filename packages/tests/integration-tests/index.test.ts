@@ -784,8 +784,11 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
       }, type);
 
       expect(result.fetchCallArgs).toEqual([
-        "https://doesnot.exist",
-        { method: "GET", credentials: "omit" },
+        "https://doesnot.exist/",
+        {
+          credentials: "omit",
+          method: "GET",
+        },
       ]);
     });
 
