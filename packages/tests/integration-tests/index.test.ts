@@ -743,6 +743,55 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
       ]);
     });
 
+    it("should be able to make fetch requests using a URL object", async () => {
+      const result = await page.evaluate(async (type) => {
+        // Create spy
+        const originalFetch = window.fetch;
+        let fetchCallArgs: unknown[];
+        window.fetch = ((...args: [unknown]) => {
+          fetchCallArgs = args;
+          return Promise.resolve(
+            new Response('{"message": "Hello, world!"}', {
+              status: 200,
+              statusText: "OK",
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }) as typeof fetch;
+
+        try {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type,
+          });
+
+          await runner.runTest(
+            `const response = await fetch(new URL('https://doesnot.exist'), { method: 'GET' });
+          const data = await response.json();
+          assert.deepEqual(data, { message: 'Hello, world!' });
+          assert.equal(response.status, 200);
+          assert.equal(response.statusText, 'OK');
+          assert.equal(response.url, 'https://doesnot.exist');
+          assert.equal(response.ok, true);`,
+          );
+
+          return {
+            fetchCallArgs,
+          };
+        } finally {
+          // Restore original fetch
+          window.fetch = originalFetch;
+        }
+      }, type);
+
+      expect(result.fetchCallArgs).toEqual([
+        "https://doesnot.exist/",
+        {
+          credentials: "omit",
+          method: "GET",
+        },
+      ]);
+    });
+
     it("should expose the Explorer class in the test environment", async () => {
       const source = `const x = "test";`;
 
