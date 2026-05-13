@@ -141,3 +141,6 @@ book
 
 # python
 __pycache__
+
+# macOS
+.DS_Store
