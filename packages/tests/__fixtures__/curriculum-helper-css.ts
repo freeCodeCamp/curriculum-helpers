@@ -305,6 +305,18 @@ body {
 .card:hover {
   background-color: khaki;
 }
+span[class~="one"] *:first-of-type {
+  background-image: linear-gradient(#f93, #f93);
+}
+span[class~="two"] *:nth-of-type(-n + 2) {
+  background-image: linear-gradient(#f93, #f93);
+}
+span[class~="three"] span {
+  background-image: linear-gradient(#f93, #f93);
+}
+span[class~="one"] :first-child {
+  border-color: #d61;
+}
 `;
 
 const testValues = {
