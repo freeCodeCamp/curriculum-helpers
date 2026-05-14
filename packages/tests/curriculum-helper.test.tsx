@@ -717,6 +717,228 @@ describe("functionRegex", () => {
   });
 });
 
+describe("callbackCallRegex", () => {
+  const { callbackCallRegex } = helper;
+  const baseOptions = {
+    target: "result",
+    source: "numbers",
+    method: "reduce",
+    params: ["acc", "el"],
+  };
+
+  it("returns a RegExp", () => {
+    expect(callbackCallRegex(baseOptions)).toBeInstanceOf(RegExp);
+  });
+
+  it("matches arrow expression callback", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+  });
+
+  it("matches arrow block callback", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(
+      regex.test("result = numbers.reduce((acc, el) => { return acc + el; })"),
+    ).toBe(true);
+  });
+
+  it("matches function callback", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return acc + el; })",
+      ),
+    ).toBe(true);
+  });
+
+  it("fails when target is different", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("other = numbers.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("fails when target is only a suffix of another identifier", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("myresult = numbers.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("fails when source is different", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("result = other.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("fails when method is different", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("result = numbers.map((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("fails when callback params are different", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("result = numbers.reduce((x, y) => x + y)")).toBe(false);
+  });
+
+  it("fails when callback param order is different", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("result = numbers.reduce((el, acc) => el + acc)")).toBe(
+      false,
+    );
+  });
+
+  it("fails when return expression does not match returns", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
+      false,
+    );
+  });
+
+  it("accepts a RegExp for returns", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /acc\s*\+\s*el/,
+    });
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+    expect(regex.test("result = numbers.reduce((acc, el) => acc  +  el)")).toBe(
+      true,
+    );
+    expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
+      false,
+    );
+  });
+
+  it("scopes alternation in returns to the callback return expression", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /acc \+ el|somethingElse/,
+    });
+
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+    expect(regex.test("somethingElse")).toBe(false);
+    expect(
+      regex.test(
+        "result = numbers.reduce((acc, el) => acc - el); somethingElse",
+      ),
+    ).toBe(false);
+  });
+
+  it("preserves non-stateful returns flags", () => {
+    expect(() =>
+      callbackCallRegex({
+        ...baseOptions,
+        returns: /\p{L}+/u,
+      }),
+    ).not.toThrow();
+
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /\p{L}+/u,
+    });
+
+    expect(regex.flags).toContain("u");
+    expect(regex.test("result = numbers.reduce((acc, el) => café)")).toBe(true);
+  });
+
+  it("matches a function callback with returns", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return acc + el; })",
+      ),
+    ).toBe(true);
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return acc - el; })",
+      ),
+    ).toBe(false);
+  });
+
+  it("matches a complex return expression using a RegExp", () => {
+    const regex = callbackCallRegex({
+      ...baseOptions,
+      returns: /acc \+ el \*\* 2/,
+    });
+    expect(
+      regex.test("result = numbers.reduce((acc, el) => acc + el ** 2)"),
+    ).toBe(true);
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      false,
+    );
+  });
+
+  it("matches with let and var declarations", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(
+      regex.test("let result = numbers.reduce((acc, el) => acc + el)"),
+    ).toBe(true);
+    expect(
+      regex.test("var result = numbers.reduce((acc, el) => acc + el)"),
+    ).toBe(true);
+  });
+
+  it("works with extra whitespace in the callback signature", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    expect(
+      regex.test("result = numbers.reduce(  ( acc , el )  =>  acc + el  )"),
+    ).toBe(true);
+  });
+
+  it("works with multiline/whitespace-heavy code", () => {
+    const regex = callbackCallRegex({ ...baseOptions, returns: /acc \+ el/ });
+    const code = `const result = numbers.reduce(
+      (acc, el) => {
+        return acc + el;
+      },
+      0
+    )`;
+    expect(regex.test(code)).toBe(true);
+  });
+
+  it("when returns is omitted, only call shape and callback signature is required", () => {
+    const regex = callbackCallRegex(baseOptions);
+    expect(regex.test("result = numbers.reduce((acc, el) => acc + el)")).toBe(
+      true,
+    );
+    expect(regex.test("result = numbers.reduce((acc, el) => acc - el)")).toBe(
+      true,
+    );
+    expect(
+      regex.test(
+        "result = numbers.reduce(function (acc, el) { return anything; })",
+      ),
+    ).toBe(true);
+  });
+
+  it("matches an empty callback when params is []", () => {
+    const regex = callbackCallRegex({
+      target: "result",
+      source: "numbers",
+      method: "forEach",
+      params: [],
+    });
+    expect(regex.test("result = numbers.forEach(() => doSomething())")).toBe(
+      true,
+    );
+    expect(
+      regex.test("result = numbers.forEach(function () { doSomething(); })"),
+    ).toBe(true);
+    expect(
+      regex.test("result = numbers.forEach((el) => doSomething(el))"),
+    ).toBe(false);
+  });
+});
+
 describe("prepTestComponent", () => {
   let MyComponent;
   beforeEach(() => {

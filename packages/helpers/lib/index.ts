@@ -687,6 +687,50 @@ export function getFunctionParams(code: string) {
 }
 
 /**
+ * Generates a regex to match a method call with a callback, assigned to a target variable.
+ * Supports arrow expression, arrow block, and function callbacks.
+ * @param options.target - The variable being assigned to (e.g. `"result"`)
+ * @param options.source - The object the method is called on (e.g. `"numbers"`)
+ * @param options.method - The method name (e.g. `"reduce"`)
+ * @param options.params - The callback parameter names (e.g. `["acc", "el"]`)
+ * @param options.returns - Optional: enforces a return expression in the callback body
+ */
+export function callbackCallRegex(options: {
+  target: string;
+  source: string;
+  method: string;
+  params: string[];
+  returns?: RegExp;
+}): RegExp {
+  const { target, source, method, params, returns } = options;
+  const identifierChar = "[\\w$]";
+
+  const targetPart = `(?:(?:const|let|var)\\s+)?(?<!${identifierChar})${escapeRegExp(
+    target,
+  )}(?!${identifierChar})\\s*=\\s*`;
+  const methodPart = `(?<!${identifierChar})${escapeRegExp(
+    source,
+  )}(?!${identifierChar})\\.${escapeRegExp(method)}\\(\\s*`;
+  const callbackSignature = functionRegex(null, params, { includeBody: false });
+
+  if (returns !== undefined) {
+    const bodyPart = `\\s*(?:return\\s+)?(?:${returns.source})\\s*[;]?\\s*\\}?`;
+    // Preserve non-stateful flags from `returns` so flag-dependent patterns keep
+    // working when embedded in the assembled regex.
+    const returnsFlags = returns.flags.replace(/[gy]/g, "");
+    const { source } = concatRegex(
+      targetPart,
+      methodPart,
+      callbackSignature,
+      bodyPart,
+    );
+    return new RegExp(source, returnsFlags);
+  }
+
+  return concatRegex(targetPart, methodPart, callbackSignature);
+}
+
+/**
  * Retries a test function with a specified delay between attempts
  * Useful for testing DOM elements that may not be immediately available
  * @param test - Function that returns a truthy value when the condition is met
