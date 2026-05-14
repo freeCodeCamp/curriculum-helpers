@@ -1,7 +1,6 @@
 const jsCodeWithSingleAndMultLineComments = `
 function nonMutatingPush(original, newItem) {
   /* This is a 
-    multi-line comment  
     multi-line comment
     that should be removed. */
   return original.push(newItem);
