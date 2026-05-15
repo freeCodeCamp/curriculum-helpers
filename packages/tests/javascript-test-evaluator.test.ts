@@ -90,6 +90,19 @@ const x = 1;
       });
     });
 
+    it("should preserve falsy expected and actual values in error responses", async () => {
+      const test = "assert.strictEqual(false, 0)";
+
+      const result = await evaluator.runTest(test);
+
+      expect(result).toMatchObject({
+        err: {
+          expected: 0,
+          actual: false,
+        },
+      });
+    });
+
     it("should use the init source when running a test", async () => {
       evaluator.init({ code: {}, source: "let x = 1" });
 
