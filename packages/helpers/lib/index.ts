@@ -490,11 +490,87 @@ export class CSSHelp {
       .map((x) => x.style);
   }
 
+  // Grab the raw CSS text before the browser normalizes it
+  private _getRawCSSText(): string {
+    const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
+      "style.fcc-injected-styles",
+    );
+    const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
+      "style:not([class]):not([media])",
+    );
+    return stylesDotCss?.textContent || styleTag?.textContent || "";
+  }
+
+  // Normalize a selector for comparison — collapse whitespace,
+  // strip spaces in pseudo-class args like (-n + 2) → (-n+2), etc.
+  private _normalizeSelector(selector: string): string {
+    // Remove whitespace inside parens (pseudo-class args)
+    let result = selector.replace(/\([^)]*\)/g, (match) => {
+      return match.replace(/\s+/g, "");
+    });
+    // Collapse whitespace
+    result = result.replace(/\s+/g, " ").trim();
+    // Standardize combinator spacing
+    result = result.replace(/\s*>\s*/g, " > ");
+    result = result.replace(/\s*\+\s*/g, " + ");
+    result = result.replace(/\s*~\s*/g, " ~ ");
+    // Commas
+    result = result.replace(/\s*,\s*/g, ", ");
+    return result;
+  }
+
+  // Check if a selector actually exists in the raw CSS source.
+  // Browsers strip * from selectors like *:first-of-type → :first-of-type,
+  // which can cause false matches in getStyle.
+  private _rawCSSContainsSelector(
+    rawCSS: string,
+    selector: string,
+  ): boolean {
+    const cleaned = removeCssComments(rawCSS);
+    const normalizedExpected = this._normalizeSelector(selector);
+
+    // Pull out selector blocks (everything before each {)
+    const selectorBlockRegex = /([^{}]+?)\s*\{/g;
+    let match;
+
+    while ((match = selectorBlockRegex.exec(cleaned)) !== null) {
+      const rawSelectorBlock = match[1].trim();
+
+      // Full match check (also handles comma-separated groups)
+      if (this._normalizeSelector(rawSelectorBlock) === normalizedExpected) {
+        return true;
+      }
+
+      // Also check individual selectors in comma-separated lists
+      const individualSelectors = rawSelectorBlock
+        .split(",")
+        .map((s) => this._normalizeSelector(s));
+
+      // Single selector might be part of a group
+      if (
+        !normalizedExpected.includes(",") &&
+        individualSelectors.includes(normalizedExpected)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   getStyle(selector: string): ExtendedStyleDeclaration | null {
     const style = this._getStyleRules().find(
       (ele) => ele?.selectorText === selector,
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
+
+    // Verify selector exists in raw CSS — browsers normalize selectors
+    // (e.g., *:first-of-type → :first-of-type) which can cause false matches
+    const rawCSS = this._getRawCSSText();
+    if (rawCSS && !this._rawCSSContainsSelector(rawCSS, selector)) {
+      return null;
+    }
+
     style.getPropVal = (prop: string, strip = false) =>
       strip
         ? style.getPropertyValue(prop).replace(/\s+/g, "")

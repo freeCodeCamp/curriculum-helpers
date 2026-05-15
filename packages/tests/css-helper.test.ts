@@ -137,6 +137,46 @@ describe("css-help", () => {
       doc.body.appendChild(form);
     }
   });
+  describe("getStyle universal selector bypass fix", () => {
+    it("should reject *:first-of-type when querying for :first-of-type", () => {
+      // Raw CSS has *:first-of-type but browser strips the * so selectorText
+      // becomes :first-of-type — we should NOT match this
+      expect(
+        t.getStyle('span[class~="one"] :first-of-type'),
+      ).toBeNull();
+    });
+    it("should reject *:nth-of-type when querying for :nth-of-type", () => {
+      // Same deal with *:nth-of-type — browser drops the *
+      expect(
+        t.getStyle('span[class~="two"] :nth-of-type(-n+2)'),
+      ).toBeNull();
+    });
+    it("should accept exact selector match from raw CSS", () => {
+      // Exact match, no * involved — should just work
+      expect(
+        t.getStyle('span[class~="three"] span'),
+      ).toBeTruthy();
+    });
+    it("should accept selector that exists in raw CSS", () => {
+      // :first-child without * exists in raw CSS, should match
+      expect(
+        t.getStyle('span[class~="one"] :first-child'),
+      ).toBeTruthy();
+    });
+    it("should not match *:first-of-type via getStyleAny with non-star selectors", () => {
+      // None of these use * so *:first-of-type shouldn't sneak through
+      const selectors = [
+        'span[class~="one"] :first-child',
+        'span[class~="one"] :nth-child(1)',
+        'span[class~="one"] span:first-child',
+      ];
+      // :first-child exists in the CSS so getStyleAny should pick that up
+      const result = t.getStyleAny(selectors);
+      expect(result).toBeTruthy();
+      // Make sure we got :first-child (has border-color) and not *:first-of-type
+      expect(result?.getPropertyValue("border-color")).toBeTruthy();
+    });
+  });
   afterEach(() => {
     document.body.innerHTML = "";
     document.head.innerHTML = "";
