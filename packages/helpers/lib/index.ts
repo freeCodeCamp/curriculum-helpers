@@ -484,6 +484,41 @@ export class CSSHelp {
     ) as CSSStyleRule[];
   }
 
+  private _normalizeSelector(selector: string): string {
+    return selector
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/\s*([>+~,])\s*/g, "$1")
+      .replace(/\(\s*/g, "(")
+      .replace(/\s*\)/g, ")")
+      .replace(/\s*([+-])\s*/g, "$1");
+  }
+
+  private _getAuthoredSelectors(): Set<string> | null {
+    const styleSheet = this.getStyleSheet();
+    const ownerNode =
+      styleSheet?.ownerNode ??
+      Array.from(this.doc.querySelectorAll("style")).find(
+        (style) => style.sheet === styleSheet,
+      );
+
+    if (!(ownerNode instanceof HTMLStyleElement)) {
+      return null;
+    }
+
+    const selectors = new Set<string>();
+    const css = ownerNode.textContent?.replace(/\/\*[\s\S]*?\*\//g, "") ?? "";
+    const selectorRegex = /([^{}@][^{}]*)\{/g;
+
+    for (const match of css.matchAll(selectorRegex)) {
+      for (const selector of match[1].split(",")) {
+        selectors.add(this._normalizeSelector(selector));
+      }
+    }
+
+    return selectors;
+  }
+
   getStyleDeclarations(selector: string): CSSStyleDeclaration[] {
     return this._getStyleRules()
       ?.filter((ele) => ele?.selectorText === selector)
@@ -491,8 +526,12 @@ export class CSSHelp {
   }
 
   getStyle(selector: string): ExtendedStyleDeclaration | null {
+    const authoredSelectors = this._getAuthoredSelectors();
+    const normalizedSelector = this._normalizeSelector(selector);
     const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector,
+      (ele) =>
+        ele?.selectorText === selector &&
+        (!authoredSelectors || authoredSelectors.has(normalizedSelector)),
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
     style.getPropVal = (prop: string, strip = false) =>

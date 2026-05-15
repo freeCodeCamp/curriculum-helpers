@@ -40,6 +40,41 @@ describe("css-help", () => {
     it("should return null", () => {
       expect(t.getStyleAny([".sun", ".earth", ".moon"])).toBeNull();
     });
+    it("should not match normalized selectors that were not provided", () => {
+      const style = doc.createElement("style");
+      style.className = "fcc-injected-styles";
+      style.innerHTML = `
+        span[class~="one"] *:first-of-type {
+          background-image: linear-gradient(#f93, #f93);
+        }
+        span[class~="two"] *:nth-of-type(-n + 2) {
+          background-image: linear-gradient(#f93, #f93);
+        }
+      `;
+      doc.head.appendChild(style);
+      Object.defineProperty(style.sheet?.cssRules[0], "selectorText", {
+        value: 'span[class~="one"] :first-of-type',
+      });
+      Object.defineProperty(style.sheet?.cssRules[1], "selectorText", {
+        value: 'span[class~="two"] :nth-of-type(-n+2)',
+      });
+      const helper = new CSSHelp(doc);
+
+      expect(
+        helper.getStyleAny([
+          'span[class~="one"] :first-of-type',
+          'span[class~="one"] span:first-of-type',
+        ]),
+      ).toBeNull();
+      expect(
+        helper.getStyleAny([
+          'span[class~="two"] :nth-of-type(-n+2)',
+          'span[class~="two"] span:nth-of-type(-n+2)',
+        ]),
+      ).toBeNull();
+
+      style.remove();
+    });
   });
   describe("isPropertyUsed", () => {
     it("should return true on existing properties", () => {
