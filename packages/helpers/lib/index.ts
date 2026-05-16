@@ -494,6 +494,14 @@ export class CSSHelp {
     return /(^|\s|\+|>|~)\*/.test(selector);
   }
 
+  private _normalizeUniversal(selector: string): string {
+    return selector
+      .replace(/^\*/, "")
+      .replace(/([+>~\s])\*/g, "$1")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+
   getStyle(selector: string): ExtendedStyleDeclaration | null {
     const wantsUniversal = this._selectorHasUniversal(selector);
 
@@ -507,7 +515,10 @@ export class CSSHelp {
       // overly broad selectors from matching specific ones.
       if (ruleHasUniversal && !wantsUniversal) return false;
 
-      return ele.selectorText === selector;
+      return (
+        this._normalizeUniversal(ele.selectorText) ===
+        this._normalizeUniversal(selector)
+      );
     });
 
     if (!rule) return null;
