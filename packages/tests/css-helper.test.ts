@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
-import { cssString } from "./__fixtures__/curriculum-helper-css";
+import {
+  cssString,
+  cssStringWithUniversal,
+} from "./__fixtures__/curriculum-helper-css";
 import { CSSHelp } from "./../helpers/lib/index";
 
 describe("css-help", () => {
@@ -140,5 +143,86 @@ describe("css-help", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     document.head.innerHTML = "";
+  });
+});
+
+describe("universal selector handling", () => {
+  const doc = document;
+  let t: CSSHelp;
+
+  beforeEach(() => {
+    const style = doc.createElement("style");
+    style.innerHTML = cssString + cssStringWithUniversal;
+    doc.head.appendChild(style);
+    t = new CSSHelp(doc);
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    document.head.innerHTML = "";
+  });
+
+  describe("getStyle", () => {
+    it("should match when query has * and CSS has *", () => {
+      expect(t.getStyle('span[class~="one"] *:first-of-type')).toBeTruthy();
+    });
+
+    it("should return null when query has * but no matching CSS rule exists", () => {
+      expect(
+        t.getStyle('span[class~="nonexistent"] *:first-of-type'),
+      ).toBeNull();
+    });
+
+    it("should not match a * rule when query does not use *", () => {
+      expect(t.getStyle('span[class~="one"] :first-of-type')).toBeNull();
+    });
+
+    it("should match a non-* rule when query does not use *", () => {
+      expect(t.getStyle("span.one div:first-of-type")).toBeTruthy();
+    });
+  });
+
+  describe("getStyleAny", () => {
+    it("should match when query has * and CSS has *", () => {
+      expect(
+        t.getStyleAny(['span[class~="one"] *:first-of-type']),
+      ).toBeTruthy();
+    });
+
+    it("should return null when query has * but no matching CSS rule exists", () => {
+      expect(
+        t.getStyleAny(['span[class~="nonexistent"] *:first-of-type']),
+      ).toBeNull();
+    });
+
+    it("should not match * rules against non-* selectors", () => {
+      // 'span[class~="one"] :first-of-type' normalizes to the same string as
+      // the CSS rule 'span[class~="one"] *:first-of-type'; the universal
+      // selector guard must block that match.
+      expect(
+        t.getStyleAny([
+          'span[class~="one"] :first-of-type',
+          'span[class~="one"] p:first-of-type',
+        ]),
+      ).toBeNull();
+    });
+
+    it("should match a non-* rule when query does not use *", () => {
+      expect(
+        t.getStyleAny([
+          "span.one div:first-of-type",
+          "span.one p:first-of-type",
+        ]),
+      ).toBeTruthy();
+    });
+
+    it("should return null when no non-* selector matches", () => {
+      expect(
+        t.getStyleAny([
+          "span.one p:first-of-type",
+          "span.one li:first-of-type",
+        ]),
+      ).toBeNull();
+    });
   });
 });
