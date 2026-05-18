@@ -15,6 +15,7 @@ export interface TestError {
   expected?: unknown;
   actual?: unknown;
   type?: string;
+  name?: string;
 }
 
 export interface Fail extends Logged {
