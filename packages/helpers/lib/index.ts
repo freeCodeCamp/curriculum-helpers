@@ -491,9 +491,13 @@ export class CSSHelp {
   }
 
   getStyle(selector: string): ExtendedStyleDeclaration | null {
-    const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector,
-    )?.style as ExtendedStyleDeclaration | undefined;
+    const style = this._getStyleRules().find((ele) => {
+      // Skip rules with universal selector if the query selector doesn't use it
+      if (ele?.selectorText?.includes("*") && !selector.includes("*")) {
+        return false;
+      }
+      return ele?.selectorText === selector;
+    })?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
     style.getPropVal = (prop: string, strip = false) =>
       strip
