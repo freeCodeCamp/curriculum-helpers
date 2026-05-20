@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
-import { cssString } from "./__fixtures__/curriculum-helper-css";
+import {
+  cssString,
+  cssWithUniversal,
+  cssWithoutUniversal,
+} from "./__fixtures__/curriculum-helper-css";
 import { CSSHelp } from "./../helpers/lib/index";
 
 describe("css-help", () => {
@@ -140,5 +144,54 @@ describe("css-help", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     document.head.innerHTML = "";
+  });
+});
+describe("CSSHelp – universal selector handling", () => {
+  afterEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  function injectStyle(css: string) {
+    const styleEl = document.createElement("style");
+    styleEl.textContent = css;
+    document.head.appendChild(styleEl);
+  }
+
+  it("want universal selector, universal selector in css", () => {
+    injectStyle(cssWithUniversal);
+
+    const cssHelp = new CSSHelp(document);
+    const style = cssHelp.getStyle('span[class~="one"] *:first-of-type');
+
+    expect(style).not.toBeNull();
+    expect(style?.getPropVal("border-color")).toBe("#d61");
+  });
+
+  it("want universal selector, universal selector not in css", () => {
+    injectStyle(cssWithoutUniversal);
+
+    const cssHelp = new CSSHelp(document);
+    const style = cssHelp.getStyle('span[class~="one"] *:first-of-type');
+
+    expect(style).toBeNull();
+  });
+
+  it("don't want universal selector, universal selector in css", () => {
+    injectStyle(cssWithUniversal);
+
+    const cssHelp = new CSSHelp(document);
+    const style = cssHelp.getStyle('span[class~="one"] > p:first-of-type');
+
+    expect(style).toBeNull();
+  });
+
+  it("don't want universal selector, universal selector not in css", () => {
+    injectStyle(cssWithoutUniversal);
+
+    const cssHelp = new CSSHelp(document);
+    const style = cssHelp.getStyle('span[class~="one"] > p:first-of-type');
+
+    expect(style).not.toBeNull();
+    expect(style?.getPropVal("color")).toBe("red");
   });
 });

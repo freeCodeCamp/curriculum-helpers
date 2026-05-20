@@ -477,6 +477,10 @@ export class CSSHelp {
     this.doc = doc;
   }
 
+  private selectorHasUniversal(selector: string): boolean {
+    return /(^|\s|\+|>|~)\*/.test(selector);
+  }
+
   private _getStyleRules() {
     const styleSheet = this.getStyleSheet();
     return this.styleSheetToCssRulesArray(styleSheet).filter(
@@ -491,10 +495,23 @@ export class CSSHelp {
   }
 
   getStyle(selector: string): ExtendedStyleDeclaration | null {
-    const style = this._getStyleRules().find(
-      (ele) => ele?.selectorText === selector,
-    )?.style as ExtendedStyleDeclaration | undefined;
-    if (!style) return null;
+    const wantsUniversal = this.selectorHasUniversal(selector);
+
+    const rule = this._getStyleRules().find((ele) => {
+      if (!ele?.selectorText) return false;
+
+      const ruleHasUniversal = this.selectorHasUniversal(ele.selectorText);
+
+      // Block universal selector leakage
+      if (ruleHasUniversal && !wantsUniversal) return false;
+
+      return ele.selectorText === selector;
+    });
+
+    if (!rule) return null;
+
+    const style = rule.style as ExtendedStyleDeclaration;
+
     style.getPropVal = (prop: string, strip = false) =>
       strip
         ? style.getPropertyValue(prop).replace(/\s+/g, "")
