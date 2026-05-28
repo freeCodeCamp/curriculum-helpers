@@ -10,52 +10,6 @@ overrides:
 importers:
 
   .:
-    dependencies:
-      '@sinonjs/fake-timers':
-        specifier: ^14.0.0
-        version: 14.0.0
-      '@types/jquery':
-        specifier: ^3.5.32
-        version: 3.5.33
-      '@types/react':
-        specifier: ^19.1.8
-        version: 19.2.7
-      '@types/react-dom':
-        specifier: ^19.1.6
-        version: 19.2.3(@types/react@19.2.7)
-      '@types/sinonjs__fake-timers':
-        specifier: ^8.1.5
-        version: 8.1.5
-      browserify:
-        specifier: ^17.0.0
-        version: 17.0.1
-      chai:
-        specifier: '4'
-        version: 4.5.0
-      expect-puppeteer:
-        specifier: ^11.0.0
-        version: 11.0.0
-      http-server:
-        specifier: ^14.1.1
-        version: 14.1.1
-      jquery:
-        specifier: ^3.7.1
-        version: 3.7.1
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
-      puppeteer:
-        specifier: ^24.9.0
-        version: 24.31.0(typescript@5.9.3)
-      pyodide:
-        specifier: 0.23.3
-        version: 0.23.3
-      util:
-        specifier: ^0.12.5
-        version: 0.12.5
-      vitest-environment-puppeteer:
-        specifier: ^11.0.3
-        version: 11.0.3(typescript@5.9.3)
     devDependencies:
       '@babel/core':
         specifier: 7.28.5
@@ -75,15 +29,36 @@ importers:
       '@eslint/js':
         specifier: ^9.25.1
         version: 9.39.1
+      '@sinonjs/fake-timers':
+        specifier: ^14.0.0
+        version: 14.0.0
       '@types/chai':
         specifier: ^4.3.20
         version: 4.3.20
+      '@types/jquery':
+        specifier: ^3.5.32
+        version: 3.5.33
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.2.7
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.2.3(@types/react@19.2.7)
+      '@types/sinonjs__fake-timers':
+        specifier: ^8.1.5
+        version: 8.1.5
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.31.0
         version: 8.48.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1)(typescript@5.9.3))(eslint@9.39.1)(typescript@5.9.3)
       '@typescript-eslint/parser':
         specifier: ^8.31.0
         version: 8.48.0(eslint@9.39.1)(typescript@5.9.3)
+      browserify:
+        specifier: ^17.0.0
+        version: 17.0.1
+      chai:
+        specifier: '4'
+        version: 4.5.0
       eslint:
         specifier: 9.39.1
         version: 9.39.1
@@ -93,18 +68,36 @@ importers:
       eslint-config-xo:
         specifier: 0.46.0
         version: 0.46.0(eslint@9.39.1)(typescript@5.9.3)
+      expect-puppeteer:
+        specifier: ^11.0.0
+        version: 11.0.0
       globals:
         specifier: ^16.0.0
         version: 16.5.0
+      http-server:
+        specifier: ^14.1.1
+        version: 14.1.1
       husky:
         specifier: 8.0.3
         version: 8.0.3
+      jquery:
+        specifier: ^3.7.1
+        version: 3.7.1
       lint-staged:
         specifier: 16.2.7
         version: 16.2.7
       prettier:
         specifier: 3.7.1
         version: 3.7.1
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^24.9.0
+        version: 24.31.0(typescript@5.9.3)
+      pyodide:
+        specifier: 0.23.3
+        version: 0.23.3
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -123,9 +116,15 @@ importers:
       typescript-eslint:
         specifier: ^8.31.0
         version: 8.48.0(eslint@9.39.1)(typescript@5.9.3)
+      util:
+        specifier: ^0.12.5
+        version: 0.12.5
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.10.1)(jsdom@20.0.3)(terser@5.39.0)(yaml@2.8.1)
+      vitest-environment-puppeteer:
+        specifier: ^11.0.3
+        version: 11.0.3(typescript@5.9.3)
       webpack:
         specifier: 5.104.1
         version: 5.104.1(webpack-cli@5.1.4)
