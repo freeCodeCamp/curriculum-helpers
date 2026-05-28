@@ -3,3 +3,5 @@ onlyBuiltDependencies:
 
 packages:
   - packages/*
+
+minimumReleaseAge: 10080
