@@ -485,71 +485,58 @@ export class CSSHelp {
   }
 
   getStyleDeclarations(selector: string): CSSStyleDeclaration[] {
+    const rawCSS = this._getRawCSSText();
+    const wantsUniversal = selector.startsWith("*");
+    const ruleHasUniversal =
+      rawCSS !== "" && !this._rawCSSContainsSelector(rawCSS, selector);
+    if (ruleHasUniversal && !wantsUniversal) return [];
+
     return this._getStyleRules()
       ?.filter((ele) => ele?.selectorText === selector)
       .map((x) => x.style);
   }
 
-  // Grab the raw CSS text before the browser normalizes it
   private _getRawCSSText(): string {
-    const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
-      "style.fcc-injected-styles",
-    );
-    const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
-      "style:not([class]):not([media])",
-    );
-    return stylesDotCss?.textContent || styleTag?.textContent || "";
+    const ownerNode = this.getStyleSheet()?.ownerNode as
+      | HTMLElement
+      | null
+      | undefined;
+    return ownerNode?.textContent ?? "";
   }
 
-  // Normalize a selector for comparison — collapse whitespace,
-  // strip spaces in pseudo-class args like (-n + 2) → (-n+2), etc.
-  private _normalizeSelector(selector: string): string {
-    // Remove whitespace inside parens (pseudo-class args)
-    let result = selector.replace(/\([^)]*\)/g, (match) => {
-      return match.replace(/\s+/g, "");
-    });
-    // Collapse whitespace
-    result = result.replace(/\s+/g, " ").trim();
-    // Standardize combinator spacing
-    result = result.replace(/\s*>\s*/g, " > ");
-    result = result.replace(/\s*\+\s*/g, " + ");
-    result = result.replace(/\s*~\s*/g, " ~ ");
-    // Commas
-    result = result.replace(/\s*,\s*/g, ", ");
-    return result;
+  private _browserNormalizePreservingStar(selector: string): string {
+    const placeholder = "__FCC_STAR__";
+    const withPlaceholder = selector.replace(/\*(?!=)/g, placeholder);
+
+    const style = this.doc.createElement("style");
+    style.textContent = `${withPlaceholder} {}`;
+    this.doc.head.appendChild(style);
+
+    const rule = style.sheet?.cssRules[0] as CSSStyleRule;
+    const normalized = rule?.selectorText || withPlaceholder;
+
+    this.doc.head.removeChild(style);
+
+    return normalized.replace(new RegExp(placeholder, "g"), "*");
   }
 
-  // Check if a selector actually exists in the raw CSS source.
-  // Browsers strip * from selectors like *:first-of-type → :first-of-type,
-  // which can cause false matches in getStyle.
-  private _rawCSSContainsSelector(
-    rawCSS: string,
-    selector: string,
-  ): boolean {
+  private _rawCSSContainsSelector(rawCSS: string, selector: string): boolean {
     const cleaned = removeCssComments(rawCSS);
-    const normalizedExpected = this._normalizeSelector(selector);
 
-    // Pull out selector blocks (everything before each {)
     const selectorBlockRegex = /([^{}]+?)\s*\{/g;
     let match;
 
     while ((match = selectorBlockRegex.exec(cleaned)) !== null) {
       const rawSelectorBlock = match[1].trim();
 
-      // Full match check (also handles comma-separated groups)
-      if (this._normalizeSelector(rawSelectorBlock) === normalizedExpected) {
-        return true;
-      }
+      const normalizedRaw =
+        this._browserNormalizePreservingStar(rawSelectorBlock);
 
-      // Also check individual selectors in comma-separated lists
-      const individualSelectors = rawSelectorBlock
-        .split(",")
-        .map((s) => this._normalizeSelector(s));
+      const individualSelectors = normalizedRaw.split(",").map((s) => s.trim());
 
-      // Single selector might be part of a group
       if (
-        !normalizedExpected.includes(",") &&
-        individualSelectors.includes(normalizedExpected)
+        normalizedRaw === selector ||
+        individualSelectors.includes(selector)
       ) {
         return true;
       }
@@ -564,12 +551,11 @@ export class CSSHelp {
     )?.style as ExtendedStyleDeclaration | undefined;
     if (!style) return null;
 
-    // Verify selector exists in raw CSS — browsers normalize selectors
-    // (e.g., *:first-of-type → :first-of-type) which can cause false matches
     const rawCSS = this._getRawCSSText();
-    if (rawCSS && !this._rawCSSContainsSelector(rawCSS, selector)) {
-      return null;
-    }
+    const wantsUniversal = selector.startsWith("*");
+    const ruleHasUniversal =
+      rawCSS !== "" && !this._rawCSSContainsSelector(rawCSS, selector);
+    if (ruleHasUniversal && !wantsUniversal) return null;
 
     style.getPropVal = (prop: string, strip = false) =>
       strip
@@ -579,7 +565,6 @@ export class CSSHelp {
     return style;
   }
 
-  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
   getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
     for (const selector of selectors) {
       const style = this.getStyle(selector);
@@ -638,17 +623,14 @@ export class CSSHelp {
   }
 
   getStyleSheet(): CSSStyleSheet | null {
-    // TODO: Change selector to match exactly 'styles.css'
     const link: HTMLLinkElement | null = this.doc?.querySelector(
       "link[href*='styles']",
     );
 
-    // When using the styles.css tab, we add a 'fcc-injected-styles' class so we can target that. This allows users to add external scripts without them interfering
     const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
       "style.fcc-injected-styles",
     );
 
-    // For steps that use <style> tags, where they don't add the above class - most* browser extensions inject styles with class/media attributes, so it filters those
     const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
       "style:not([class]):not([media])",
     );
@@ -674,8 +656,6 @@ export class CSSHelp {
     return Array.from(styleSheet?.cssRules || []);
   }
 
-  // Takes a CSS selector, returns all equivalent selectors from the current document
-  // or an empty array if there are no matches
   selectorsFromSelector(selector: string): string[] {
     const elements = this.doc.querySelectorAll(selector);
     const allSelectors = Array.from(elements)
@@ -700,7 +680,6 @@ export class CSSHelp {
           indirectPath.unshift(tag);
           allPaths.push([directPath.join(" > "), indirectPath.join(" ")]);
 
-          // Traverse up the DOM tree
           element = element.parentNode as Element;
         }
 
@@ -708,7 +687,6 @@ export class CSSHelp {
       })
       .flat();
 
-    // Remove duplicates
     return [...new Set(allSelectors)];
   }
 }

@@ -317,6 +317,9 @@ span[class~="three"] span {
 span[class~="one"] :first-child {
   border-color: #d61;
 }
+span[class~="four"] *:nth-child(2) {
+  outline: 1px solid red;
+}
 `;
 
 const testValues = {
