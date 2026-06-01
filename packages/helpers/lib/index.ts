@@ -565,6 +565,7 @@ export class CSSHelp {
     return style;
   }
 
+  // A wrapper around getStyle for testing challenges where multiple CSS selectors are valid
   getStyleAny(selectors: string[]): ExtendedStyleDeclaration | null {
     for (const selector of selectors) {
       const style = this.getStyle(selector);
@@ -623,14 +624,17 @@ export class CSSHelp {
   }
 
   getStyleSheet(): CSSStyleSheet | null {
+    // TODO: Change selector to match exactly 'styles.css'
     const link: HTMLLinkElement | null = this.doc?.querySelector(
       "link[href*='styles']",
     );
 
+    // When using the styles.css tab, we add a 'fcc-injected-styles' class so we can target that. This allows users to add external scripts without them interfering
     const stylesDotCss: HTMLStyleElement | null = this.doc?.querySelector(
       "style.fcc-injected-styles",
     );
 
+    // For steps that use <style> tags, where they don't add the above class - most* browser extensions inject styles with class/media attributes, so it filters those
     const styleTag: HTMLStyleElement | null = this.doc?.querySelector(
       "style:not([class]):not([media])",
     );
@@ -656,6 +660,8 @@ export class CSSHelp {
     return Array.from(styleSheet?.cssRules || []);
   }
 
+  // Takes a CSS selector, returns all equivalent selectors from the current document
+  // or an empty array if there are no matches
   selectorsFromSelector(selector: string): string[] {
     const elements = this.doc.querySelectorAll(selector);
     const allSelectors = Array.from(elements)
@@ -680,6 +686,7 @@ export class CSSHelp {
           indirectPath.unshift(tag);
           allPaths.push([directPath.join(" > "), indirectPath.join(" ")]);
 
+          // Traverse up the DOM tree
           element = element.parentNode as Element;
         }
 
@@ -687,6 +694,7 @@ export class CSSHelp {
       })
       .flat();
 
+    // Remove duplicates
     return [...new Set(allSelectors)];
   }
 }
