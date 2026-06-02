@@ -11,7 +11,7 @@
 # All files are owned by dev team
 # -------------------------------------------------
 
-* @freecodecamp/dev-team
+* @freecodecamp/curriculum
 
 # --- Owned by none (negate rule above) ---
 
@@ -22,7 +22,7 @@ package-lock.json
 # All files in the root are owned by dev team
 # -------------------------------------------------
 
-/* @freecodecamp/dev-team
+/* @freecodecamp/curriculum
 
 # --- Owned by none (negate rule above) ---
 
