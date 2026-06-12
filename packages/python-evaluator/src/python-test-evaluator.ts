@@ -55,8 +55,8 @@ class PythonTestEvaluator implements TestEvaluator {
       err: {
         message: error.message,
         stack: error.stack,
-        ...(!!expected && { expected }),
-        ...(!!actual && { actual }),
+        ...(expected !== undefined && { expected }),
+        ...(actual !== undefined && { actual }),
         type: error.type,
       },
     };
