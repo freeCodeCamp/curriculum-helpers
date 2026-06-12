@@ -43,8 +43,8 @@ export class JavascriptTestEvaluator implements TestEvaluator {
       err: {
         message: error.message,
         stack: error.stack,
-        ...(!!error.expected && { expected: error.expected }),
-        ...(!!error.actual && { actual: error.actual }),
+        ...(error.expected !== undefined && { expected: error.expected }),
+        ...(error.actual !== undefined && { actual: error.actual }),
       },
     };
   }
