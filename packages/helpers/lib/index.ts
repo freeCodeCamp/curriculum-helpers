@@ -650,7 +650,7 @@ export function getFunctionParams(code: string) {
   const functionVariableRegex =
     /(?:\b(?:const|let|var)\s*\w+\s*=\s*(?:function)?\s*\(([^)]*)\))/;
 
-  const arrowFunctionRegex = /=\s+([^)]*)=>/;
+  const arrowFunctionRegex = /=?\s*\(?([^)]*)\)?\s*=>/;
 
   // Match the function parameters
   const paramMatch =
