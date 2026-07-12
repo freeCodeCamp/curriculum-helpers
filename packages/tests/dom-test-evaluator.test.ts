@@ -38,6 +38,7 @@ describe("DOMTestEvaluator", () => {
       expect(result).toStrictEqual({
         err: {
           message: "test error",
+          name: "Error",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: test error"),
         },
@@ -54,6 +55,7 @@ describe("DOMTestEvaluator", () => {
           message: "test error: expected 'actual' to equal 'expected'",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           stack: expect.stringMatching("Error: test error"),
+          name: "AssertionError",
           expected: "expected",
           actual: "actual",
         },
