@@ -650,7 +650,7 @@ export function getFunctionParams(code: string) {
   const functionVariableRegex =
     /(?:\b(?:const|let|var)\s*\w+\s*=\s*(?:function)?\s*\(([^)]*)\))/;
 
-  const arrowFunctionRegex = /=\s+([^)]*)=>/;
+  const arrowFunctionRegex = /(?:=\s*)?(?:\(([^)]*)\)|([a-zA-Z_$][\w$]*))\s*=>/;
 
   // Match the function parameters
   const paramMatch =
@@ -658,10 +658,12 @@ export function getFunctionParams(code: string) {
     code.match(functionVariableRegex) ||
     code.match(arrowFunctionRegex);
 
-  if (paramMatch && paramMatch[1].trim() !== "") {
-    // Find the captured group containing the parameters
-    const paramString =
-      paramMatch[1] || paramMatch[2] || paramMatch[3] || paramMatch[4];
+  // Find the captured group containing the parameters
+  const paramString = paramMatch
+    ?.slice(1)
+    .find((match): match is string => match !== undefined);
+
+  if (paramString?.trim()) {
     // Split the parameter string by commas to get individual parameters
     const params = paramString
       .replace(/[{}[\]]/g, "")

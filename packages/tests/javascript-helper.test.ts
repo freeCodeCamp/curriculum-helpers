@@ -39,6 +39,25 @@ describe("js-help", () => {
       const parameters = getFunctionParams(arrowFunction);
       expect(parameters[0].name).toBe("name");
     });
+    it("gets arguments from stringified arrow functions", () => {
+      const parameters = getFunctionParams(
+        "(param1, param2 = 'default') => {}",
+      );
+      expect(parameters[0].name).toBe("param1");
+      expect(parameters[1].defaultValue).toBe("default");
+      expect(parameters[1].name).toBe("param2");
+    });
+    it("gets arguments from arrow function toString output", () => {
+      const add = (param1: number, param2 = 2) => param1 + param2;
+      const parameters = getFunctionParams(add.toString());
+      expect(parameters[0].name).toBe("param1");
+      expect(parameters[1].defaultValue).toBe("2");
+      expect(parameters[1].name).toBe("param2");
+    });
+    it("gets arguments from stringified arrow functions without parentheses", () => {
+      const parameters = getFunctionParams("name => console.log(name)");
+      expect(parameters[0].name).toBe("name");
+    });
     it("gets arguments from a destructured function declaration", () => {
       const parameters = getFunctionParams(destructuredArgsFunctionDeclaration);
       expect(parameters[0].name).toBe("a");
