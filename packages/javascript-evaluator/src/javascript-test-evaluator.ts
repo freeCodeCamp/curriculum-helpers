@@ -14,6 +14,7 @@ import type {
 } from "../../shared/src/interfaces/test-evaluator";
 import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
+import { hasDefinedProperty } from "../../shared/src/has-defined-property";
 import { format } from "../../shared/src/format";
 import { createAsyncIife } from "../../shared/src/async-iife";
 import { ProxyConsole } from "../../shared/src/proxy-console";
@@ -39,10 +40,8 @@ export class JavascriptTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
-    const hasExpected =
-      Object.hasOwn(error, "expected") && error.expected !== undefined;
-    const hasActual =
-      Object.hasOwn(error, "actual") && error.actual !== undefined;
+    const hasExpected = hasDefinedProperty(error, "expected");
+    const hasActual = hasDefinedProperty(error, "actual");
 
     return {
       err: {

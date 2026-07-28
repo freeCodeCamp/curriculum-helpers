@@ -73,6 +73,19 @@ describe("DOMTestEvaluator", () => {
       });
     });
 
+    it("should preserve an empty string expected value in error responses", async () => {
+      const test = "assert.strictEqual('not empty', '', 'test error')";
+
+      const result = await evaluator.runTest(test);
+
+      expect(result).toMatchObject({
+        err: {
+          expected: "",
+          actual: "not empty",
+        },
+      });
+    });
+
     it("should test against the enclosing document", async () => {
       resetDocument();
       document.body.appendChild(document.createElement("div"));

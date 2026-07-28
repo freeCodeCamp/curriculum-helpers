@@ -18,6 +18,7 @@ import {
 } from "../../shared/src/interfaces/test-evaluator";
 import { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 import { postCloneableMessage } from "../../shared/src/messages";
+import { hasDefinedProperty } from "../../shared/src/has-defined-property";
 import { format } from "../../shared/src/format";
 import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
@@ -49,13 +50,10 @@ class PythonTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
-    const rawExpected = (error as { expected?: unknown }).expected;
-    const rawActual = (error as { actual?: unknown }).actual;
-    const hasExpected =
-      Object.hasOwn(error, "expected") && rawExpected !== undefined;
-    const hasActual = Object.hasOwn(error, "actual") && rawActual !== undefined;
-    const expected = hasExpected ? serialize(rawExpected) : undefined;
-    const actual = hasActual ? serialize(rawActual) : undefined;
+    const hasExpected = hasDefinedProperty(error, "expected");
+    const hasActual = hasDefinedProperty(error, "actual");
+    const expected = hasExpected ? serialize(error.expected) : undefined;
+    const actual = hasActual ? serialize(error.actual) : undefined;
     return {
       err: {
         message: error.message,

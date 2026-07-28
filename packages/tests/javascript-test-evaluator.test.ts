@@ -103,6 +103,19 @@ const x = 1;
       });
     });
 
+    it("should preserve an empty string expected value in error responses", async () => {
+      const test = "assert.strictEqual('not empty', '')";
+
+      const result = await evaluator.runTest(test);
+
+      expect(result).toMatchObject({
+        err: {
+          expected: "",
+          actual: "not empty",
+        },
+      });
+    });
+
     it("should use the init source when running a test", async () => {
       evaluator.init({ code: {}, source: "let x = 1" });
 

@@ -17,6 +17,7 @@ import type {
 import type { ReadyEvent } from "../../shared/src/interfaces/test-runner";
 
 import { postCloneableMessage } from "../../shared/src/messages";
+import { hasDefinedProperty } from "../../shared/src/has-defined-property";
 import {
   TEST_EVALUATOR_SCRIPT_ID,
   TEST_EVALUATOR_HOOKS_ID,
@@ -67,10 +68,8 @@ export class DOMTestEvaluator implements TestEvaluator {
   #proxyConsole: ProxyConsole;
 
   #createErrorResponse(error: TestError) {
-    const hasExpected =
-      Object.hasOwn(error, "expected") && error.expected !== undefined;
-    const hasActual =
-      Object.hasOwn(error, "actual") && error.actual !== undefined;
+    const hasExpected = hasDefinedProperty(error, "expected");
+    const hasActual = hasDefinedProperty(error, "actual");
 
     return {
       err: {
