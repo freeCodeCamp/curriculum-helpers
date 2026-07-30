@@ -69,6 +69,11 @@ import {
   isCallExpression,
   isNewExpression,
   isTypeNode,
+  isForStatement,
+  isForOfStatement,
+  isForInStatement,
+  isWhileStatement,
+  isDoStatement,
 } from "typescript";
 
 type TypeProp = {
@@ -1116,21 +1121,118 @@ class Explorer {
     return this.getAll(SyntaxKind.IfStatement);
   }
 
-  // Retrieves the condition expression of an if statement or ternary (conditional) expression
+  // Finds all "for" loops (for (init; condition; incrementor) {...}) in the current scope
+  get forStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForStatement);
+  }
+
+  // Finds all "for...of" loops in the current scope
+  get forOfStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForOfStatement);
+  }
+
+  // Finds all "for...in" loops in the current scope
+  get forInStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForInStatement);
+  }
+
+  // Finds all "while" loops in the current scope
+  get whileStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.WhileStatement);
+  }
+
+  // Finds all "do...while" loops in the current scope
+  get doWhileStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.DoStatement);
+  }
+
+  // Retrieves the condition expression of an if statement, ternary (conditional)
+  // expression, while/do-while loop, or "for" loop (if it has one)
   get condition(): Explorer {
     if (!this.tree) return new Explorer();
-    if (isIfStatement(this.tree)) return new Explorer(this.tree.expression);
+    if (
+      isIfStatement(this.tree) ||
+      isWhileStatement(this.tree) ||
+      isDoStatement(this.tree)
+    ) {
+      return new Explorer(this.tree.expression);
+    }
+
     if (isConditionalExpression(this.tree)) {
       return new Explorer(this.tree.condition);
+    }
+
+    if (isForStatement(this.tree)) {
+      return this.tree.condition
+        ? new Explorer(this.tree.condition)
+        : new Explorer();
     }
 
     return new Explorer();
   }
 
-  // Retrieves the body of an if statement
+  // Retrieves the body of an if statement, while/do-while loop, or
+  // for/for-of/for-in loop
   get body(): Explorer {
-    if (!this.tree || !isIfStatement(this.tree)) return new Explorer();
-    return new Explorer(this.tree.thenStatement);
+    if (!this.tree) return new Explorer();
+    if (isIfStatement(this.tree)) return new Explorer(this.tree.thenStatement);
+
+    if (
+      isWhileStatement(this.tree) ||
+      isDoStatement(this.tree) ||
+      isForStatement(this.tree) ||
+      isForOfStatement(this.tree) ||
+      isForInStatement(this.tree)
+    ) {
+      return new Explorer(this.tree.statement);
+    }
+
+    return new Explorer();
+  }
+
+  // Retrieves the initializer of a classic "for" loop, or the declaration/
+  // expression bound in a "for...of"/"for...in" loop
+  get initializer(): Explorer {
+    if (!this.tree) return new Explorer();
+
+    if (
+      isForStatement(this.tree) ||
+      isForOfStatement(this.tree) ||
+      isForInStatement(this.tree)
+    ) {
+      return this.tree.initializer
+        ? new Explorer(this.tree.initializer)
+        : new Explorer();
+    }
+
+    return new Explorer();
+  }
+
+  // Retrieves the incrementor expression of a classic "for" loop (e.g. "i++")
+  get incrementor(): Explorer {
+    if (!this.tree || !isForStatement(this.tree)) return new Explorer();
+    return this.tree.incrementor
+      ? new Explorer(this.tree.incrementor)
+      : new Explorer();
+  }
+
+  // Retrieves the collection/iterable being looped over in a "for...of" or
+  // "for...in" loop
+  get iterable(): Explorer {
+    if (
+      !this.tree ||
+      (!isForOfStatement(this.tree) && !isForInStatement(this.tree))
+    ) {
+      return new Explorer();
+    }
+
+    return new Explorer(this.tree.expression);
+  }
+
+  // Checks if a "for...of" loop uses the "for await...of" syntax
+  isAwaitFor(): boolean {
+    if (!this.tree || !isForOfStatement(this.tree)) return false;
+    return this.tree.awaitModifier !== undefined;
   }
 
   // Retrieves the "true" branch expression of a ternary (conditional) expression

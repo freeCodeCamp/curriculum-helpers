@@ -1406,6 +1406,26 @@ describe("condition", () => {
     expect(value.condition.matches("x > 0")).toBe(true);
   });
 
+  it("returns the condition of a while loop", () => {
+    const explorer = new Explorer(`while (x > 0) { x--; }`);
+    expect(explorer.whileStatements[0].condition.matches("x > 0")).toBe(true);
+  });
+
+  it("returns the condition of a do...while loop", () => {
+    const explorer = new Explorer(`do { x--; } while (x > 0);`);
+    expect(explorer.doWhileStatements[0].condition.matches("x > 0")).toBe(true);
+  });
+
+  it("returns the condition of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].condition.matches("i < 10")).toBe(true);
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no condition", () => {
+    const explorer = new Explorer(`for (let i = 0; ; i++) { }`);
+    expect(explorer.forStatements[0].condition.isEmpty()).toBe(true);
+  });
+
   it("returns an empty Explorer if called on a node that isn't an if statement or ternary expression", () => {
     const { variables } = new Explorer(`const a = 1;`);
     expect(variables.a.condition.isEmpty()).toBe(true);
@@ -1504,6 +1524,43 @@ describe("body", () => {
     const outer = explorer.ifStatements[0];
     const inner = outer.body.ifStatements[0];
     expect(inner.body.matches(`{ console.log("Both positive"); }`)).toBe(true);
+  });
+
+  it("returns the body of a while loop", () => {
+    const explorer = new Explorer(`while (x > 0) { x--; }`);
+    expect(explorer.whileStatements[0].body.matches(`{ x--; }`)).toBe(true);
+  });
+
+  it("returns the body of a do...while loop", () => {
+    const explorer = new Explorer(`do { x--; } while (x > 0);`);
+    expect(explorer.doWhileStatements[0].body.matches(`{ x--; }`)).toBe(true);
+  });
+
+  it("returns the body of a classic 'for' loop", () => {
+    const explorer = new Explorer(
+      `for (let i = 0; i < 10; i++) { console.log(i); }`,
+    );
+    expect(explorer.forStatements[0].body.matches(`{ console.log(i); }`)).toBe(
+      true,
+    );
+  });
+
+  it("returns the body of a 'for...of' loop", () => {
+    const explorer = new Explorer(
+      `for (const item of items) { console.log(item); }`,
+    );
+    expect(
+      explorer.forOfStatements[0].body.matches(`{ console.log(item); }`),
+    ).toBe(true);
+  });
+
+  it("returns the body of a 'for...in' loop", () => {
+    const explorer = new Explorer(
+      `for (const key in obj) { console.log(key); }`,
+    );
+    expect(
+      explorer.forInStatements[0].body.matches(`{ console.log(key); }`),
+    ).toBe(true);
   });
 });
 
@@ -1662,5 +1719,286 @@ describe("elseIfStatements", () => {
     expect(
       nestedIfStatements[0].body.matches(`{ console.log("Both negative"); }`),
     ).toBe(true);
+  });
+});
+
+describe("whileStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `while (x > 0) { x--; } while (y < 10) { y++; }`;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements).toHaveLength(2);
+    whileStatements.forEach((w) => expect(w).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per while loop", () => {
+    const sourceCode = `while (x > 0) { x--; }`;
+    const explorer = new Explorer(sourceCode);
+    expect(explorer.whileStatements[0].matches(`while (x > 0) { x--; }`)).toBe(
+      true,
+    );
+  });
+
+  it("returns an empty array if there are no while loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.whileStatements).toHaveLength(0);
+  });
+
+  it("finds while loops nested inside the body of an outer while loop", () => {
+    const sourceCode = `
+      while (x > 0) {
+        while (y > 0) {
+          y--;
+        }
+        x--;
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements).toHaveLength(1);
+
+    const nested = whileStatements[0].body.whileStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("y > 0")).toBe(true);
+  });
+
+  it("does not find while loops nested inside a function declared within the body", () => {
+    const sourceCode = `
+      while (x > 0) {
+        function helper() {
+          while (y > 0) {
+            y--;
+          }
+        }
+        x--;
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements[0].body.whileStatements).toHaveLength(0);
+
+    const { helper } = whileStatements[0].body.functions;
+    expect(helper.whileStatements).toHaveLength(1);
+  });
+});
+
+describe("doWhileStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `do { x--; } while (x > 0); do { y++; } while (y < 10);`;
+    const explorer = new Explorer(sourceCode);
+    const { doWhileStatements } = explorer;
+    expect(doWhileStatements).toHaveLength(2);
+    doWhileStatements.forEach((d) => expect(d).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per do...while loop", () => {
+    const sourceCode = `do { x--; } while (x > 0);`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.doWhileStatements[0].matches(`do { x--; } while (x > 0);`),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no do...while loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.doWhileStatements).toHaveLength(0);
+  });
+
+  it("finds do...while loops nested inside the body of an outer do...while loop", () => {
+    const sourceCode = `
+      do {
+        do {
+          y--;
+        } while (y > 0);
+        x--;
+      } while (x > 0);
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { doWhileStatements } = explorer;
+    expect(doWhileStatements).toHaveLength(1);
+
+    const nested = doWhileStatements[0].body.doWhileStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("y > 0")).toBe(true);
+  });
+});
+
+describe("forStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (let i = 0; i < 10; i++) { } for (let j = 0; j < 5; j++) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forStatements } = explorer;
+    expect(forStatements).toHaveLength(2);
+    forStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for loop", () => {
+    const sourceCode = `for (let i = 0; i < 10; i++) { console.log(i); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forStatements[0].matches(
+        `for (let i = 0; i < 10; i++) { console.log(i); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forStatements).toHaveLength(0);
+  });
+
+  it("finds for loops nested inside the body of an outer for loop", () => {
+    const sourceCode = `
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 5; j++) {
+          console.log(j);
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { forStatements } = explorer;
+    expect(forStatements).toHaveLength(1);
+
+    const nested = forStatements[0].body.forStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("j < 5")).toBe(true);
+  });
+});
+
+describe("forOfStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (const a of items) { } for (const b of others) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forOfStatements } = explorer;
+    expect(forOfStatements).toHaveLength(2);
+    forOfStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for...of loop", () => {
+    const sourceCode = `for (const item of items) { console.log(item); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forOfStatements[0].matches(
+        `for (const item of items) { console.log(item); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for...of loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forOfStatements).toHaveLength(0);
+  });
+});
+
+describe("forInStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (const a in obj1) { } for (const b in obj2) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forInStatements } = explorer;
+    expect(forInStatements).toHaveLength(2);
+    forInStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for...in loop", () => {
+    const sourceCode = `for (const key in obj) { console.log(key); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forInStatements[0].matches(
+        `for (const key in obj) { console.log(key); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for...in loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forInStatements).toHaveLength(0);
+  });
+});
+
+describe("initializer", () => {
+  it("returns an Explorer object for the initializer of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].initializer.toString()).toBe("let i = 0");
+  });
+
+  it("returns an Explorer object for the declaration in a 'for...of' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].initializer.toString()).toBe(
+      "const item",
+    );
+  });
+
+  it("returns an Explorer object for the declaration in a 'for...in' loop", () => {
+    const explorer = new Explorer(`for (const key in obj) { }`);
+    expect(explorer.forInStatements[0].initializer.toString()).toBe(
+      "const key",
+    );
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no initializer", () => {
+    const explorer = new Explorer(`for (; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].initializer.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a loop", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.initializer.isEmpty()).toBe(true);
+  });
+});
+
+describe("incrementor", () => {
+  it("returns an Explorer object for the incrementor of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].incrementor.matches("i++")).toBe(true);
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no incrementor", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; ) { }`);
+    expect(explorer.forStatements[0].incrementor.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].incrementor.isEmpty()).toBe(true);
+  });
+});
+
+describe("iterable", () => {
+  it("returns an Explorer object for the collection being iterated in a 'for...of' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].iterable.matches("items")).toBe(true);
+  });
+
+  it("returns an Explorer object for the collection being iterated in a 'for...in' loop", () => {
+    const explorer = new Explorer(`for (const key in obj) { }`);
+    expect(explorer.forInStatements[0].iterable.matches("obj")).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a for...of/for...in loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].iterable.isEmpty()).toBe(true);
+  });
+});
+
+describe("isAwaitFor", () => {
+  it("returns true if the 'for...of' loop uses the 'for await...of' syntax", () => {
+    const sourceCode = `
+      async function foo() {
+        for await (const item of items) { }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { foo } = explorer.functions;
+    expect(foo.forOfStatements[0].isAwaitFor()).toBe(true);
+  });
+
+  it("returns false if the 'for...of' loop does not use 'await'", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].isAwaitFor()).toBe(false);
+  });
+
+  it("returns false if called on a node that isn't a for...of loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].isAwaitFor()).toBe(false);
   });
 });
