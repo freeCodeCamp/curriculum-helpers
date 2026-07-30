@@ -1,5 +1,6 @@
 import type { Pass, Fail } from "./interfaces/test-evaluator";
 import { format } from "./format";
+import { hasDefinedProperty } from "./has-defined-property";
 
 type Message = {
   type: "result";
@@ -17,18 +18,18 @@ export const postCloneableMessage = (
     // of 'actual' or 'expected' is not transferable.
     const result = msg.value;
     if ("err" in result) {
-      const rawActual = result.err?.actual;
-      const actual = rawActual ? format(rawActual) : undefined;
-      const rawExpected = result.err?.expected;
-      const expected = rawExpected ? format(rawExpected) : undefined;
+      const hasActual = hasDefinedProperty(result.err, "actual");
+      const actual = hasActual ? format(result.err.actual) : undefined;
+      const hasExpected = hasDefinedProperty(result.err, "expected");
+      const expected = hasExpected ? format(result.err.expected) : undefined;
 
       const msgClone = {
         type: "result",
         value: {
           err: {
             ...result.err,
-            actual,
-            expected,
+            ...(hasActual && { actual }),
+            ...(hasExpected && { expected }),
           },
         },
       };

@@ -1767,6 +1767,42 @@ pattern = re.compile('l+')
       });
     });
 
+    it("should preserve falsy expected and actual values in error responses", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner?.runTest(
+          `({ test: () => assert.strictEqual(runPython('False'), 0) })`,
+        );
+      });
+
+      expect(result).toMatchObject({
+        err: {
+          expected: 0,
+          actual: false,
+        },
+      });
+    });
+
+    it("should preserve an empty string expected value in error responses", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner?.runTest(
+          `({ test: () => assert.strictEqual(runPython("'not empty'"), '') })`,
+        );
+      });
+
+      expect(result).toMatchObject({
+        err: {
+          expected: "",
+          actual: "not empty",
+        },
+      });
+    });
+
     it("should handle DataCloneErrors", async () => {
       const source = `
 import re
