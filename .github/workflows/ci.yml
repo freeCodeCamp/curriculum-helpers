@@ -8,8 +8,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: psf/black@05f0a8ce1f71fbb36e1e032d3b518c7b945089a2 # 25.11.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: psf/black@782e5605c86aab56be6f905da10dcd3e463fd9c2 # 25.12.0
 
   tests:
     name: "Node CI"
@@ -17,9 +17,9 @@ jobs:
     needs: lint
     steps:
       # Checkout the Repo
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 10
 
@@ -50,11 +50,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout the Repo
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       # Just to run the script
       - name: Install pnpm
-        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 10
 
