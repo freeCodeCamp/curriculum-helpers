@@ -965,8 +965,8 @@ const getFive = () => 5;
       });
 
       expect(style).toEqual({
-        width: "0px",
-        height: "0px",
+        width: "1px",
+        height: "1px",
         opacity: "0",
         pointerEvents: "none",
         visbility: "visible", // This confirms that the default style has been reverted
