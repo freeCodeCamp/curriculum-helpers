@@ -74,6 +74,11 @@ import {
   isForInStatement,
   isWhileStatement,
   isDoStatement,
+  isObjectBindingPattern,
+  isArrayBindingPattern,
+  isBindingElement,
+  ObjectBindingPattern,
+  ArrayBindingPattern,
 } from "typescript";
 
 type TypeProp = {
@@ -166,6 +171,37 @@ function getBody(tree: Node): Node | undefined {
   }
 }
 
+// Retrieves the binding pattern (object or array) of a variable declaration's
+// name, if it uses destructuring (e.g. "const { a, b } = obj")
+function getBindingPattern(
+  tree: Node,
+): ObjectBindingPattern | ArrayBindingPattern | undefined {
+  if (isVariableStatement(tree)) {
+    const { name } = tree.declarationList.declarations[0];
+    return isObjectBindingPattern(name) || isArrayBindingPattern(name)
+      ? name
+      : undefined;
+  }
+
+  return undefined;
+}
+
+// Builds a name -> Explorer map from an object/array binding pattern's
+// elements. Array pattern holes (e.g. "const [, b] = arr") are skipped.
+function collectDestructuredElements(
+  pattern: ObjectBindingPattern | ArrayBindingPattern,
+): { [key: string]: Explorer } {
+  const result: { [key: string]: Explorer } = {};
+
+  pattern.elements.forEach((element) => {
+    if (isBindingElement(element) && isIdentifier(element.name)) {
+      result[element.name.text] = new Explorer(element);
+    }
+  });
+
+  return result;
+}
+
 type ParseContext =
   | "source"
   | "method"
@@ -174,7 +210,8 @@ type ParseContext =
   | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
-  | "expression";
+  | "expression"
+  | "bindingElement";
 
 const CONTEXT_GUARDS: ReadonlyArray<
   [ParseContext, ReadonlyArray<(node: Node) => boolean>]
@@ -184,6 +221,7 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["propertyDeclaration", [isPropertyDeclaration]],
   ["parameter", [isParameter]],
   ["typeParameter", [isTypeParameterDeclaration]],
+  ["bindingElement", [isBindingElement]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -270,6 +308,16 @@ function createTree(code: string, context: ParseContext): Node | null {
       const sf = createSource(`class _ { ${code} }`);
       const classDecl = sf.statements[0] as ClassDeclaration;
       return classDecl.members.find(isPropertyDeclaration) ?? null;
+    }
+
+    // Wraps the code as an object destructuring element, e.g. "a",
+    // "b: renamed = 5", or "...rest" all parse validly inside "{ }"
+    case "bindingElement": {
+      const sf = createSource(`const { ${code} } = _;`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      const pattern = declaration.name as ObjectBindingPattern;
+      return pattern.elements[0] ?? null;
     }
 
     case "typeReference": {
@@ -403,17 +451,69 @@ class Explorer {
     return explorers;
   }
 
-  // Finds all variable statements
+  // Finds all variable statements with a simple (non-destructured) name.
+  // Use `destructuringStmts` for "const { a, b } = obj;" / "const [a, b] = arr;"
   get variables(): { [key: string]: Explorer } {
     const variables = this.getAll(SyntaxKind.VariableStatement);
     const result: { [key: string]: Explorer } = {};
     variables.forEach((variable) => {
       const declaration = (variable.tree as VariableStatement).declarationList
         .declarations[0];
-      const name = (declaration.name as Identifier).text;
-      result[name] = variable;
+      if (isIdentifier(declaration.name)) {
+        result[declaration.name.text] = variable;
+      }
     });
     return result;
+  }
+
+  // Finds all variable statements using destructuring (object or array
+  // patterns) in the current scope. Chain `.destructuredVariables` on each
+  // result to get the individual bound names.
+  get destructuringStmts(): Explorer[] {
+    return this.getAll(SyntaxKind.VariableStatement).filter((stmt) =>
+      stmt.tree ? getBindingPattern(stmt.tree) !== undefined : false,
+    );
+  }
+
+  // Finds the destructuring statement (from `destructuringStmts`) that
+  // declares the specified local variable name, or an empty Explorer if none does
+  findDestructuringStmt(name: string): Explorer {
+    return (
+      this.destructuringStmts.find((stmt) =>
+        Object.hasOwn(stmt.destructuredVariables, name),
+      ) ?? new Explorer()
+    );
+  }
+
+  // Retrieves the variables bound by a destructuring assignment (e.g.
+  // "const { a, b: renamed = 5, ...rest } = obj"), keyed by their local
+  // (bound) name
+  get destructuredVariables(): { [key: string]: Explorer } {
+    if (!this.tree) {
+      return {};
+    }
+
+    const pattern = getBindingPattern(this.tree);
+    return pattern ? collectDestructuredElements(pattern) : {};
+  }
+
+  // Retrieves the original property name of a renamed destructured element
+  // (e.g. "b" in "const { b: renamed } = obj"), or an empty Explorer otherwise
+  get propertyName(): Explorer {
+    if (!this.tree || !isBindingElement(this.tree) || !this.tree.propertyName) {
+      return new Explorer();
+    }
+
+    return isIdentifier(this.tree.propertyName)
+      ? new Explorer(this.tree.propertyName)
+      : new Explorer();
+  }
+
+  // Checks if a destructured element is a rest element (e.g. "...rest")
+  isRestElement(): boolean {
+    return (
+      !!this.tree && isBindingElement(this.tree) && !!this.tree.dotDotDotToken
+    );
   }
 
   // Retrieves the assigned value of a variable, property, parameter, or property assignment
@@ -423,6 +523,11 @@ class Explorer {
     }
 
     const node = this.tree!;
+
+    // Handle BindingElement default value (e.g. destructured "{ a = 1 }")
+    if (isBindingElement(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
 
     // Handle VariableStatement
     if (isVariableStatement(node)) {

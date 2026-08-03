@@ -180,6 +180,211 @@ describe("variables", () => {
     const { method1 } = Spam.methods;
     expect(method1.variables.c.matches("const c = 3;")).toBe(true);
   });
+
+  it("does not include destructured variable declarations", () => {
+    const sourceCode = `
+      const a = 1;
+      const { b } = obj;
+      const [c] = arr;
+    `;
+    const { variables } = new Explorer(sourceCode);
+    expect(Object.keys(variables)).toEqual(["a"]);
+  });
+});
+
+describe("destructuringStmts", () => {
+  it("returns an array of Explorer objects for destructuring variable statements", () => {
+    const sourceCode = `
+      const { a, b } = obj1;
+      const [c, d] = arr;
+      const e = 1;
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { destructuringStmts } = explorer;
+    expect(destructuringStmts).toHaveLength(2);
+    destructuringStmts.forEach((stmt) => expect(stmt).toBeInstanceOf(Explorer));
+  });
+
+  it("returns an empty array if there are no destructuring statements", () => {
+    const explorer = new Explorer("const a = 1; const b = 2;");
+    expect(explorer.destructuringStmts).toHaveLength(0);
+  });
+
+  it("only finds destructuring statements in the current scope", () => {
+    const sourceCode = `
+      const { a } = obj1;
+      function foo() { const { b } = obj2; }
+    `;
+    const explorer = new Explorer(sourceCode);
+    expect(explorer.destructuringStmts).toHaveLength(1);
+
+    const { foo } = explorer.functions;
+    expect(foo.destructuringStmts).toHaveLength(1);
+    expect(foo.destructuringStmts[0].matches("const { b } = obj2;")).toBe(true);
+  });
+});
+
+describe("destructuredVariables", () => {
+  it("returns a map of bound name to Explorer for an object destructuring statement", () => {
+    const explorer = new Explorer("const { a, b } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toHaveLength(2);
+    expect(vars.a.matches("a")).toBe(true);
+    expect(vars.b.matches("b")).toBe(true);
+  });
+
+  it("returns a map of bound name to Explorer for an array destructuring statement", () => {
+    const explorer = new Explorer("const [c, d] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toHaveLength(2);
+    expect(vars.c.matches("c")).toBe(true);
+    expect(vars.d.matches("d")).toBe(true);
+  });
+
+  it("keys renamed object destructured elements by their local (bound) name, not the original property name", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toEqual(["renamed"]);
+    expect(vars.renamed.propertyName.matches("b")).toBe(true);
+  });
+
+  it("returns an empty object for a non-destructuring statement", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.destructuredVariables).toEqual({});
+  });
+
+  it("returns an empty object for an empty Explorer", () => {
+    const explorer = new Explorer();
+    expect(explorer.destructuredVariables).toEqual({});
+  });
+
+  it("skips holes in array destructuring patterns", () => {
+    const explorer = new Explorer("const [, b] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toEqual(["b"]);
+  });
+});
+
+describe("findDestructuringStmt", () => {
+  it("finds the statement that declares the specified local (bound) variable name", () => {
+    const sourceCode = `
+      const { a, b: renamed } = obj1;
+      const [c, d] = arr;
+    `;
+    const explorer = new Explorer(sourceCode);
+
+    expect(
+      explorer
+        .findDestructuringStmt("a")
+        .matches("const { a, b: renamed } = obj1;"),
+    ).toBe(true);
+    expect(
+      explorer
+        .findDestructuringStmt("renamed")
+        .matches("const { a, b: renamed } = obj1;"),
+    ).toBe(true);
+    expect(
+      explorer.findDestructuringStmt("c").matches("const [c, d] = arr;"),
+    ).toBe(true);
+  });
+
+  it("does not match by the original property name when a variable is renamed", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    // "b" is the original key on `obj`, not a name in scope — should not match
+    expect(explorer.findDestructuringStmt("b").isEmpty()).toBe(true);
+    expect(explorer.findDestructuringStmt("renamed").isEmpty()).toBe(false);
+  });
+
+  it("returns an empty Explorer if no destructuring statement declares the specified variable", () => {
+    const explorer = new Explorer("const { a } = obj;");
+    expect(explorer.findDestructuringStmt("missing").isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if there are no destructuring statements at all", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.findDestructuringStmt("a").isEmpty()).toBe(true);
+  });
+});
+
+describe("propertyName", () => {
+  it("returns an Explorer for the original property name of a renamed destructured element", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.renamed.propertyName.matches("b")).toBe(
+      true,
+    );
+  });
+
+  it("returns an empty Explorer if the destructured element is not renamed", () => {
+    const explorer = new Explorer("const { a } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.a.propertyName.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer for a non-BindingElement node", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.propertyName.isEmpty()).toBe(true);
+  });
+});
+
+describe("isRestElement", () => {
+  it("returns true for a rest element in an object destructuring pattern", () => {
+    const explorer = new Explorer("const { a, ...rest } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.rest.isRestElement()).toBe(true);
+    expect(stmt.destructuredVariables.a.isRestElement()).toBe(false);
+  });
+
+  it("returns true for a rest element in an array destructuring pattern", () => {
+    const explorer = new Explorer("const [a, ...rest] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.rest.isRestElement()).toBe(true);
+    expect(stmt.destructuredVariables.a.isRestElement()).toBe(false);
+  });
+
+  it("returns false for a non-BindingElement node", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.isRestElement()).toBe(false);
+  });
+});
+
+describe("value (destructured elements)", () => {
+  it("returns an Explorer for the default value of a destructured element", () => {
+    const explorer = new Explorer("const { a = 1, b } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(vars.a.value.matches("1")).toBe(true);
+    expect(vars.b.value.isEmpty()).toBe(true);
+  });
+
+  it("returns an Explorer for the default value of a renamed destructured element", () => {
+    const explorer = new Explorer("const { b: renamed = 5 } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.renamed.value.matches("5")).toBe(true);
+  });
+
+  it("returns an Explorer for the right-hand side (source) of an object destructuring assignment, without matching the whole statement", () => {
+    const explorer = new Explorer("const { a, b } = obj1;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("obj1")).toBe(true);
+  });
+
+  it("supports drilling into an object literal on the right-hand side of a destructuring assignment", () => {
+    const explorer = new Explorer("const { x, y } = { x: 1, y: 2 };");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("{ x: 1, y: 2 }")).toBe(true);
+    expect(stmt.value.objectProps.x.value.matches("1")).toBe(true);
+  });
+
+  it("returns the right-hand side for an array destructuring assignment", () => {
+    const explorer = new Explorer("const [a, b] = getArray();");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("getArray()")).toBe(true);
+  });
 });
 
 describe("value", () => {
