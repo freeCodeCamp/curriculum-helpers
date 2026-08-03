@@ -440,6 +440,20 @@ class Explorer {
       return node.initializer ? new Explorer(node.initializer) : new Explorer();
     }
 
+    // Handle constructor property assignments (this.x = y), as returned by
+    // constructorProps, which wraps the assignment in an ExpressionStatement
+    const expr = isExpressionStatement(node) ? node.expression : node;
+    if (isBinaryExpression(expr) && isPropertyAccessExpression(expr.left)) {
+      const propAccess = expr.left;
+      // Ensure it's accessing a property on 'this'
+      if (
+        propAccess.expression.kind === SyntaxKind.ThisKeyword &&
+        isIdentifier(propAccess.name)
+      ) {
+        return expr.right ? new Explorer(expr.right) : new Explorer();
+      }
+    }
+
     return new Explorer();
   }
 
