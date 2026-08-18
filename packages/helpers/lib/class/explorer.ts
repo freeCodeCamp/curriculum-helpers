@@ -41,10 +41,12 @@ import {
   isAsExpression,
   isUnionTypeNode,
   Statement,
+  Expression,
   ReturnStatement,
   isBinaryExpression,
   isPropertyAccessExpression,
   isExpressionStatement,
+  isReturnStatement,
   isConstructorDeclaration,
   isNonNullExpression,
   isExpression,
@@ -156,6 +158,96 @@ function getBody(tree: Node): Node | undefined {
       return initializer.body;
     }
   }
+}
+
+type ChainLink =
+  | { call: string; args: Explorer[] }
+  | { receiver: Explorer }
+  | {
+      method: string;
+      args: Explorer[];
+      params: Explorer[];
+      body: Explorer[];
+    };
+
+// Extracts the parameters of a callback (arrow function or function expression)
+function getCallbackParams(callback: Node): Explorer[] {
+  if (!isArrowFunction(callback) && !isFunctionExpression(callback)) {
+    return [];
+  }
+
+  return callback.parameters.map((param) => new Explorer(param));
+}
+
+// Extracts the body of a callback as a list of statements (block body) or a
+// single-element list wrapping the expression (expression body)
+function getCallbackBody(callback: Node): Explorer[] {
+  if (!isArrowFunction(callback) && !isFunctionExpression(callback)) {
+    return [];
+  }
+
+  if (isBlock(callback.body)) {
+    return callback.body.statements.map((statement) =>
+      // Unwrap `return <expr>;` to its expression, so a block body's
+      // explicit return compares equal to an expression body's implicit
+      // one via matches() — same value, either way of writing it.
+      isReturnStatement(statement) && statement.expression
+        ? new Explorer(statement.expression)
+        : new Explorer(statement),
+    );
+  }
+
+  return [new Explorer(callback.body)];
+}
+
+// Flattens a chained call expression (e.g. `fetch(url).then(a).then(b)`) into
+// an ordered list of links, from the base call to the last chained method
+function flattenChain(node: Node): ChainLink[] | null {
+  // Unwrap `return <chain>;` so a chain nested in a return statement (e.g.
+  // one statement among several in a callback's block body) is still found.
+  if (isReturnStatement(node)) {
+    return node.expression ? flattenChain(node.expression) : null;
+  }
+
+  if (!isCallExpression(node)) {
+    // Not a call — the plain variable (or property access) a chain starts
+    // from, e.g. `items` in `items.filter(...)` or `array` in `array.map(...)`
+    if (isIdentifier(node) || isPropertyAccessExpression(node)) {
+      return [{ receiver: new Explorer(node) }];
+    }
+
+    return null;
+  }
+
+  // Base case: the callee is a plain identifier, e.g. `fetch(...)`
+  if (isIdentifier(node.expression)) {
+    return [
+      {
+        call: node.expression.text,
+        args: node.arguments.map((arg) => new Explorer(arg)),
+      },
+    ];
+  }
+
+  // Recursive case: the callee is `<inner>.<method>`, e.g. `<inner>.then(...)`
+  if (isPropertyAccessExpression(node.expression)) {
+    const inner = flattenChain(node.expression.expression);
+    if (!inner) {
+      return null;
+    }
+
+    const [callback] = node.arguments;
+    const link: ChainLink = {
+      method: node.expression.name.text,
+      args: node.arguments.map((arg) => new Explorer(arg)),
+      params: callback ? getCallbackParams(callback) : [],
+      body: callback ? getCallbackBody(callback) : [],
+    };
+
+    return [...inner, link];
+  }
+
+  return null;
 }
 
 type ParseContext =
@@ -1106,6 +1198,46 @@ class Explorer {
   hasNonNullAssertion(): boolean {
     if (!this.tree) return false;
     return isNonNullExpression(this.tree);
+  }
+
+  // Flattens a chained method-call expression (e.g. `fetch(url).then(a).then(b)`)
+  // into an ordered list of links. The base call is `{ call, args }`; each
+  // subsequent chained method is `{ method, params, body }`. Works whether the
+  // current node is the chain expression itself, a function whose block body
+  // contains it as a statement, or a function with an expression body that is
+  // the chain. Returns null if no such chain can be found.
+  get chain(): ChainLink[] | null {
+    if (!this.tree) {
+      return null;
+    }
+
+    const scope = getBody(this.tree) ?? this.tree;
+
+    // FindStatements handles SourceFile, Block, ModuleBlock, and
+    // CaseOrDefaultClause uniformly, so this also finds a bare chain
+    // statement (or a `return <chain>;`) sitting among other top-level
+    // statements, not just one that is the sole content of a function body.
+    const statements = findStatements(scope);
+    let candidate: Node | undefined = scope;
+    if (statements.length > 0) {
+      candidate = statements
+        .map((statement) => {
+          if (
+            isExpressionStatement(statement) ||
+            isReturnStatement(statement)
+          ) {
+            return statement.expression;
+          }
+
+          return undefined;
+        })
+        .find(
+          (expression): expression is Expression =>
+            expression !== undefined && isCallExpression(expression),
+        );
+    }
+
+    return candidate ? flattenChain(candidate) : null;
   }
 }
 
