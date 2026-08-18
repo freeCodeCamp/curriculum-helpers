@@ -159,6 +159,46 @@ describe("chain", () => {
     ).toEqual(["items", "filter"]);
   });
 
+  it("finds a chain reassigned via `=`, among other statements", () => {
+    const { allFunctions } = new Explorer(`
+      const run = () => {
+        let result;
+        const unrelated = 1 + 2;
+        result = items.filter((item) => item.includes(query));
+      };
+    `);
+
+    const { chain } = allFunctions.run;
+    expect(
+      chain?.map((link) =>
+        "receiver" in link
+          ? link.receiver.toString()
+          : "call" in link
+            ? link.call
+            : link.method,
+      ),
+    ).toEqual(["items", "filter"]);
+  });
+
+  it("finds a chain on the right-hand side of a compound assignment (+=)", () => {
+    const { allFunctions } = new Explorer(`
+      const run = () => {
+        container.innerHTML += arr.map((x) => x.toString()).join('');
+      };
+    `);
+
+    const { chain } = allFunctions.run;
+    expect(
+      chain?.map((link) =>
+        "receiver" in link
+          ? link.receiver.toString()
+          : "call" in link
+            ? link.call
+            : link.method,
+      ),
+    ).toEqual(["arr", "map", "join"]);
+  });
+
   it("finds a nested chain inside a callback's `return <chain>;` body", () => {
     const { variables } = new Explorer(
       "const filtered = items.filter((item) => { return item.toLowerCase().includes(query.toLowerCase()); });",

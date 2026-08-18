@@ -209,6 +209,16 @@ function flattenChain(node: Node): ChainLink[] | null {
     return node.expression ? flattenChain(node.expression) : null;
   }
 
+  // Unwrap `x = <chain>;` / `x += <chain>;` etc. to the chain on the
+  // right-hand side.
+  if (
+    isBinaryExpression(node) &&
+    node.operatorToken.kind >= SyntaxKind.FirstAssignment &&
+    node.operatorToken.kind <= SyntaxKind.LastAssignment
+  ) {
+    return flattenChain(node.right);
+  }
+
   if (!isCallExpression(node)) {
     // Not a call — the plain variable (or property access) a chain starts
     // from, e.g. `items` in `items.filter(...)` or `array` in `array.map(...)`
@@ -1222,14 +1232,26 @@ class Explorer {
     if (statements.length > 0) {
       candidate = statements
         .map((statement) => {
+          let expression: Node | undefined;
           if (
             isExpressionStatement(statement) ||
             isReturnStatement(statement)
           ) {
-            return statement.expression;
+            expression = statement.expression;
           }
 
-          return undefined;
+          // Unwrap `x = <chain>;` / `x += <chain>;` etc. to the chain on the
+          // right-hand side, e.g. `container.innerHTML += arr.map(...).join('')`
+          if (
+            expression &&
+            isBinaryExpression(expression) &&
+            expression.operatorToken.kind >= SyntaxKind.FirstAssignment &&
+            expression.operatorToken.kind <= SyntaxKind.LastAssignment
+          ) {
+            expression = expression.right;
+          }
+
+          return expression;
         })
         .find(
           (expression): expression is Expression =>
