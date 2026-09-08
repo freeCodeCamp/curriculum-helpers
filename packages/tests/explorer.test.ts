@@ -390,7 +390,7 @@ describe("value (destructured elements)", () => {
 describe("value", () => {
   it("returns an Explorer object for the initializer of a variable", () => {
     const sourceCode =
-      "const a = 1; const b = { x: 10 }; const c = 'hello'; const d = [1, 2, 3];";
+      "const a = 1; const b = { x: 10, y }; const c = 'hello'; const d = [1, 2, 3];";
     const explorer = new Explorer(sourceCode);
     const { a, b, c, d } = explorer.variables;
     const valueA = a.value;
@@ -399,9 +399,10 @@ describe("value", () => {
 
     const valueB = b.value;
     expect(valueB).toBeInstanceOf(Explorer);
-    expect(valueB.matches("{ x: 10 }")).toBe(true);
+    expect(valueB.matches("{ x: 10, y }")).toBe(true);
 
     expect(b.objectProps.x.value.matches("10")).toBe(true);
+    expect(b.objectProps.y.value.matches("y")).toBe(true);
 
     const valueC = c.value;
     expect(valueC).toBeInstanceOf(Explorer);
@@ -1139,6 +1140,15 @@ describe("objectProps", () => {
     const explorer = new Explorer(sourceCode);
     const { objectProps } = explorer.variables.obj;
     expect(Object.keys(objectProps)).toHaveLength(0);
+  });
+
+  it("handles shorthand properties", () => {
+    const sourceCode = "const obj = { x, y };";
+    const explorer = new Explorer(sourceCode);
+    const { objectProps } = explorer.variables.obj;
+    expect(Object.keys(objectProps)).toHaveLength(2);
+    expect(objectProps.x.matches("x")).toBe(true);
+    expect(objectProps.y.matches("y")).toBe(true);
   });
 });
 

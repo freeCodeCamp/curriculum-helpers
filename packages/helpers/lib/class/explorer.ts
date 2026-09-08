@@ -77,6 +77,7 @@ import {
   isObjectBindingPattern,
   isArrayBindingPattern,
   isBindingElement,
+  isShorthandPropertyAssignment,
   ObjectBindingPattern,
   ArrayBindingPattern,
 } from "typescript";
@@ -211,7 +212,8 @@ type ParseContext =
   | "propertyDeclaration"
   | "typeReference"
   | "expression"
-  | "bindingElement";
+  | "bindingElement"
+  | "objectProperty";
 
 const CONTEXT_GUARDS: ReadonlyArray<
   [ParseContext, ReadonlyArray<(node: Node) => boolean>]
@@ -222,6 +224,9 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["parameter", [isParameter]],
   ["typeParameter", [isTypeParameterDeclaration]],
   ["bindingElement", [isBindingElement]],
+  // Object literal properties (explicit "x: 10" or shorthand "x") — matches()
+  // needs to wrap the code back inside "{ }" to parse it the same way.
+  ["objectProperty", [isPropertyAssignment, isShorthandPropertyAssignment]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -332,6 +337,16 @@ function createTree(code: string, context: ParseContext): Node | null {
       const declaration = (sf.statements[0] as VariableStatement)
         .declarationList.declarations[0];
       return declaration.initializer ?? null;
+    }
+
+    // Wraps the code as an object literal property, e.g. "x: 10" or the
+    // shorthand "x", both of which parse validly inside "{ }"
+    case "objectProperty": {
+      const sf = createSource(`const _ = { ${code} };`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      const objectLiteral = declaration.initializer as ObjectLiteralExpression;
+      return objectLiteral.properties[0] ?? null;
     }
 
     case "source":
@@ -543,6 +558,12 @@ class Explorer {
     // Handle PropertyAssignment (object literal properties)
     if (isPropertyAssignment(node)) {
       return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle ShorthandPropertyAssignment (e.g. "{ name }"), whose value is
+    // the referenced identifier itself (same name as the property)
+    if (isShorthandPropertyAssignment(node)) {
+      return new Explorer(node.name);
     }
 
     // Handle constructor property assignments (this.x = y), as returned by
@@ -996,6 +1017,11 @@ class Explorer {
           const name = property.name.text;
           result[name] = new Explorer(property);
         }
+      }
+
+      if (isShorthandPropertyAssignment(property)) {
+        const name = property.name.text;
+        result[name] = new Explorer(property);
       }
     });
 
