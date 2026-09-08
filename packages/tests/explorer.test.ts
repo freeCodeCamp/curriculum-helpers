@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Explorer } from "../helpers/lib/class/explorer";
 
 expect.extend({
@@ -179,12 +180,217 @@ describe("variables", () => {
     const { method1 } = Spam.methods;
     expect(method1.variables.c.matches("const c = 3;")).toBe(true);
   });
+
+  it("does not include destructured variable declarations", () => {
+    const sourceCode = `
+      const a = 1;
+      const { b } = obj;
+      const [c] = arr;
+    `;
+    const { variables } = new Explorer(sourceCode);
+    expect(Object.keys(variables)).toEqual(["a"]);
+  });
+});
+
+describe("destructuringStmts", () => {
+  it("returns an array of Explorer objects for destructuring variable statements", () => {
+    const sourceCode = `
+      const { a, b } = obj1;
+      const [c, d] = arr;
+      const e = 1;
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { destructuringStmts } = explorer;
+    expect(destructuringStmts).toHaveLength(2);
+    destructuringStmts.forEach((stmt) => expect(stmt).toBeInstanceOf(Explorer));
+  });
+
+  it("returns an empty array if there are no destructuring statements", () => {
+    const explorer = new Explorer("const a = 1; const b = 2;");
+    expect(explorer.destructuringStmts).toHaveLength(0);
+  });
+
+  it("only finds destructuring statements in the current scope", () => {
+    const sourceCode = `
+      const { a } = obj1;
+      function foo() { const { b } = obj2; }
+    `;
+    const explorer = new Explorer(sourceCode);
+    expect(explorer.destructuringStmts).toHaveLength(1);
+
+    const { foo } = explorer.functions;
+    expect(foo.destructuringStmts).toHaveLength(1);
+    expect(foo.destructuringStmts[0].matches("const { b } = obj2;")).toBe(true);
+  });
+});
+
+describe("destructuredVariables", () => {
+  it("returns a map of bound name to Explorer for an object destructuring statement", () => {
+    const explorer = new Explorer("const { a, b } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toHaveLength(2);
+    expect(vars.a.matches("a")).toBe(true);
+    expect(vars.b.matches("b")).toBe(true);
+  });
+
+  it("returns a map of bound name to Explorer for an array destructuring statement", () => {
+    const explorer = new Explorer("const [c, d] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toHaveLength(2);
+    expect(vars.c.matches("c")).toBe(true);
+    expect(vars.d.matches("d")).toBe(true);
+  });
+
+  it("keys renamed object destructured elements by their local (bound) name, not the original property name", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toEqual(["renamed"]);
+    expect(vars.renamed.propertyName.matches("b")).toBe(true);
+  });
+
+  it("returns an empty object for a non-destructuring statement", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.destructuredVariables).toEqual({});
+  });
+
+  it("returns an empty object for an empty Explorer", () => {
+    const explorer = new Explorer();
+    expect(explorer.destructuredVariables).toEqual({});
+  });
+
+  it("skips holes in array destructuring patterns", () => {
+    const explorer = new Explorer("const [, b] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(Object.keys(vars)).toEqual(["b"]);
+  });
+});
+
+describe("findDestructuringStmt", () => {
+  it("finds the statement that declares the specified local (bound) variable name", () => {
+    const sourceCode = `
+      const { a, b: renamed } = obj1;
+      const [c, d] = arr;
+    `;
+    const explorer = new Explorer(sourceCode);
+
+    expect(
+      explorer
+        .findDestructuringStmt("a")
+        .matches("const { a, b: renamed } = obj1;"),
+    ).toBe(true);
+    expect(
+      explorer
+        .findDestructuringStmt("renamed")
+        .matches("const { a, b: renamed } = obj1;"),
+    ).toBe(true);
+    expect(
+      explorer.findDestructuringStmt("c").matches("const [c, d] = arr;"),
+    ).toBe(true);
+  });
+
+  it("does not match by the original property name when a variable is renamed", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    // "b" is the original key on `obj`, not a name in scope — should not match
+    expect(explorer.findDestructuringStmt("b").isEmpty()).toBe(true);
+    expect(explorer.findDestructuringStmt("renamed").isEmpty()).toBe(false);
+  });
+
+  it("returns an empty Explorer if no destructuring statement declares the specified variable", () => {
+    const explorer = new Explorer("const { a } = obj;");
+    expect(explorer.findDestructuringStmt("missing").isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if there are no destructuring statements at all", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.findDestructuringStmt("a").isEmpty()).toBe(true);
+  });
+});
+
+describe("propertyName", () => {
+  it("returns an Explorer for the original property name of a renamed destructured element", () => {
+    const explorer = new Explorer("const { b: renamed } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.renamed.propertyName.matches("b")).toBe(
+      true,
+    );
+  });
+
+  it("returns an empty Explorer if the destructured element is not renamed", () => {
+    const explorer = new Explorer("const { a } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.a.propertyName.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer for a non-BindingElement node", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.propertyName.isEmpty()).toBe(true);
+  });
+});
+
+describe("isRestElement", () => {
+  it("returns true for a rest element in an object destructuring pattern", () => {
+    const explorer = new Explorer("const { a, ...rest } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.rest.isRestElement()).toBe(true);
+    expect(stmt.destructuredVariables.a.isRestElement()).toBe(false);
+  });
+
+  it("returns true for a rest element in an array destructuring pattern", () => {
+    const explorer = new Explorer("const [a, ...rest] = arr;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.rest.isRestElement()).toBe(true);
+    expect(stmt.destructuredVariables.a.isRestElement()).toBe(false);
+  });
+
+  it("returns false for a non-BindingElement node", () => {
+    const explorer = new Explorer("const a = 1;");
+    expect(explorer.isRestElement()).toBe(false);
+  });
+});
+
+describe("value (destructured elements)", () => {
+  it("returns an Explorer for the default value of a destructured element", () => {
+    const explorer = new Explorer("const { a = 1, b } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    const vars = stmt.destructuredVariables;
+    expect(vars.a.value.matches("1")).toBe(true);
+    expect(vars.b.value.isEmpty()).toBe(true);
+  });
+
+  it("returns an Explorer for the default value of a renamed destructured element", () => {
+    const explorer = new Explorer("const { b: renamed = 5 } = obj;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.destructuredVariables.renamed.value.matches("5")).toBe(true);
+  });
+
+  it("returns an Explorer for the right-hand side (source) of an object destructuring assignment, without matching the whole statement", () => {
+    const explorer = new Explorer("const { a, b } = obj1;");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("obj1")).toBe(true);
+  });
+
+  it("supports drilling into an object literal on the right-hand side of a destructuring assignment", () => {
+    const explorer = new Explorer("const { x, y } = { x: 1, y: 2 };");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("{ x: 1, y: 2 }")).toBe(true);
+    expect(stmt.value.objectProps.x.value.matches("1")).toBe(true);
+  });
+
+  it("returns the right-hand side for an array destructuring assignment", () => {
+    const explorer = new Explorer("const [a, b] = getArray();");
+    const [stmt] = explorer.destructuringStmts;
+    expect(stmt.value.matches("getArray()")).toBe(true);
+  });
 });
 
 describe("value", () => {
   it("returns an Explorer object for the initializer of a variable", () => {
     const sourceCode =
-      "const a = 1; const b = { x: 10 }; const c = 'hello'; const d = [1, 2, 3];";
+      "const a = 1; const b = { x: 10, y }; const c = 'hello'; const d = [1, 2, 3];";
     const explorer = new Explorer(sourceCode);
     const { a, b, c, d } = explorer.variables;
     const valueA = a.value;
@@ -193,9 +399,10 @@ describe("value", () => {
 
     const valueB = b.value;
     expect(valueB).toBeInstanceOf(Explorer);
-    expect(valueB.matches("{ x: 10 }")).toBe(true);
+    expect(valueB.matches("{ x: 10, y }")).toBe(true);
 
     expect(b.objectProps.x.value.matches("10")).toBe(true);
+    expect(b.objectProps.y.value.matches("y")).toBe(true);
 
     const valueC = c.value;
     expect(valueC).toBeInstanceOf(Explorer);
@@ -212,6 +419,45 @@ describe("value", () => {
     const valueA = variables.a.value;
     expect(valueA).toBeInstanceOf(Explorer);
     expect(valueA.isEmpty()).toBe(true);
+  });
+
+  it("returns an Explorer object for the assigned value of a constructor property assignment (this.x = y)", () => {
+    const sourceCode = `
+                    class Rectangle {
+                      constructor(height, width) {
+                        this.height = height;
+                        this.width = width;
+                      }
+                    }
+                `;
+    const { classes } = new Explorer(sourceCode);
+    const { constructorProps } = classes.Rectangle;
+
+    expect(constructorProps.height.value).toBeInstanceOf(Explorer);
+    expect(constructorProps.height.value.matches("height")).toBe(true);
+    expect(constructorProps.width.value.matches("width")).toBe(true);
+  });
+
+  it("supports drilling into an object literal assigned via a constructor property assignment", () => {
+    const sourceCode = `
+                    class Rectangle {
+                      constructor(height, width) {
+                        this.dimensions = { h: height, w: width };
+                      }
+                    }
+                `;
+    const { classes } = new Explorer(sourceCode);
+    const { constructorProps } = classes.Rectangle;
+
+    expect(
+      constructorProps.dimensions.value.matches("{ h: height, w: width }"),
+    ).toBe(true);
+    expect(
+      constructorProps.dimensions.value.objectProps.h.value.matches("height"),
+    ).toBe(true);
+    expect(
+      constructorProps.dimensions.value.objectProps.w.value.matches("width"),
+    ).toBe(true);
   });
 });
 
@@ -895,6 +1141,15 @@ describe("objectProps", () => {
     const { objectProps } = explorer.variables.obj;
     expect(Object.keys(objectProps)).toHaveLength(0);
   });
+
+  it("handles shorthand properties", () => {
+    const sourceCode = "const obj = { x, y };";
+    const explorer = new Explorer(sourceCode);
+    const { objectProps } = explorer.variables.obj;
+    expect(Object.keys(objectProps)).toHaveLength(2);
+    expect(objectProps.x.matches("x")).toBe(true);
+    expect(objectProps.y.matches("y")).toBe(true);
+  });
 });
 
 describe("typeProps", () => {
@@ -1269,5 +1524,735 @@ describe("typeArguments", () => {
   it("returns an empty array for an empty Explorer", () => {
     const explorer = new Explorer();
     expect(explorer.typeArguments).toHaveLength(0);
+  });
+});
+
+describe("ifStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); }
+    if (y < 0) { console.log("Negative"); } else { console.log("Non-negative"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements).toHaveLength(2);
+    ifStatements.forEach((ifStmt) => expect(ifStmt).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per if statement", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); }
+    if (y < 0) { console.log("Negative"); } else { console.log("Non-negative"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(
+      ifStatements[0].matches(
+        `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); }`,
+      ),
+    ).toBe(true);
+    expect(
+      ifStatements[1].matches(
+        `if (y < 0) { console.log("Negative"); } else { console.log("Non-negative"); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no if statements", () => {
+    const sourceCode = `const a = 1; const b = 2;`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements).toHaveLength(0);
+  });
+
+  it("finds if statements nested inside the body of an outer if statement", () => {
+    const sourceCode = `
+      if (x > 0) {
+        if (y > 0) {
+          console.log("Both positive");
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements).toHaveLength(1);
+
+    const { ifStatements: nestedIfStatements } = ifStatements[0].body;
+    expect(nestedIfStatements).toHaveLength(1);
+    expect(
+      nestedIfStatements[0].matches(
+        `if (y > 0) { console.log("Both positive"); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("finds if statements nested inside the else branch of an outer if statement", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else {
+        if (y > 0) {
+          console.log("x non-positive but y positive");
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    const { ifStatements: nestedIfStatements } = ifStatements[0].elseStatement;
+    expect(nestedIfStatements).toHaveLength(1);
+    expect(nestedIfStatements[0].condition.matches("y > 0")).toBe(true);
+  });
+
+  it("does not find if statements nested inside a function declared within the body", () => {
+    const sourceCode = `
+      if (x > 0) {
+        function helper() {
+          if (y > 0) {
+            console.log("nested in function");
+          }
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].body.ifStatements).toHaveLength(0);
+
+    const { helper } = ifStatements[0].body.functions;
+    expect(helper.ifStatements).toHaveLength(1);
+    expect(helper.ifStatements[0].condition.matches("y > 0")).toBe(true);
+  });
+});
+
+describe("condition", () => {
+  it("returns an Explorer object for the condition of an if statement", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); } if (y < 0 && z > 0) { console.log("Negative"); } else { console.log("Non-negative"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].condition).toBeInstanceOf(Explorer);
+    expect(ifStatements[0].condition.matches(`x > 0`)).toBe(true);
+    expect(ifStatements[1].condition).toBeInstanceOf(Explorer);
+    expect(ifStatements[1].condition.matches(`y < 0 && z > 0`)).toBe(true);
+  });
+
+  it("returns the condition of an if statement nested inside another if statement's body", () => {
+    const sourceCode = `
+      if (a > 0) {
+        if (b > 0) {
+          if (c > 0) {
+            console.log("All positive");
+          }
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const level1 = explorer.ifStatements[0];
+    expect(level1.condition.matches("a > 0")).toBe(true);
+
+    const level2 = level1.body.ifStatements[0];
+    expect(level2.condition.matches("b > 0")).toBe(true);
+
+    const level3 = level2.body.ifStatements[0];
+    expect(level3.condition.matches("c > 0")).toBe(true);
+  });
+
+  it("returns an Explorer object for the condition of a ternary expression", () => {
+    const { variables } = new Explorer(
+      `const a = x > 0 ? "positive" : "non-positive";`,
+    );
+    const { value } = variables.a;
+    expect(value.condition).toBeInstanceOf(Explorer);
+    expect(value.condition.matches("x > 0")).toBe(true);
+  });
+
+  it("returns the condition of a while loop", () => {
+    const explorer = new Explorer(`while (x > 0) { x--; }`);
+    expect(explorer.whileStatements[0].condition.matches("x > 0")).toBe(true);
+  });
+
+  it("returns the condition of a do...while loop", () => {
+    const explorer = new Explorer(`do { x--; } while (x > 0);`);
+    expect(explorer.doWhileStatements[0].condition.matches("x > 0")).toBe(true);
+  });
+
+  it("returns the condition of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].condition.matches("i < 10")).toBe(true);
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no condition", () => {
+    const explorer = new Explorer(`for (let i = 0; ; i++) { }`);
+    expect(explorer.forStatements[0].condition.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't an if statement or ternary expression", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.condition.isEmpty()).toBe(true);
+  });
+});
+
+describe("whenTrue", () => {
+  it("returns an Explorer object for the 'true' branch of a ternary expression", () => {
+    const { variables } = new Explorer(
+      `const a = x > 0 ? "positive" : "non-positive";`,
+    );
+    const { value } = variables.a;
+    expect(value.whenTrue).toBeInstanceOf(Explorer);
+    expect(value.whenTrue.matches(`"positive"`)).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a ternary expression", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.value.whenTrue.isEmpty()).toBe(true);
+  });
+});
+
+describe("whenFalse", () => {
+  it("returns an Explorer object for the 'false' branch of a ternary expression", () => {
+    const { variables } = new Explorer(
+      `const a = x > 0 ? "positive" : "non-positive";`,
+    );
+    const { value } = variables.a;
+    expect(value.whenFalse).toBeInstanceOf(Explorer);
+    expect(value.whenFalse.matches(`"non-positive"`)).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a ternary expression", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.value.whenFalse.isEmpty()).toBe(true);
+  });
+
+  it("supports chained (nested) ternaries via whenFalse", () => {
+    const { variables } = new Explorer(
+      `const a = x > 0 ? "positive" : x < 0 ? "negative" : "zero";`,
+    );
+    const { value } = variables.a;
+    expect(value.condition.matches("x > 0")).toBe(true);
+    expect(value.whenTrue.matches(`"positive"`)).toBe(true);
+
+    const nested = value.whenFalse;
+    expect(nested.condition.matches("x < 0")).toBe(true);
+    expect(nested.whenTrue.matches(`"negative"`)).toBe(true);
+    expect(nested.whenFalse.matches(`"zero"`)).toBe(true);
+  });
+});
+
+describe("isTernary", () => {
+  it("returns true if the node is a ternary (conditional) expression", () => {
+    const { variables } = new Explorer(
+      `const a = x > 0 ? "positive" : "non-positive";`,
+    );
+    expect(variables.a.value.isTernary()).toBe(true);
+  });
+
+  it("returns false if the node is not a ternary (conditional) expression", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.value.isTernary()).toBe(false);
+  });
+
+  it("returns false for an empty Explorer", () => {
+    const explorer = new Explorer();
+    expect(explorer.isTernary()).toBe(false);
+  });
+});
+
+describe("body", () => {
+  it("returns an Explorer object for the body of a conditional statement", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); } if (y < 0 && z > 0) { console.log("Negative"); } else { console.log("Non-negative"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].body).toBeInstanceOf(Explorer);
+    expect(ifStatements[0].body.matches(`{ console.log("Positive"); }`)).toBe(
+      true,
+    );
+    expect(ifStatements[1].body).toBeInstanceOf(Explorer);
+    expect(ifStatements[1].body.matches(`{ console.log("Negative"); }`)).toBe(
+      true,
+    );
+  });
+
+  it("allows drilling into the body of nested if statements", () => {
+    const sourceCode = `
+      if (a > 0) {
+        if (b > 0) {
+          console.log("Both positive");
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const outer = explorer.ifStatements[0];
+    const inner = outer.body.ifStatements[0];
+    expect(inner.body.matches(`{ console.log("Both positive"); }`)).toBe(true);
+  });
+
+  it("returns the body of a while loop", () => {
+    const explorer = new Explorer(`while (x > 0) { x--; }`);
+    expect(explorer.whileStatements[0].body.matches(`{ x--; }`)).toBe(true);
+  });
+
+  it("returns the body of a do...while loop", () => {
+    const explorer = new Explorer(`do { x--; } while (x > 0);`);
+    expect(explorer.doWhileStatements[0].body.matches(`{ x--; }`)).toBe(true);
+  });
+
+  it("returns the body of a classic 'for' loop", () => {
+    const explorer = new Explorer(
+      `for (let i = 0; i < 10; i++) { console.log(i); }`,
+    );
+    expect(explorer.forStatements[0].body.matches(`{ console.log(i); }`)).toBe(
+      true,
+    );
+  });
+
+  it("returns the body of a 'for...of' loop", () => {
+    const explorer = new Explorer(
+      `for (const item of items) { console.log(item); }`,
+    );
+    expect(
+      explorer.forOfStatements[0].body.matches(`{ console.log(item); }`),
+    ).toBe(true);
+  });
+
+  it("returns the body of a 'for...in' loop", () => {
+    const explorer = new Explorer(
+      `for (const key in obj) { console.log(key); }`,
+    );
+    expect(
+      explorer.forInStatements[0].body.matches(`{ console.log(key); }`),
+    ).toBe(true);
+  });
+});
+
+describe("elseStatement", () => {
+  it("returns an Explorer object for the body of an else statement", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); } if (y < 0 && z > 0) { console.log("Negative"); } else { console.log("Non-negative"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].elseStatement).toBeInstanceOf(Explorer);
+    expect(
+      ifStatements[0].elseStatement.matches(`{ console.log("Non-positive"); }`),
+    ).toBe(true);
+    expect(ifStatements[1].elseStatement).toBeInstanceOf(Explorer);
+    expect(
+      ifStatements[1].elseStatement.matches(`{ console.log("Non-negative"); }`),
+    ).toBe(true);
+  });
+
+  it("returns an empty Explorer if there is no else statement", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].elseStatement.isEmpty()).toBe(true);
+  });
+
+  it("skips past 'else if' links and returns only the trailing plain else block", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else if (x < 0) {
+        console.log("Negative");
+      } else if (x === 0) {
+        console.log("Zero");
+      } else {
+        console.log("Unknown");
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(
+      ifStatements[0].elseStatement.matches(`{ console.log("Unknown"); }`),
+    ).toBe(true);
+  });
+
+  it("returns an empty Explorer if an 'else if' chain has no trailing else", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else if (x < 0) {
+        console.log("Negative");
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].elseStatement.isEmpty()).toBe(true);
+  });
+
+  it("supports if statements nested inside the else branch", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else {
+        if (y > 0) {
+          console.log("x non-positive but y positive");
+        } else {
+          console.log("Both non-positive");
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    const nestedIf = ifStatements[0].elseStatement.ifStatements[0];
+    expect(nestedIf.condition.matches("y > 0")).toBe(true);
+    expect(
+      nestedIf.elseStatement.matches(`{ console.log("Both non-positive"); }`),
+    ).toBe(true);
+  });
+});
+
+describe("elseIfStatements", () => {
+  it("returns an array of Explorer objects for each 'else if' link in the chain", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else if (x < 0) {
+        console.log("Negative");
+      } else if (x === 0) {
+        console.log("Zero");
+      } else {
+        console.log("Unknown");
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    const { elseIfStatements } = ifStatements[0];
+    expect(elseIfStatements).toHaveLength(2);
+    elseIfStatements.forEach((elseIf) =>
+      expect(elseIf).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("allows accessing condition and body on each 'else if' link", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else if (x < 0) {
+        console.log("Negative");
+      } else if (x === 0) {
+        console.log("Zero");
+      } else {
+        console.log("Unknown");
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    const { elseIfStatements } = ifStatements[0];
+
+    expect(elseIfStatements[0].condition.matches("x < 0")).toBe(true);
+    expect(
+      elseIfStatements[0].body.matches(`{ console.log("Negative"); }`),
+    ).toBe(true);
+
+    expect(elseIfStatements[1].condition.matches("x === 0")).toBe(true);
+    expect(elseIfStatements[1].body.matches(`{ console.log("Zero"); }`)).toBe(
+      true,
+    );
+  });
+
+  it("returns an empty array if there are no 'else if' links", () => {
+    const sourceCode = `if (x > 0) { console.log("Positive"); } else { console.log("Non-positive"); }`;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    expect(ifStatements[0].elseIfStatements).toHaveLength(0);
+  });
+
+  it("finds if statements nested inside an 'else if' branch", () => {
+    const sourceCode = `
+      if (x > 0) {
+        console.log("Positive");
+      } else if (x < 0) {
+        if (y < 0) {
+          console.log("Both negative");
+        }
+      } else {
+        console.log("Zero");
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { ifStatements } = explorer;
+    const { elseIfStatements } = ifStatements[0];
+    expect(elseIfStatements).toHaveLength(1);
+
+    const { ifStatements: nestedIfStatements } = elseIfStatements[0].body;
+    expect(nestedIfStatements).toHaveLength(1);
+    expect(nestedIfStatements[0].condition.matches("y < 0")).toBe(true);
+    expect(
+      nestedIfStatements[0].body.matches(`{ console.log("Both negative"); }`),
+    ).toBe(true);
+  });
+});
+
+describe("whileStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `while (x > 0) { x--; } while (y < 10) { y++; }`;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements).toHaveLength(2);
+    whileStatements.forEach((w) => expect(w).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per while loop", () => {
+    const sourceCode = `while (x > 0) { x--; }`;
+    const explorer = new Explorer(sourceCode);
+    expect(explorer.whileStatements[0].matches(`while (x > 0) { x--; }`)).toBe(
+      true,
+    );
+  });
+
+  it("returns an empty array if there are no while loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.whileStatements).toHaveLength(0);
+  });
+
+  it("finds while loops nested inside the body of an outer while loop", () => {
+    const sourceCode = `
+      while (x > 0) {
+        while (y > 0) {
+          y--;
+        }
+        x--;
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements).toHaveLength(1);
+
+    const nested = whileStatements[0].body.whileStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("y > 0")).toBe(true);
+  });
+
+  it("does not find while loops nested inside a function declared within the body", () => {
+    const sourceCode = `
+      while (x > 0) {
+        function helper() {
+          while (y > 0) {
+            y--;
+          }
+        }
+        x--;
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { whileStatements } = explorer;
+    expect(whileStatements[0].body.whileStatements).toHaveLength(0);
+
+    const { helper } = whileStatements[0].body.functions;
+    expect(helper.whileStatements).toHaveLength(1);
+  });
+});
+
+describe("doWhileStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `do { x--; } while (x > 0); do { y++; } while (y < 10);`;
+    const explorer = new Explorer(sourceCode);
+    const { doWhileStatements } = explorer;
+    expect(doWhileStatements).toHaveLength(2);
+    doWhileStatements.forEach((d) => expect(d).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per do...while loop", () => {
+    const sourceCode = `do { x--; } while (x > 0);`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.doWhileStatements[0].matches(`do { x--; } while (x > 0);`),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no do...while loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.doWhileStatements).toHaveLength(0);
+  });
+
+  it("finds do...while loops nested inside the body of an outer do...while loop", () => {
+    const sourceCode = `
+      do {
+        do {
+          y--;
+        } while (y > 0);
+        x--;
+      } while (x > 0);
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { doWhileStatements } = explorer;
+    expect(doWhileStatements).toHaveLength(1);
+
+    const nested = doWhileStatements[0].body.doWhileStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("y > 0")).toBe(true);
+  });
+});
+
+describe("forStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (let i = 0; i < 10; i++) { } for (let j = 0; j < 5; j++) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forStatements } = explorer;
+    expect(forStatements).toHaveLength(2);
+    forStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for loop", () => {
+    const sourceCode = `for (let i = 0; i < 10; i++) { console.log(i); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forStatements[0].matches(
+        `for (let i = 0; i < 10; i++) { console.log(i); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forStatements).toHaveLength(0);
+  });
+
+  it("finds for loops nested inside the body of an outer for loop", () => {
+    const sourceCode = `
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 5; j++) {
+          console.log(j);
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { forStatements } = explorer;
+    expect(forStatements).toHaveLength(1);
+
+    const nested = forStatements[0].body.forStatements;
+    expect(nested).toHaveLength(1);
+    expect(nested[0].condition.matches("j < 5")).toBe(true);
+  });
+});
+
+describe("forOfStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (const a of items) { } for (const b of others) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forOfStatements } = explorer;
+    expect(forOfStatements).toHaveLength(2);
+    forOfStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for...of loop", () => {
+    const sourceCode = `for (const item of items) { console.log(item); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forOfStatements[0].matches(
+        `for (const item of items) { console.log(item); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for...of loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forOfStatements).toHaveLength(0);
+  });
+});
+
+describe("forInStatements", () => {
+  it("returns an array of Explorer objects", () => {
+    const sourceCode = `for (const a in obj1) { } for (const b in obj2) { }`;
+    const explorer = new Explorer(sourceCode);
+    const { forInStatements } = explorer;
+    expect(forInStatements).toHaveLength(2);
+    forInStatements.forEach((f) => expect(f).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per for...in loop", () => {
+    const sourceCode = `for (const key in obj) { console.log(key); }`;
+    const explorer = new Explorer(sourceCode);
+    expect(
+      explorer.forInStatements[0].matches(
+        `for (const key in obj) { console.log(key); }`,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns an empty array if there are no for...in loops", () => {
+    const explorer = new Explorer(`const a = 1;`);
+    expect(explorer.forInStatements).toHaveLength(0);
+  });
+});
+
+describe("initializer", () => {
+  it("returns an Explorer object for the initializer of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].initializer.toString()).toBe("let i = 0");
+  });
+
+  it("returns an Explorer object for the declaration in a 'for...of' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].initializer.toString()).toBe(
+      "const item",
+    );
+  });
+
+  it("returns an Explorer object for the declaration in a 'for...in' loop", () => {
+    const explorer = new Explorer(`for (const key in obj) { }`);
+    expect(explorer.forInStatements[0].initializer.toString()).toBe(
+      "const key",
+    );
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no initializer", () => {
+    const explorer = new Explorer(`for (; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].initializer.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a loop", () => {
+    const { variables } = new Explorer(`const a = 1;`);
+    expect(variables.a.initializer.isEmpty()).toBe(true);
+  });
+});
+
+describe("incrementor", () => {
+  it("returns an Explorer object for the incrementor of a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].incrementor.matches("i++")).toBe(true);
+  });
+
+  it("returns an empty Explorer if a classic 'for' loop has no incrementor", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; ) { }`);
+    expect(explorer.forStatements[0].incrementor.isEmpty()).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a classic 'for' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].incrementor.isEmpty()).toBe(true);
+  });
+});
+
+describe("iterable", () => {
+  it("returns an Explorer object for the collection being iterated in a 'for...of' loop", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].iterable.matches("items")).toBe(true);
+  });
+
+  it("returns an Explorer object for the collection being iterated in a 'for...in' loop", () => {
+    const explorer = new Explorer(`for (const key in obj) { }`);
+    expect(explorer.forInStatements[0].iterable.matches("obj")).toBe(true);
+  });
+
+  it("returns an empty Explorer if called on a node that isn't a for...of/for...in loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].iterable.isEmpty()).toBe(true);
+  });
+});
+
+describe("isAwaitFor", () => {
+  it("returns true if the 'for...of' loop uses the 'for await...of' syntax", () => {
+    const sourceCode = `
+      async function foo() {
+        for await (const item of items) { }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const { foo } = explorer.functions;
+    expect(foo.forOfStatements[0].isAwaitFor()).toBe(true);
+  });
+
+  it("returns false if the 'for...of' loop does not use 'await'", () => {
+    const explorer = new Explorer(`for (const item of items) { }`);
+    expect(explorer.forOfStatements[0].isAwaitFor()).toBe(false);
+  });
+
+  it("returns false if called on a node that isn't a for...of loop", () => {
+    const explorer = new Explorer(`for (let i = 0; i < 10; i++) { }`);
+    expect(explorer.forStatements[0].isAwaitFor()).toBe(false);
   });
 });
