@@ -1767,6 +1767,32 @@ pattern = re.compile('l+')
       });
     });
 
+    it.each([
+      ["{'toString': 1}", "{'toString': 1}"],
+      ["{'nested': {'toString': 1}}", "{'nested': {'toString': 1}}"],
+      ["[1, {'toString': 2}]", "[1, {'toString': 2}]"],
+      ["{1: 'one', '1': 'string'}", "{1: 'one', '1': 'string'}"],
+    ])(
+      "should serialize Python assertion values for %s",
+      async (expression, serialized) => {
+        const result = await page.evaluate(async (expression) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type: "python",
+          });
+          return runner.runTest(
+            `assert.fail(runPython(${JSON.stringify(expression)}), runPython(${JSON.stringify(expression)}), 'Python values differ')`,
+          );
+        }, expression);
+
+        expect(result).toMatchObject({
+          err: {
+            actual: serialized,
+            expected: serialized,
+          },
+        });
+      },
+    );
+
     it("should preserve falsy expected and actual values in error responses", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({

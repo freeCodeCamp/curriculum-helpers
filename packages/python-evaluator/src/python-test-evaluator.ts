@@ -1,7 +1,5 @@
 /* eslint-disable no-eval */
-// We have to specify pyodide.js because we need to import that file (not .mjs)
-// and 'import' defaults to .mjs
-import { loadPyodide, type PyodideInterface } from "pyodide/pyodide.js";
+import { loadPyodide, type PyodideInterface } from "pyodide";
 import type { PyProxy, PythonError } from "pyodide/ffi";
 import pkg from "pyodide/package.json";
 import * as helpers from "../../helpers/lib";
@@ -40,9 +38,7 @@ function isProxy(raw: unknown): raw is PyProxy {
   return !!raw && typeof raw === "object" && "toJs" in raw;
 }
 
-const serialize = (obj: unknown) =>
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-  isProxy(obj) ? (obj.toJs().toString() as string) : obj;
+const serialize = (obj: unknown) => (isProxy(obj) ? obj.toString() : obj);
 
 class PythonTestEvaluator implements TestEvaluator {
   #pyodide?: PyodideInterface;
