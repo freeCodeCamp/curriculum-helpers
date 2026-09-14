@@ -78,6 +78,7 @@ import {
   isArrayBindingPattern,
   isBindingElement,
   isShorthandPropertyAssignment,
+  isTypePredicateNode,
   ObjectBindingPattern,
   ArrayBindingPattern,
 } from "typescript";
@@ -211,6 +212,7 @@ type ParseContext =
   | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
+  | "typePredicate"
   | "expression"
   | "bindingElement"
   | "objectProperty";
@@ -227,6 +229,10 @@ const CONTEXT_GUARDS: ReadonlyArray<
   // Object literal properties (explicit "x: 10" or shorthand "x") — matches()
   // needs to wrap the code back inside "{ }" to parse it the same way.
   ["objectProperty", [isPropertyAssignment, isShorthandPropertyAssignment]],
+  // Type predicates (e.g. "x is Foo"), only valid in a function's return
+  // type position — must be checked before the "typeReference" catch-all
+  // below, since isTypeNode() also matches TypePredicateNode.
+  ["typePredicate", [isTypePredicateNode]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -330,6 +336,14 @@ function createTree(code: string, context: ParseContext): Node | null {
       const declaration = (sf.statements[0] as VariableStatement)
         .declarationList.declarations[0];
       return declaration.type ?? null;
+    }
+
+    // Type predicates are only valid syntax in a function's return type
+    // position, e.g. "function _(): x is Foo {}"
+    case "typePredicate": {
+      const sf = createSource(`function _(): ${code} {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.type ?? null;
     }
 
     case "expression": {
@@ -734,9 +748,11 @@ class Explorer {
 
     // Check return type if we found a function node
     if (functionNode?.type) {
+      // The return type node's inferred context (e.g. "typeReference" or
+      // "typePredicate") determines how the annotation string is wrapped
+      // for comparison, so both sides are parsed the same way.
       const returnAnnotation = new Explorer(functionNode.type);
-      const explorerAnnotation = new Explorer(annotation, "typeReference");
-      return returnAnnotation.matches(explorerAnnotation);
+      return returnAnnotation.matches(annotation);
     }
 
     return false;

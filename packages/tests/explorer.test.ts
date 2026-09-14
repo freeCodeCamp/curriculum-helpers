@@ -618,6 +618,55 @@ describe("hasReturnAnnotation", () => {
       explorer.classes.Spam.methods.method.hasReturnAnnotation("number"),
     ).toBe(false);
   });
+
+  it("returns true for type predicates on function declarations, arrow functions, function expressions and methods", () => {
+    const sourceCode = `
+                    function isSelect(element) {
+                      return element instanceof HTMLSelectElement;
+                    }
+                    function isSelectDecl(element): element is HTMLSelectElement {
+                      return element instanceof HTMLSelectElement;
+                    }
+                    const isSelectArrow = (element): element is HTMLSelectElement =>
+                      element instanceof HTMLSelectElement;
+                    const isSelectExpr = function (element): element is HTMLSelectElement {
+                      return element instanceof HTMLSelectElement;
+                    };
+                    class Spam {
+                      isSelectMethod(element): element is HTMLSelectElement {
+                        return element instanceof HTMLSelectElement;
+                      }
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.allFunctions;
+    expect(
+      functions.isSelect.hasReturnAnnotation("element is HTMLSelectElement"),
+    ).toBe(false);
+    expect(
+      functions.isSelectDecl.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      functions.isSelectArrow.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      functions.isSelectExpr.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      explorer.classes.Spam.methods.isSelectMethod.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      functions.isSelectDecl.hasReturnAnnotation("element is HTMLDivElement"),
+    ).toBe(false);
+  });
 });
 
 describe("hasReturn", () => {
