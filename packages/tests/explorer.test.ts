@@ -569,6 +569,34 @@ describe("parameters", () => {
     const parametersBar = functions.bar.parameters;
     expect(parametersBar).toHaveLength(0);
   });
+
+  it("returns an array of Explorer objects for the parameters of a class constructor", () => {
+    const sourceCode = `
+                    class Bee {
+                      constructor(emojiElement: HTMLParagraphElement, name: string) {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const constructor = explorer.classes.Bee.classConstructor;
+    const constructorParams = constructor?.parameters ?? [];
+    expect(constructorParams).toHaveLength(2);
+
+    expect(
+      constructorParams[0].matches("emojiElement: HTMLParagraphElement"),
+    ).toBe(true);
+    expect(constructorParams[1].matches("name: string")).toBe(true);
+  });
+
+  it("returns an empty array if the class constructor has no parameters", () => {
+    const sourceCode = `
+                    class Bee {
+                      constructor() {}
+                    }
+                `;
+    const explorer = new Explorer(sourceCode);
+    const constructor = explorer.classes.Bee.classConstructor;
+    expect(constructor?.parameters).toHaveLength(0);
+  });
 });
 
 describe("hasReturnAnnotation", () => {
