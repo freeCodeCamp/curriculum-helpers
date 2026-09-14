@@ -40,6 +40,31 @@ function isProxy(raw: unknown): raw is PyProxy {
 
 const serialize = (obj: unknown) => (isProxy(obj) ? obj.toString() : obj);
 
+chai.use((chai, utils) => {
+  const getMessage = utils.getMessage.bind(utils);
+
+  Object.assign(utils, {
+    getMessage(assertion: Chai.Assertion, args: Chai.AssertionArgs) {
+      // Chai's inspection probes Python dictionaries with JavaScript symbols,
+      // which Pyodide rejects as unhashable keys. Serialize only the values used
+      // to format the message, preserving the original assertion and its flags.
+      const printable = new chai.Assertion(undefined);
+      utils.transferFlags(assertion, printable);
+      utils.flag(
+        printable,
+        "object",
+        serialize(utils.flag(assertion, "object")),
+      );
+
+      const printableArgs = Array.from(args) as Chai.AssertionArgs;
+      printableArgs[3] = serialize(args[3]);
+      if (args.length > 4) printableArgs[4] = serialize(args[4]);
+
+      return getMessage(printable, printableArgs);
+    },
+  });
+});
+
 class PythonTestEvaluator implements TestEvaluator {
   #pyodide?: PyodideInterface;
   #runTest?: TestEvaluator["runTest"];
