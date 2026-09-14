@@ -873,16 +873,6 @@ node.find_matches()[0].find_match_cases()[1].find_case_guard().is_equivalent("y 
 node.find_matches()[0].find_match_cases()[2].find_case_guard().is_empty() # True (no guard)
 ```
 
-### Getting values
-
-`get_` functions return the value of the node, not the node itself.
-
-#### `get_variable`
-
-```python
-Node("x = 1").get_variable("x") # 1
-```
-
 ### Checking for existence
 
 `has_` functions return a boolean indicating whether the node exists.
