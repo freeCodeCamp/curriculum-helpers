@@ -181,6 +181,16 @@ describe("variables", () => {
     expect(method1.variables.c.matches("const c = 3;")).toBe(true);
   });
 
+  it("finds all declarators in a single variable statement", () => {
+    const sourceCode = "const a = 1, b = 2;";
+    const { variables } = new Explorer(sourceCode);
+    expect(Object.keys(variables)).toHaveLength(2);
+    expect(variables.a.matches("const a = 1, b = 2;")).toBe(true);
+    expect(variables.b.matches("const a = 1, b = 2;")).toBe(true);
+    expect(variables.a.value.matches("1")).toBe(true);
+    expect(variables.b.value.matches("2")).toBe(true);
+  });
+
   it("does not include destructured variable declarations", () => {
     const sourceCode = `
       const a = 1;
@@ -1226,6 +1236,19 @@ describe("objectProps", () => {
     expect(Object.keys(objectProps)).toHaveLength(2);
     expect(objectProps.x.matches("x")).toBe(true);
     expect(objectProps.y.matches("y")).toBe(true);
+  });
+
+  it("handles string and numeric literal property names", () => {
+    const sourceCode = 'const obj = { "y": 2, 1: "one", z: 3 };';
+    const explorer = new Explorer(sourceCode);
+    const { objectProps } = explorer.variables.obj;
+    expect(Object.keys(objectProps)).toHaveLength(3);
+    expect(objectProps.y.matches('"y": 2')).toBe(true);
+    expect(objectProps.y.matches("y: 2")).toBe(true);
+    expect(objectProps[1].matches('1: "one"')).toBe(true);
+    expect(objectProps[1].matches("'1': 'one'")).toBe(true);
+    expect(objectProps.z.matches("z: 3")).toBe(true);
+    expect(objectProps.z.matches('"z": 3')).toBe(true);
   });
 });
 

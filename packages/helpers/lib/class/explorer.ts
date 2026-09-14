@@ -78,6 +78,8 @@ import {
   isArrayBindingPattern,
   isBindingElement,
   isShorthandPropertyAssignment,
+  isStringLiteral,
+  isNumericLiteral,
   isTypePredicateNode,
   ObjectBindingPattern,
   ArrayBindingPattern,
@@ -390,7 +392,22 @@ const areNodesEquivalent = (
   node1 = unwrap(node1);
   node2 = unwrap(node2);
 
-  if (node1.kind !== node2.kind) return false;
+  if (node1.kind !== node2.kind) {
+    // Object literal property names can be written as an identifier (x),
+    // string literal ("x"), or numeric literal (1) interchangeably. Treat
+    // them as equivalent when comparing the name of a PropertyAssignment.
+    const isPropertyName = (node: Node): node is Identifier =>
+      !!node.parent &&
+      isPropertyAssignment(node.parent) &&
+      node.parent.name === node &&
+      (isIdentifier(node) || isStringLiteral(node) || isNumericLiteral(node));
+
+    if (isPropertyName(node1) && isPropertyName(node2)) {
+      return node1.text === node2.text;
+    }
+
+    return false;
+  }
 
   const children1 = removeSemicolons(node1.getChildren());
   const children2 = removeSemicolons(node2.getChildren());
@@ -420,8 +437,16 @@ const areNodesEquivalent = (
 class Explorer {
   private tree: Node | null;
   private context: ParseContext;
+  // For a VariableStatement with multiple declarators (e.g. "const a = 1, b = 2;"),
+  // identifies which declarator this Explorer refers to, so getters like `value`
+  // can resolve the correct one instead of always defaulting to declarations[0].
+  private declaratorName?: string;
 
-  constructor(tree: Node | string = "", context: ParseContext = "source") {
+  constructor(
+    tree: Node | string = "",
+    context: ParseContext = "source",
+    declaratorName?: string,
+  ) {
     if (typeof tree === "string") {
       this.tree = createTree(tree, context);
       this.context = context;
@@ -429,6 +454,8 @@ class Explorer {
       this.tree = tree;
       this.context = inferContext(tree);
     }
+
+    this.declaratorName = declaratorName;
   }
 
   isEmpty(): boolean {
@@ -481,16 +508,20 @@ class Explorer {
   }
 
   // Finds all variable statements with a simple (non-destructured) name.
+  // Handles multiple declarators in a single statement (e.g. "const a = 1, b = 2;").
   // Use `destructuringStmts` for "const { a, b } = obj;" / "const [a, b] = arr;"
   get variables(): { [key: string]: Explorer } {
     const variables = this.getAll(SyntaxKind.VariableStatement);
     const result: { [key: string]: Explorer } = {};
     variables.forEach((variable) => {
-      const declaration = (variable.tree as VariableStatement).declarationList
-        .declarations[0];
-      if (isIdentifier(declaration.name)) {
-        result[declaration.name.text] = variable;
-      }
+      const { declarations } = (variable.tree as VariableStatement)
+        .declarationList;
+      declarations.forEach((declaration) => {
+        if (isIdentifier(declaration.name)) {
+          const name = declaration.name.text;
+          result[name] = new Explorer(variable.tree as Node, "source", name);
+        }
+      });
     });
     return result;
   }
@@ -558,9 +589,18 @@ class Explorer {
       return node.initializer ? new Explorer(node.initializer) : new Explorer();
     }
 
-    // Handle VariableStatement
+    // Handle VariableStatement. If this Explorer was created for a specific
+    // declarator (see `variables`), use that one instead of always defaulting
+    // to the first declarator, so "const a = 1, b = 2;" resolves correctly.
     if (isVariableStatement(node)) {
-      const { initializer } = node.declarationList.declarations[0];
+      const { declarations } = node.declarationList;
+      const declaration =
+        (this.declaratorName &&
+          declarations.find(
+            (d) => isIdentifier(d.name) && d.name.text === this.declaratorName,
+          )) ||
+        declarations[0];
+      const { initializer } = declaration;
       return initializer ? new Explorer(initializer) : new Explorer();
     }
 
@@ -1033,9 +1073,13 @@ class Explorer {
     const result: { [key: string]: Explorer } = {};
     objectLiteral.properties.forEach((property) => {
       if (isPropertyAssignment(property)) {
-        if (property.name && isIdentifier(property.name)) {
-          const name = property.name.text;
-          result[name] = new Explorer(property);
+        const { name } = property;
+        if (
+          isIdentifier(name) ||
+          isStringLiteral(name) ||
+          isNumericLiteral(name)
+        ) {
+          result[name.text] = new Explorer(property);
         }
       }
 
