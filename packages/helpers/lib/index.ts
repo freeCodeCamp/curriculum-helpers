@@ -1,5 +1,11 @@
-import { strip } from "./strip";
+import { removeJSComments, removePythonComments } from "./remove-comments";
 import astHelpers from "../python/py_helpers.py";
+
+export {
+  removeHtmlComments,
+  removeCssComments,
+  removeJSComments,
+} from "./remove-comments";
 
 export const Explorer = async (code: string) =>
   new (
@@ -152,41 +158,6 @@ export function spyOnCallbacks(
 }
 
 /**
- * Removes every HTML-comment from the string that is provided
- * @param {String} str a HTML-string where the comments need to be removed of
- * @returns {String}
- */
-
-export function removeHtmlComments(str: string): string {
-  return str.replace(/<!--[\s\S]*?(-->|$)/g, "");
-}
-
-/**
- * Removes every CSS-comment from the string that is provided
- * @param {String} str a CSS-string where the comments need to be removed of
- * @returns {String}
- */
-
-export function removeCssComments(str: string): string {
-  return str.replace(/\/\*[\s\S]+?\*\//g, "");
-}
-
-/**
- * Removes every JS-comment from the string that is provided
- * @param {String} codeStr a JS-string where the comments need to be removed of
- * @returns {String}
- */
-
-export function removeJSComments(codeStr: string): string {
-  // TODO: publish type declarations and re-enable eslint
-  try {
-    return strip(codeStr);
-  } catch {
-    return codeStr;
-  }
-}
-
-/**
  * Removes every white-space from the string that is provided
  * @param {String} str a String where the white spaces need to be removed of
  * @returns {String}
@@ -217,7 +188,7 @@ export function isCalledWithNoArgs(
   calledFuncName: string,
   callingCode: string,
 ): boolean {
-  const noCommentsCallingCode = strip(callingCode);
+  const noCommentsCallingCode = removeJSComments(callingCode);
   const funcExp = `^\\s*?${escapeRegExp(calledFuncName)}\\(\\s*?\\)`;
   const matches = new RegExp(funcExp, "gm").exec(noCommentsCallingCode) ?? [];
   return Boolean(matches.length);
@@ -426,7 +397,7 @@ export const python = {
   },
 
   removeComments(code: string) {
-    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(#.*$)/gm, "");
+    return removePythonComments(code);
   },
 
   /**

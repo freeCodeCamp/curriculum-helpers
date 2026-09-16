@@ -23,6 +23,45 @@ describe("Test Runner", () => {
     });
   });
 
+  it.each(["dom", "javascript"] as const)(
+    "removes comments without corrupting source in the %s runner",
+    async (type) => {
+      const result = await page.evaluate(async (type) => {
+        const runner = await window.FCCTestRunner.createTestRunner({ type });
+        const cases = [
+          [
+            "removeHtmlComments",
+            '<p title="<!-- keep -->"><!-- remove --></p>',
+            '<p title="<!-- keep -->"></p>',
+          ],
+          [
+            "removeCssComments",
+            'a { content: "/* keep */"; /**/ }',
+            'a { content: "/* keep */";  }',
+          ],
+          [
+            "removeJSComments",
+            "const re = /[/*]/; // remove",
+            "const re = /[/*]/; ",
+          ],
+          [
+            "python.removeComments",
+            "value = 10 // 2 # remove",
+            "value = 10 // 2 ",
+          ],
+        ];
+        return runner.runAllTests(
+          cases.map(
+            ([helper, source, expected]) =>
+              `assert.equal(__helpers.${helper}(${JSON.stringify(source)}), ${JSON.stringify(expected)});`,
+          ),
+        );
+      }, type);
+
+      expect(result).toEqual(Array.from({ length: 4 }, () => ({ pass: true })));
+    },
+  );
+
   it("should throw if createTestRunner times out while creating a DOM runner", async () => {
     await expect(() =>
       page.evaluate(async () => {
