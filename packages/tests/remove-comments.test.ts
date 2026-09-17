@@ -90,6 +90,30 @@ describe("CSS comment removal", () => {
 describe("JavaScript comment removal", () => {
   it.each([
     [
+      'const el = <div title="unfinished\n/* keep',
+      'const el = <div title="unfinished\n/* keep',
+    ],
+    [
+      "const el = <div title='unfinished\n// keep",
+      "const el = <div title='unfinished\n// keep",
+    ],
+    [
+      "const el = <div>/* keep */\n// keep",
+      "const el = <div>/* keep */\n// keep",
+    ],
+    ["const text = `unfinished\n/* keep", "const text = `unfinished\n/* keep"],
+    ["const text = `unfinished\n// keep", "const text = `unfinished\n// keep"],
+    ["const text = `value ${1 /* unfinished", "const text = `value ${1 "],
+    [
+      'const text = "unfinished\n// remove\nnext(); /* unfinished\nrest',
+      'const text = "unfinished\n\nnext(); \n',
+    ],
+    ["<!-- remove\nconst x = 1; // remove", "\nconst x = 1; "],
+    [
+      "const element = <div>{/[/*]/.test(text) /* remove */}</div>;",
+      "const element = <div>{/[/*]/.test(text) }</div>;",
+    ],
+    [
       'const value = "text\u2028// keep"; // remove',
       'const value = "text\u2028// keep"; ',
     ],

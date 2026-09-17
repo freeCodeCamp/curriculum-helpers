@@ -1,19 +1,15 @@
 import { tokenize, isTokenComment } from "@csstools/css-tokenizer";
 import { parser as pythonParser } from "@lezer/python";
 import { defaultTreeAdapter, parseFragment } from "parse5";
-import {
-  createScanner,
-  createSourceFile,
-  isJsxText,
-  isRegularExpressionLiteral,
-  isStringLiteral,
-  isTemplateLiteralToken,
-  LanguageVariant,
-  type Node,
-  ScriptKind,
-  ScriptTarget,
-  SyntaxKind,
-} from "typescript";
+import { Parser, type Options } from "acorn";
+import jsx from "acorn-jsx";
+import { LooseParser } from "acorn-loose";
+
+const JavaScriptParser = Parser.extend(jsx());
+
+class RecoveringJavaScriptParser extends LooseParser {
+  static BaseParser = JavaScriptParser;
+}
 
 type Range = { from: number; to: number };
 
@@ -105,64 +101,29 @@ export function removeHtmlComments(code: string): string {
  * Preserve line terminators and separate tokens formerly divided by a comment.
  */
 export function removeJSComments(code: string): string {
-  const source = createSourceFile(
-    "source.tsx",
-    code,
-    ScriptTarget.Latest,
-    false,
-    ScriptKind.TSX,
-  );
-  const literals: Range[] = [];
-  const visit = (node: Node) => {
-    if (
-      isRegularExpressionLiteral(node) ||
-      isStringLiteral(node) ||
-      isTemplateLiteralToken(node) ||
-      isJsxText(node)
-    ) {
-      literals.push({
-        from: isJsxText(node) ? node.pos : node.getStart(source),
-        to: node.end,
-      });
-    } else {
-      node.forEachChild(visit);
-    }
+  const comments: Range[] = [];
+  const options: Options = {
+    ecmaVersion: "latest",
+    allowReturnOutsideFunction: true,
+    allowAwaitOutsideFunction: true,
+    allowImportExportEverywhere: true,
+    onComment(_block, _text, from, to) {
+      if (from < code.length) {
+        comments.push({ from, to: Math.min(to, code.length) });
+      }
+    },
   };
 
-  visit(source);
+  try {
+    JavaScriptParser.parse(code, options);
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
 
-  // The parser resolves regex/division, template interpolation and JSX text.
-  // Scan the remaining source, including incomplete code, for comment trivia.
-  const scanner = createScanner(
-    ScriptTarget.Latest,
-    false,
-    LanguageVariant.JSX,
-    code,
-  );
-  const comments: Range[] = [];
-  let literalIndex = 0;
-  for (
-    let token = scanner.scan();
-    token !== SyntaxKind.EndOfFileToken;
-    token = scanner.scan()
-  ) {
-    const from = scanner.getTokenPos();
-    while (
-      literalIndex < literals.length &&
-      literals[literalIndex].to <= from
-    ) {
-      literalIndex++;
-    }
-
-    const literal = literals[literalIndex];
-    if (literal && literal.from <= from) {
-      scanner.setTextPos(literal.to);
-    } else if (
-      token === SyntaxKind.SingleLineCommentTrivia ||
-      token === SyntaxKind.MultiLineCommentTrivia
-    ) {
-      comments.push({ from, to: scanner.getTextPos() });
-    }
+    comments.length = 0;
+    // Finish trailing block comments and quoted JSX attributes for the lexer.
+    // Otherwise recovery can treat attribute contents as JavaScript comments.
+    // Clip ranges to the source so these synthetic delimiters never escape.
+    RecoveringJavaScriptParser.parse(code + "\n*/'\"", options);
   }
 
   return removeRanges(code, comments, true);

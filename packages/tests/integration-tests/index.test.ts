@@ -45,6 +45,16 @@ describe("Test Runner", () => {
             "const re = /[/*]/; ",
           ],
           [
+            "removeJSComments",
+            'const element = <div title="// keep">/* keep */{/* remove */}</div>;',
+            'const element = <div title="// keep">/* keep */{ }</div>;',
+          ],
+          [
+            "removeJSComments",
+            "const value = ; // remove\n/* unfinished",
+            "const value = ; \n",
+          ],
+          [
             "python.removeComments",
             "value = 10 // 2 # remove",
             "value = 10 // 2 ",
@@ -58,7 +68,7 @@ describe("Test Runner", () => {
         );
       }, type);
 
-      expect(result).toEqual(Array.from({ length: 4 }, () => ({ pass: true })));
+      expect(result).toEqual(Array.from({ length: 6 }, () => ({ pass: true })));
     },
   );
 
