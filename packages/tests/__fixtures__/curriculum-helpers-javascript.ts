@@ -12,7 +12,10 @@ nonMutatingPush(first, second);`;
 
 const jsCodeWithSingleAndMultLineCommentsRemoved = `
 function nonMutatingPush(original, newItem) {
-    return original.push(newItem);
+\x20\x20
+
+
+  return original.push(newItem);
 }
 var first = [1, 2, 3];
 
