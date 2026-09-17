@@ -163,7 +163,7 @@ const testRunnerConfig =
       },
       plugins: [
         new webpack.ProvidePlugin({
-          process: "process/browser",
+          process: require.resolve("process/browser.js"),
         }),
         // @sinon/fake-timers can use 'timers/promises' if it's available, but
         // 'timers-browserify' does not include it. This means webpack has to be
