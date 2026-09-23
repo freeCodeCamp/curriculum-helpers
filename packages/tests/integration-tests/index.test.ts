@@ -1767,6 +1767,73 @@ pattern = re.compile('l+')
       });
     });
 
+    it.each([
+      ["{'toString': 1}", "{'toString': 1}"],
+      ["{'nested': {'toString': 1}}", "{'nested': {'toString': 1}}"],
+      ["[1, {'toString': 2}]", "[1, {'toString': 2}]"],
+      ["{1: 'one', '1': 'string'}", "{1: 'one', '1': 'string'}"],
+    ])(
+      "should serialize Python assertion values for %s",
+      async (expression, serialized) => {
+        const result = await page.evaluate(async (expression) => {
+          const runner = await window.FCCTestRunner.createTestRunner({
+            type: "python",
+          });
+          return runner.runTest(
+            `assert.strictEqual(runPython(${JSON.stringify(expression)}), runPython(${JSON.stringify(expression)}))`,
+          );
+        }, expression);
+
+        expect(result).toMatchObject({
+          err: {
+            actual: serialized,
+            expected: serialized,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            stack: expect.stringContaining("AssertionError: expected"),
+          },
+        });
+      },
+    );
+
+    it("should preserve Python object identity when comparing proxies", async () => {
+      const results = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner.runAllTests([
+          `const value = runPython("{'toString': 1}"); assert.strictEqual(value, value)`,
+          `assert.notStrictEqual(runPython("{'toString': 1}"), runPython("{'toString': 1}"))`,
+        ]);
+      });
+
+      expect(results).toEqual([{ pass: true }, { pass: true }]);
+    });
+
+    it("should format negated Python assertions with custom messages", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner.runTest(`
+          const value = runPython("{'toString': 1}");
+          assert.notStrictEqual(value, value, 'Values must differ');
+        `);
+      });
+
+      expect(result).toMatchObject({
+        err: {
+          actual: "{'toString': 1}",
+          expected: "{'toString': 1}",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          message: expect.stringMatching(
+            /^Values must differ: expected .* to not equal /,
+          ),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          stack: expect.stringContaining("AssertionError: Values must differ"),
+        },
+      });
+    });
+
     it("should preserve falsy expected and actual values in error responses", async () => {
       const result = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
@@ -1824,13 +1891,11 @@ pattern = re.compile('l+')`;
         err: {
           actual: "re.compile('l+')",
           expected: "l+",
-          // Yes, the message doesn't match the "actual" value, it's not
-          // ideal, but we only use message and stack for debugging.
-
+          message: "expected 're.compile(\\'l+\\')' to equal 'l+'",
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          message: expect.stringContaining("expected PyProxy"),
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          stack: expect.stringContaining("AssertionError: expected PyProxy"),
+          stack: expect.stringContaining(
+            "AssertionError: expected 're.compile(\\'l+\\')' to equal 'l+'",
+          ),
         },
       });
     });
