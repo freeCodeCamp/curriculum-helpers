@@ -163,7 +163,12 @@ const testRunnerConfig =
       },
       plugins: [
         new webpack.ProvidePlugin({
-          process: "process/browser",
+          process: "process/browser.js",
+        }),
+        // Pyodide's Node-only imports are never used in a browser worker.
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^node:/,
+          contextRegExp: /[\\/]pyodide$/,
         }),
         // @sinon/fake-timers can use 'timers/promises' if it's available, but
         // 'timers-browserify' does not include it. This means webpack has to be
