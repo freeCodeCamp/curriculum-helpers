@@ -1795,6 +1795,23 @@ pattern = re.compile('l+')
       },
     );
 
+    it("should serialize callable Python assertion values", async () => {
+      const result = await page.evaluate(async () => {
+        const runner = await window.FCCTestRunner.createTestRunner({
+          type: "python",
+        });
+        return runner.runTest(`assert.strictEqual(runPython("len"), null)`);
+      });
+
+      expect(result).toMatchObject({
+        err: {
+          actual: "<built-in function len>",
+          expected: null,
+          message: "expected '<built-in function len>' to equal null",
+        },
+      });
+    });
+
     it("should preserve Python object identity when comparing proxies", async () => {
       const results = await page.evaluate(async () => {
         const runner = await window.FCCTestRunner.createTestRunner({
