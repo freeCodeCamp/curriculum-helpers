@@ -35,7 +35,11 @@ type EvaluatedTeststring = {
 const READY_MESSAGE: ReadyEvent["data"] = { type: "ready" };
 
 function isProxy(raw: unknown): raw is PyProxy {
-  return !!raw && typeof raw === "object" && "toJs" in raw;
+  return (
+    !!raw &&
+    (typeof raw === "object" || typeof raw === "function") &&
+    "toJs" in raw
+  );
 }
 
 const serialize = (obj: unknown) => (isProxy(obj) ? obj.toString() : obj);
