@@ -99,4 +99,28 @@ describe("proxy-console", () => {
       expect(results).toEqual({});
     });
   });
+
+  describe("preserveHtmlEntities", () => {
+    it("should double-encode HTML entities so they survive sanitizeHtml decoding", () => {
+      vi.spyOn(window.console, "log").mockImplementation(vi.fn());
+      const proxy = new ProxyConsole(window.console, simpleFormat);
+      proxy.on();
+
+      window.console.log("A &amp; B");
+      const results = proxy.flush();
+
+      expect(results.logs).toEqual([{ level: "log", msg: "A &amp;amp; B" }]);
+    });
+
+    it("should not encode & that is not part of an HTML entity", () => {
+      vi.spyOn(window.console, "log").mockImplementation(vi.fn());
+      const proxy = new ProxyConsole(window.console, simpleFormat);
+      proxy.on();
+
+      window.console.log("A & B");
+      const results = proxy.flush();
+
+      expect(results.logs).toEqual([{ level: "log", msg: "A & B" }]);
+    });
+  });
 });
