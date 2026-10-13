@@ -92,8 +92,8 @@ const hideFrame = (iframe: HTMLIFrameElement) => {
 };
 
 const hideAllowingAnimations = (iframe: HTMLIFrameElement) => {
-  iframe.style.width = "0px";
-  iframe.style.height = "0px";
+  iframe.style.width = "1px";
+  iframe.style.height = "1px";
   iframe.style.opacity = "0";
   iframe.style.pointerEvents = "none";
 };
