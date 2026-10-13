@@ -1,0 +1,6 @@
+* @freecodecamp/curriculum
+
+/package.json
+/pnpm-lock.yaml
+/pnpm-workspace.yaml
+/packages/*/package.json
