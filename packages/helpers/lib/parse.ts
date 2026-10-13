@@ -6,10 +6,10 @@ import { languages } from "./languages";
 
 const constants = {
   ESCAPED_CHAR_REGEX: /^\\./,
-  // The QUOTED_STRING_REGEX looks for an opening quote, then any number of
-  // escaped quotes or characters that are not the opening quote. Finally, it
-  // looks for the closing quote.
-  QUOTED_STRING_REGEX: /^([`'"])((?:\\\1|(?!\1).)*)\1/s,
+  // Consume escapes in pairs, including escaped backslashes. An unfinished
+  // ordinary string ends at a line break; template text may span lines.
+  QUOTED_STRING_REGEX:
+    /^(?:"(?:\\[\s\S]|[^"\\\r\n])*"?|'(?:\\[\s\S]|[^'\\\r\n])*'?|`(?:\\[\s\S]|[^`\\])*`?)/,
   NEWLINE_REGEX: /^\r*\n/,
 };
 
@@ -95,7 +95,10 @@ export const parse = (input: string, options: Partial<options> = {}) => {
   // eslint-disable-next-line no-unmodified-loop-condition
   while (remaining !== "") {
     // Escaped characters
-    if ((token = scan(constants.ESCAPED_CHAR_REGEX, "text"))) {
+    if (
+      block.type !== "block" &&
+      (token = scan(constants.ESCAPED_CHAR_REGEX, "text"))
+    ) {
       push(new Block(token));
       continue;
     }
@@ -103,7 +106,6 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     // Quoted strings
     if (
       block.type !== "block" &&
-      (!prev || !/\w$/.test(prev.value ?? "")) &&
       !(tripleQuotes && remaining.startsWith('"""'))
     ) {
       if ((token = scan(constants.QUOTED_STRING_REGEX, "text"))) {
@@ -122,6 +124,7 @@ export const parse = (input: string, options: Partial<options> = {}) => {
     if (
       BLOCK_OPEN_REGEX &&
       options.block &&
+      (name !== "javascript" || block.type !== "block") &&
       !(tripleQuotes && block.type === "block")
     ) {
       if ((token = scan(BLOCK_OPEN_REGEX, "open"))) {

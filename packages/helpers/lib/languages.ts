@@ -21,8 +21,8 @@ export const languages: Record<
     LINE_REGEX: /^--.*/,
   },
   javascript: {
-    BLOCK_OPEN_REGEX: /^\/\*\*?(!?)/,
-    BLOCK_CLOSE_REGEX: /^\*\/(\n?)/,
+    BLOCK_OPEN_REGEX: /^\/\*(!?)/,
+    BLOCK_CLOSE_REGEX: /^\*\//,
     LINE_REGEX: /^\/\/(!?).*/,
   },
   lua: {
