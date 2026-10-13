@@ -2,7 +2,15 @@ import { post, type Messenger } from "./awaitable-post";
 
 export const createFetchProxy =
   (messenger: Messenger<unknown>) =>
-  async (url: string, options?: RequestInit) => {
+  async (url: string | URL, options?: RequestInit) => {
+    if (url instanceof URL) {
+      url = url.toString();
+    }
+
+    if (options?.body && options.body instanceof URLSearchParams) {
+      options.body = options.body.toString();
+    }
+
     const message = {
       type: "fetch",
       url,
