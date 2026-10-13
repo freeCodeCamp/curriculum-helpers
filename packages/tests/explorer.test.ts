@@ -213,6 +213,45 @@ describe("value", () => {
     expect(valueA).toBeInstanceOf(Explorer);
     expect(valueA.isEmpty()).toBe(true);
   });
+
+  it("returns an Explorer object for the assigned value of a constructor property assignment (this.x = y)", () => {
+    const sourceCode = `
+                    class Rectangle {
+                      constructor(height, width) {
+                        this.height = height;
+                        this.width = width;
+                      }
+                    }
+                `;
+    const { classes } = new Explorer(sourceCode);
+    const { constructorProps } = classes.Rectangle;
+
+    expect(constructorProps.height.value).toBeInstanceOf(Explorer);
+    expect(constructorProps.height.value.matches("height")).toBe(true);
+    expect(constructorProps.width.value.matches("width")).toBe(true);
+  });
+
+  it("supports drilling into an object literal assigned via a constructor property assignment", () => {
+    const sourceCode = `
+                    class Rectangle {
+                      constructor(height, width) {
+                        this.dimensions = { h: height, w: width };
+                      }
+                    }
+                `;
+    const { classes } = new Explorer(sourceCode);
+    const { constructorProps } = classes.Rectangle;
+
+    expect(
+      constructorProps.dimensions.value.matches("{ h: height, w: width }"),
+    ).toBe(true);
+    expect(
+      constructorProps.dimensions.value.objectProps.h.value.matches("height"),
+    ).toBe(true);
+    expect(
+      constructorProps.dimensions.value.objectProps.w.value.matches("width"),
+    ).toBe(true);
+  });
 });
 
 describe("functions", () => {
@@ -626,6 +665,20 @@ describe("constructorProps", () => {
     const sourceCode = "class Foo { constructor() {} }";
     const explorer = new Explorer(sourceCode);
     expect(Object.keys(explorer.classes.Foo.constructorProps)).toHaveLength(0);
+  });
+
+  it("ignores property comparisons and compound assignments", () => {
+    const sourceCode = `
+      class Foo {
+        constructor(value) {
+          this.compared === value;
+          this.updated += value;
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+
+    expect(explorer.classes.Foo.constructorProps).toEqual({});
   });
 });
 
