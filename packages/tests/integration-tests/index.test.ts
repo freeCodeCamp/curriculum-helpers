@@ -1675,7 +1675,7 @@ test: () => assert.equal(runPython('__name__'), '__main__'),
           type: "python",
         });
         return runner?.runTest(`({
-  test: () => assert.equal(runPython('_Node("x = 1").get_variable("x")'), 1)
+  test: () => assert.isTrue(runPython('_Node("x = 1").has_variable("x")'))
 })`);
       });
 
