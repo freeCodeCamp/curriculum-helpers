@@ -213,6 +213,27 @@ describe("value", () => {
     expect(valueA).toBeInstanceOf(Explorer);
     expect(valueA.isEmpty()).toBe(true);
   });
+
+  it("returns an Explorer object for the initializer of an enum member", () => {
+    const sourceCode = "enum Foo { A = 'a', B = { x: 10 }, C = 1, D }";
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+
+    const valueA = enumMembers.A.value;
+    expect(valueA).toBeInstanceOf(Explorer);
+    expect(valueA.matches("'a'")).toBe(true);
+
+    const valueB = enumMembers.B.value;
+    expect(valueB).toBeInstanceOf(Explorer);
+    expect(valueB.matches("{ x: 10 }")).toBe(true);
+
+    const valueC = enumMembers.C.value;
+    expect(valueC).toBeInstanceOf(Explorer);
+    expect(valueC.matches("1")).toBe(true);
+
+    const valueD = enumMembers.D.value;
+    expect(valueD).toBeInstanceOf(Explorer);
+    expect(valueD.isEmpty()).toBe(true);
+  });
 });
 
 describe("functions", () => {
@@ -1269,5 +1290,115 @@ describe("typeArguments", () => {
   it("returns an empty array for an empty Explorer", () => {
     const explorer = new Explorer();
     expect(explorer.typeArguments).toHaveLength(0);
+  });
+});
+
+describe("enums", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "enum Foo { A } enum Bar { B }";
+    const { enums } = new Explorer(sourceCode);
+    Object.values(enums).forEach((e) => expect(e).toBeInstanceOf(Explorer));
+  });
+
+  it("returns one entry per enum", () => {
+    const sourceCode = "enum Foo { A } enum Bar { B }";
+    const { enums } = new Explorer(sourceCode);
+    expect(Object.keys(enums)).toHaveLength(2);
+  });
+
+  it("returns an empty object if there are no enums", () => {
+    const sourceCode = "const a = 1; type Foo = string; interface Bar {}";
+    const { enums } = new Explorer(sourceCode);
+    expect(Object.keys(enums)).toHaveLength(0);
+  });
+
+  it("finds only enums in the current scope", () => {
+    const sourceCode = `
+                    enum Foo { A }
+                    function bar() { enum Baz { B } }
+                `;
+    const { enums } = new Explorer(sourceCode);
+    expect(Object.keys(enums)).toHaveLength(1);
+    expect(enums.Foo.matches("enum Foo { A }")).toBe(true);
+  });
+
+  it("finds const and exported enums", () => {
+    const sourceCode = `
+                    const enum Foo { A }
+                    export enum Bar { B }
+                `;
+    const { enums } = new Explorer(sourceCode);
+    expect(Object.keys(enums).sort()).toEqual(["Bar", "Foo"]);
+  });
+
+  it("finds enums whose members have initializers", () => {
+    const sourceCode = "enum PetMood { HAPPY = 'HAPPY', SAD = 'SAD' }";
+    const { enums } = new Explorer(sourceCode);
+    expect(
+      enums.PetMood.matches("enum PetMood { HAPPY = 'HAPPY', SAD = 'SAD' }"),
+    ).toBe(true);
+  });
+});
+
+describe("enumMembers", () => {
+  it("returns an object with Explorer objects as values", () => {
+    const sourceCode = "enum Foo { A, B }";
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+    Object.values(enumMembers).forEach((m) =>
+      expect(m).toBeInstanceOf(Explorer),
+    );
+  });
+
+  it("returns one entry per member", () => {
+    const sourceCode = "enum Foo { A, B, C }";
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+    expect(Object.keys(enumMembers)).toHaveLength(3);
+  });
+
+  it("returns an empty object if there are no members", () => {
+    const { enumMembers } = new Explorer("enum Foo { }").enums.Foo;
+    expect(Object.keys(enumMembers)).toHaveLength(0);
+  });
+
+  it("does not find members unless called on an enum Explorer", () => {
+    const explorer = new Explorer("enum Foo { A }");
+    expect(Object.keys(explorer.enumMembers)).toHaveLength(0);
+    expect(Object.keys(explorer.enums.Foo.enumMembers)).toHaveLength(1);
+  });
+
+  it("finds members with and without initializers", () => {
+    const sourceCode = "enum Foo { A, B = 1 }";
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+    expect(Object.keys(enumMembers)).toEqual(["A", "B"]);
+  });
+
+  it("keys members by their source text, not a bare identifier", () => {
+    const sourceCode = "enum Foo { 'a-b' = 1, [Bar] = 2, C }";
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+    expect(Object.keys(enumMembers)).toEqual(["'a-b'", "[Bar]", "C"]);
+    expect(enumMembers.C.value.isEmpty()).toBe(true);
+  });
+
+  it("matches members with string, numeric and computed initializers", () => {
+    const sourceCode = `
+      enum Foo {
+        A = 'a',
+        B = 1,
+        C = 1 + 1,
+        D
+      }
+    `;
+    const { enumMembers } = new Explorer(sourceCode).enums.Foo;
+    expect(enumMembers.A.matches("A = 'a'")).toBe(true);
+    expect(enumMembers.B.matches("B = 1")).toBe(true);
+    expect(enumMembers.C.matches("C = 1 + 1")).toBe(true);
+    expect(enumMembers.D.matches("D")).toBe(true);
+  });
+
+  it("matches the enum member syntax used in the digital pet game lab", () => {
+    const sourceCode = "enum PetMood { HAPPY = 'HAPPY', SAD = 'SAD' }";
+    const { enumMembers } = new Explorer(sourceCode).enums.PetMood;
+    expect(enumMembers.HAPPY.matches("HAPPY = 'HAPPY'")).toBe(true);
+    expect(enumMembers.SAD.matches("SAD = 'SAD'")).toBe(true);
   });
 });
