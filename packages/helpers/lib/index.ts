@@ -10,6 +10,120 @@ declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean;
 }
 
+type Matchable = { matches(expected: string): boolean };
+
+type MatchableChainLink =
+  | { call: string; args: Matchable[] }
+  | { receiver: Matchable }
+  | {
+      method: string;
+      args: Matchable[];
+      params: Matchable[];
+      body: Matchable[];
+    };
+
+// A single expected string, or a list of acceptable alternatives (matches if
+// any one of them matches) — e.g. ["!isNaN(el)", "!Number.isNaN(el)"]
+type ExpectedValue = string | string[];
+
+type ExpectedChainLink =
+  | { call: string; args?: ExpectedValue[] }
+  | { receiver: ExpectedValue }
+  | {
+      method: string;
+      args?: ExpectedValue[];
+      params?: ExpectedValue[];
+      body?: ExpectedValue[];
+    };
+
+function matchesExpected(
+  actual: Matchable | undefined,
+  expected: ExpectedValue,
+): boolean {
+  if (!actual) {
+    return false;
+  }
+
+  if (Array.isArray(expected)) {
+    return expected.some((alternative) => actual.matches(alternative));
+  }
+
+  return actual.matches(expected);
+}
+
+/**
+ * Compares the result of `Explorer#chain` against a declarative expected
+ * shape. Each arg/param/body/receiver entry is compared via
+ * `Explorer#matches`, so quote style and single-parameter parenthesization
+ * differences are tolerated, same as everywhere else `matches()` is used.
+ * Any entry can also be a list of acceptable alternatives, matching if any
+ * one of them matches.
+ *
+ * A method link's `args` are its raw, unprocessed arguments (useful when an
+ * argument isn't a callback, e.g. `includes(query.toLowerCase())`). Its
+ * `params`/`body` are only populated when the first argument is a callback
+ * (arrow function or function expression) — use whichever fits the call.
+ * @example
+ * chainMatches(explorer.allFunctions.initialFetch.chain, [
+ *   { call: "fetch", args: ["'https://example.com'"] },
+ *   { method: "then", params: ["res"], body: ["res.json()"] },
+ * ]);
+ * @example
+ * chainMatches(explorer.variables.filteredItems.value.chain, [
+ *   { receiver: "items" },
+ *   { method: "filter", params: ["item"], body: ["item.includes(query)"] },
+ * ]);
+ * @example
+ * chainMatches(explorer.variables.numbers.value.chain, [
+ *   { receiver: "array" },
+ *   { method: "map", args: ["Number"] },
+ * ]);
+ * @example
+ * // body[0] matches if either alternative matches
+ * chainMatches(explorer.variables.filtered.value.chain, [
+ *   { receiver: "numbers" },
+ *   {
+ *     method: "filter",
+ *     params: ["el"],
+ *     body: [["!isNaN(el)", "!Number.isNaN(el)"]],
+ *   },
+ * ]);
+ */
+export function chainMatches(
+  chain: MatchableChainLink[] | null,
+  expected: ExpectedChainLink[],
+): boolean {
+  if (!chain || chain.length !== expected.length) {
+    return false;
+  }
+
+  return chain.every((link, i) => {
+    const exp = expected[i];
+
+    if ("call" in link) {
+      return (
+        "call" in exp &&
+        link.call === exp.call &&
+        (exp.args ?? []).every((arg, j) => matchesExpected(link.args[j], arg))
+      );
+    }
+
+    if ("receiver" in link) {
+      return "receiver" in exp && matchesExpected(link.receiver, exp.receiver);
+    }
+
+    return (
+      "method" in exp &&
+      link.method === exp.method &&
+      (exp.args ?? []).every((arg, j) => matchesExpected(link.args[j], arg)) &&
+      (exp.params ?? []).every((param, j) =>
+        matchesExpected(link.params[j], param),
+      ) &&
+      (exp.body ?? []).every((line, j) => matchesExpected(link.body[j], line))
+    );
+  });
+}
+
 /**
  * The `RandomMocker` class provides functionality to mock and restore the global `Math.random` function.
  * It replaces the default random number generator with a deterministic pseudo-random number generator.
