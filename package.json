@@ -73,12 +73,6 @@
     "webpack-cli": "5.1.4",
     "webpack": "5.104.1"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "puppeteer"
-    ]
-  },
   "publishConfig": {
     "access": "public"
   },
