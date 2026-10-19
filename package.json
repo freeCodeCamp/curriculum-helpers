@@ -74,9 +74,6 @@
     "webpack": "5.104.1"
   },
   "pnpm": {
-    "overrides": {
-      "enzyme>cheerio": "1.0.0-rc.3"
-    },
     "onlyBuiltDependencies": [
       "esbuild",
       "puppeteer"
