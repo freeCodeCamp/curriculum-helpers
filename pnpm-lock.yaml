@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  enzyme>cheerio: 1.0.0-rc.3
+
 importers:
 
   .:

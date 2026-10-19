@@ -31,6 +31,7 @@ describe("proxy-console", () => {
     proxy.on();
 
     for (const level of LEVELS) {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- compares references only
       expect(window.console[level]).not.toEqual(originalConsole[level]);
     }
   });
@@ -42,6 +43,7 @@ describe("proxy-console", () => {
     proxy.off();
 
     for (const level of LEVELS) {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- compares references only
       expect(window.console[level]).toEqual(originalConsole[level]);
     }
   });
