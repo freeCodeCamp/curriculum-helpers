@@ -208,12 +208,14 @@ ${opts.source}`;
   }
 
   runTest(test: string) {
+    const msg: TestEvent["data"] = {
+      type: "test",
+      value: test,
+    };
+
     const result = post<{ value: Pass | Fail }>({
       messenger: this.#testEvaluator.contentWindow!,
-      message: {
-        type: "test",
-        value: test,
-      } as TestEvent["data"],
+      message: msg,
     }).then(({ value }) => value);
 
     return result;

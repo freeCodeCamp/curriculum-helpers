@@ -7,7 +7,7 @@ describe("css-help", () => {
   let t: CSSHelp;
   beforeEach(() => {
     const style = doc.createElement("style");
-    style.innerHTML = cssString as string;
+    style.innerHTML = cssString;
     doc.head.appendChild(style);
     t = new CSSHelp(doc);
     // JSDOM does not implement latest CSSOM spec. As such,

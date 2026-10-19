@@ -43,6 +43,7 @@ export class ProxyConsole {
     this.#isOn = false;
 
     for (const level of LEVELS) {
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- restores the original reference
       this.#proxyConsole[level] = this.#originalConsole[level];
     }
   }

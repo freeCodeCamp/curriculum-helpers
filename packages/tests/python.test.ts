@@ -1,19 +1,6 @@
 /* eslint-disable camelcase */
 import * as helper from "./../helpers/lib/index";
 
-type FunctionMatch = {
-  def: string;
-  function_indentation: number;
-  function_body: string;
-  function_parameters: string;
-};
-
-type BlockMatch = {
-  block_indentation: number;
-  block_body: string;
-  block_condition: string;
-};
-
 describe("python", () => {
   const { python } = helper;
   describe("getDef", () => {
@@ -31,7 +18,7 @@ def c():
       expect(match).not.toBeNull();
 
       const { def, function_indentation, function_body, function_parameters } =
-        match as FunctionMatch;
+        match;
       expect(def).toEqual(`def b(d, e):
   a = 2
 `);
@@ -51,7 +38,7 @@ def c():
       expect(match).not.toBeNull();
 
       const { def, function_indentation, function_body, function_parameters } =
-        match as FunctionMatch;
+        match;
       expect(def).toEqual(`    def b(d, e):
       a = 2
     `);
@@ -70,7 +57,7 @@ def b(d, e):
       expect(match).not.toBeNull();
 
       const { def, function_indentation, function_body, function_parameters } =
-        match as FunctionMatch;
+        match;
       expect(def).toEqual(`def b(d, e):
 
   a = 2
@@ -90,7 +77,7 @@ def b():
       expect(match).not.toBeNull();
 
       const { def, function_indentation, function_body, function_parameters } =
-        match as FunctionMatch;
+        match;
       expect(def).toEqual(`def b():
 `);
       expect(function_indentation).toEqual(0);
@@ -113,7 +100,7 @@ def b():
           function_indentation,
           function_body,
           function_parameters,
-        } = match as FunctionMatch;
+        } = match;
         expect(def).toEqual(expectedDef);
         expect(function_indentation).toEqual(0);
         expect(function_body).toEqual("");
@@ -166,8 +153,7 @@ for i in range(10):
       ];
       for (const match of matches) {
         expect(match).not.toBeNull();
-        const { block_indentation, block_body, block_condition } =
-          match as BlockMatch;
+        const { block_indentation, block_body, block_condition } = match;
         expect(block_condition).toEqual("if a == 1");
         expect(block_indentation).toEqual(0);
         expect(block_body).toEqual(
@@ -188,8 +174,7 @@ for i in range(10):
       for (const match of matches2) {
         expect(match).not.toBeNull();
 
-        const { block_indentation, block_body, block_condition } =
-          match as BlockMatch;
+        const { block_indentation, block_body, block_condition } = match;
         expect(block_condition).toEqual("for i in range(10)");
         expect(block_indentation).toEqual(0);
         expect(block_body).toEqual(`  a = 1

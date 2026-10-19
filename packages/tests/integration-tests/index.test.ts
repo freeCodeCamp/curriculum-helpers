@@ -663,9 +663,10 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
     it("should make fetch requests from the browsing context of the test runner", async () => {
       const result = await page.evaluate(async (type) => {
         // Create spy
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- restored after the test
         const originalFetch = window.fetch;
         let fetchCallArgs: unknown[];
-        window.fetch = ((...args: [unknown]) => {
+        window.fetch = (...args: [unknown]) => {
           fetchCallArgs = args;
           return Promise.resolve(
             new Response('{"message": "Hello, world!"}', {
@@ -674,7 +675,7 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
               headers: { "Content-Type": "application/json" },
             }),
           );
-        }) as typeof fetch;
+        };
 
         try {
           const runner = await window.FCCTestRunner.createTestRunner({
@@ -709,10 +710,11 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
     it("should always omit credentials in fetch requests", async () => {
       const result = await page.evaluate(async (type) => {
         // Create spy
+        // eslint-disable-next-line @typescript-eslint/unbound-method -- restored after the test
         const originalFetch = window.fetch;
         let fetchCallArgs: unknown[];
         try {
-          window.fetch = ((...args: [unknown]) => {
+          window.fetch = (...args: [unknown]) => {
             fetchCallArgs = args;
             return Promise.resolve(
               new Response('{"message": "Hello, world!"}', {
@@ -721,7 +723,7 @@ assert.deepEqual(data, { message: 'Mocked fetch in beforeEach!' });
                 headers: { "Content-Type": "application/json" },
               }),
             );
-          }) as typeof fetch;
+          };
 
           const runner = await window.FCCTestRunner.createTestRunner({
             type,
