@@ -24,6 +24,8 @@ import { ProxyConsole } from "../../shared/src/proxy-console";
 import { createAsyncIife } from "../../shared/src/async-iife";
 import { createFetchProxy } from "../../shared/src/proxy-fetch";
 
+declare const PYODIDE_INDEX_URL: string | undefined;
+
 declare global {
   var __helpers: typeof helpers;
 }
@@ -121,6 +123,7 @@ def __fake_input(arg=None):
 input = __fake_input
 `);
 
+      let result: Pass | Fail = { pass: true };
       try {
         const testString = `${opts.hooks?.beforeEach ?? ""};
 ${rawTestString}`;
@@ -151,57 +154,46 @@ ${rawTestString}`;
         // Finally, if it is a Promise, that should have been awaited so we
         // ignore it.
         if (
-          typeof evaluatedTestString !== "object" ||
-          evaluatedTestString instanceof Promise
+          typeof evaluatedTestString === "object" &&
+          !(evaluatedTestString instanceof Promise)
         ) {
-          // Execute afterEach hook if it exists
-          if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
+          if (!evaluatedTestString || !("test" in evaluatedTestString)) {
+            throw Error(
+              "Test string did not evaluate to an object with the 'test' property",
+            );
+          }
 
-          return { pass: true, ...this.#proxyConsole.flush() };
+          const { test } = evaluatedTestString;
+
+          // Evaluates the learner's code so that any variables they define are
+          // available to the test.
+          runPython(opts.source ?? "");
+
+          await test();
         }
-
-        if (!evaluatedTestString || !("test" in evaluatedTestString)) {
-          throw Error(
-            "Test string did not evaluate to an object with the 'test' property",
-          );
-        }
-
-        const { test } = evaluatedTestString;
-
-        // Evaluates the learner's code so that any variables they define are
-        // available to the test.
-        runPython(opts.source ?? "");
-
-        await test();
-
-        return { pass: true, ...this.#proxyConsole.flush() };
       } catch (err) {
         this.#proxyConsole.off();
         console.error(err);
+        this.#proxyConsole.on();
 
         const error = err as PythonError;
 
         // To provide useful debugging information when debugging the tests, we
         // have to extract the message, stack and, if they exist, expected and
         // actual before returning
-        return {
-          ...this.#createErrorResponse(error),
-          ...this.#proxyConsole.flush(),
-        };
+        result = this.#createErrorResponse(error);
       } finally {
-        this.#proxyConsole.off();
-
         try {
           if (opts.hooks?.afterEach) eval(opts.hooks.afterEach);
         } catch (afterEachErr) {
-          // eslint-disable-next-line no-unsafe-finally
-          return {
-            ...this.#createErrorResponse(afterEachErr as TestError),
-          };
+          result = this.#createErrorResponse(afterEachErr as TestError);
+        } finally {
+          this.#proxyConsole.off();
+          __userGlobals.destroy();
         }
-
-        __userGlobals.destroy();
       }
+
+      return { ...result, ...this.#proxyConsole.flush() };
     };
   }
 
@@ -211,7 +203,9 @@ ${rawTestString}`;
 
     const pyodide = await loadPyodide({
       // TODO: host this ourselves
-      indexURL: `https://cdn.jsdelivr.net/pyodide/v${pkg.version}/full/`,
+      indexURL:
+        PYODIDE_INDEX_URL ??
+        `https://cdn.jsdelivr.net/pyodide/v${pkg.version}/full/`,
     });
     this.#pyodide = pyodide;
 
