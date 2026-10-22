@@ -108,9 +108,9 @@ const sharedSources = [
 const allSources = [...entrypointSources, ...sharedSources];
 
 const getTSRules = (isDev) =>
-  allSources.map(({ name, path }) => ({
+  allSources.map(({ name, path: sourcePath }) => ({
     test: /\.ts$/,
-    include: path,
+    include: path.normalize(sourcePath),
     use: [
       {
         loader: "ts-loader",
@@ -162,6 +162,15 @@ const testRunnerConfig =
         extensions: [".ts", ".js"],
       },
       plugins: [
+        new webpack.DefinePlugin({
+          PYODIDE_INDEX_URL: isDev
+            ? JSON.stringify("http://localhost:8080/dist/pyodide/")
+            : "undefined",
+        }),
+        // Pyodide's browser mappings use bare names for Node built-ins.
+        new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+          resource.request = resource.request.replace(/^node:/, "");
+        }),
         new webpack.ProvidePlugin({
           process: "process/browser",
         }),
