@@ -1,6 +1,7 @@
 import { configDefaults, defineConfig } from "vitest/config";
 
 const integrationTests = [
+  "./packages/tests/integration-tests/python-hooks.test.ts",
   "./packages/tests/integration-tests/index.test.ts",
   "./packages/tests/integration-tests/timeout.test.ts",
 ];
@@ -21,7 +22,9 @@ export default defineConfig({
     environment: "puppeteer",
     include: integrationTests,
     exclude: [...configDefaults.exclude, "packages/*/build", "dist"],
-    globalSetup: "vitest-environment-puppeteer/global-init",
-    setupFiles: ["./packages/shared/tooling/webpack-compile.ts"],
+    globalSetup: [
+      "./packages/shared/tooling/webpack-compile.ts",
+      "vitest-environment-puppeteer/global-init",
+    ],
   },
 });
