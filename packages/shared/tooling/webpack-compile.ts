@@ -1,12 +1,16 @@
 import { spawnSync } from "child_process";
-import { rmSync, existsSync } from "fs";
+import { rmSync, existsSync, mkdirSync, copyFileSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
-const __dirname = new URL(".", import.meta.url).pathname;
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+
+const require = createRequire(import.meta.url);
 
 const FIXTURES_DIR = path.join(__dirname, "../../../__fixtures__/dist");
 
-const compileForTests = () => {
+export default function compileForTests() {
   // It's necessary to manually remove the previous build artifacts so we can
   // check that the build is successful. This should not be necessary, but
   // webpack can fail silently.
@@ -15,9 +19,10 @@ const compileForTests = () => {
   // It's necessary spawnSync the webpack process to ensure that the build is
   // complete before the tests start
   const result = spawnSync(
-    "webpack",
+    process.execPath,
     // We only need the test-runner to be compiled for testing.
     [
+      require.resolve("webpack-cli/bin/cli.js"),
       "--color",
       "--env",
       "development",
@@ -35,19 +40,31 @@ const compileForTests = () => {
     },
   );
 
+  if (result.error) throw result.error;
+
+  if (result.status !== 0) {
+    throw new Error(
+      `Webpack build failed:\n${result.stdout}\n${result.stderr}`,
+    );
+  }
+
   if (!existsSync(FIXTURES_DIR)) {
-    console.log(result.stdout);
-    console.error(result.stderr);
-    console.error(
+    throw new Error(
       `Webpack build failed. The dist folder, ${FIXTURES_DIR}, was not created.`,
     );
   }
 
-  // Only log if there is an error
-  if (result.status) {
-    console.log(result.stdout);
-    console.error(result.stderr);
+  const assetsDir = path.join(FIXTURES_DIR, "pyodide");
+  mkdirSync(assetsDir, { recursive: true });
+  for (const asset of [
+    "pyodide.asm.js",
+    "pyodide.asm.wasm",
+    "python_stdlib.zip",
+    "pyodide-lock.json",
+  ]) {
+    copyFileSync(
+      require.resolve(`pyodide/${asset}`),
+      path.join(assetsDir, asset),
+    );
   }
-};
-
-compileForTests();
+}
