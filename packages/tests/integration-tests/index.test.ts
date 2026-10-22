@@ -10,6 +10,18 @@ declare global {
 }
 
 describe("Test Runner", () => {
+  it("boots the Python worker with the installed Pyodide runtime", async () => {
+    const result = await page.evaluate(async () => {
+      const runner = await window.FCCTestRunner.createTestRunner({
+        type: "python",
+      });
+      return runner.runTest(
+        'assert.equal(runPython("import pyodide; pyodide.__version__"), "0.29.5"); assert.equal(runPython("6 * 7"), 42)',
+      );
+    });
+    expect(result).toEqual({ pass: true });
+  });
+
   beforeAll(async () => {
     await page.goto("http://localhost:8080/");
     // It shouldn't take this long, particularly now that webpack is used in a
