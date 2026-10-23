@@ -12,9 +12,13 @@ jobs:
       - uses: psf/black@782e5605c86aab56be6f905da10dcd3e463fd9c2 # 25.12.0
 
   tests:
-    name: "Node CI"
+    name: "Node CI (${{ matrix.node-version }})"
     runs-on: ubuntu-latest
     needs: lint
+    strategy:
+      matrix:
+        node-version: [22, 26]
+
     steps:
       # Checkout the Repo
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -23,11 +27,11 @@ jobs:
         with:
           version: 12
 
-      # Install Node 22
+      # Set up the Node version for this matrix job
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: pnpm
 
       - name: Install Dependencies
