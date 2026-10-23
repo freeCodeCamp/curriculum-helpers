@@ -528,23 +528,24 @@ class Explorer {
   get allFunctions(): { [key: string]: Explorer } {
     const result = { ...this.functions };
 
-    const functionVariables = this.getAll(SyntaxKind.VariableStatement).filter(
-      (v) => {
-        const declaration = (v.tree as VariableStatement).declarationList
-          .declarations[0];
-        if (!declaration.initializer) return false;
+    this.getAll(SyntaxKind.VariableStatement).forEach((v) => {
+      const { declarations } = (v.tree as VariableStatement).declarationList;
+      declarations.forEach((declaration) => {
+        const { name, initializer } = declaration;
+        if (
+          !isIdentifier(name) ||
+          !initializer ||
+          !(isArrowFunction(initializer) || isFunctionExpression(initializer))
+        ) {
+          return;
+        }
 
-        return (
-          isArrowFunction(declaration.initializer) ||
-          isFunctionExpression(declaration.initializer)
-        );
-      },
-    );
-    functionVariables.forEach((v) => {
-      const declaration = (v.tree as VariableStatement).declarationList
-        .declarations[0];
-      const name = (declaration.name as Identifier).text;
-      result[name] = v;
+        // A single declaration keeps the whole statement; with multiple
+        // declarations, use the initializer so later queries target this
+        // function rather than the statement's first declaration
+        result[name.text] =
+          declarations.length === 1 ? v : new Explorer(initializer);
+      });
     });
 
     return result;
@@ -600,7 +601,11 @@ class Explorer {
       return [];
     }
 
-    if (isFunctionDeclaration(this.tree)) {
+    if (
+      isFunctionDeclaration(this.tree) ||
+      isArrowFunction(this.tree) ||
+      isFunctionExpression(this.tree)
+    ) {
       return this.tree.parameters.map((param) => new Explorer(param));
     }
 
