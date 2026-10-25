@@ -5,6 +5,8 @@ import {
   ScriptTarget,
   ScriptKind,
   TypeAliasDeclaration,
+  EnumDeclaration,
+  EnumMember,
   VariableStatement,
   FunctionDeclaration,
   SyntaxKind,
@@ -25,6 +27,8 @@ import {
   isParameter,
   isPropertyDeclaration,
   isTypeAliasDeclaration,
+  isEnumDeclaration,
+  isEnumMember,
   isFunctionDeclaration,
   isMethodDeclaration,
   isArrowFunction,
@@ -84,7 +88,9 @@ function createSource(source: string): SourceFile {
   );
 }
 
-function findMembers(tree: Node): ReadonlyArray<TypeElement | ClassElement> {
+function findMembers(
+  tree: Node,
+): ReadonlyArray<TypeElement | ClassElement | EnumMember> {
   // Handle VariableStatement with TypeLiteral annotation
   if (isVariableStatement(tree)) {
     const declaration = tree.declarationList.declarations[0];
@@ -93,11 +99,13 @@ function findMembers(tree: Node): ReadonlyArray<TypeElement | ClassElement> {
       : [];
   }
 
-  // Handle InterfaceDeclaration, TypeLiteralNode and ClassDeclaration directly
+  // Handle InterfaceDeclaration, TypeLiteralNode, ClassDeclaration and
+  // EnumDeclaration directly
   if (
     isInterfaceDeclaration(tree) ||
     isTypeLiteralNode(tree) ||
-    isClassDeclaration(tree)
+    isClassDeclaration(tree) ||
+    isEnumDeclaration(tree)
   ) {
     return tree.members;
   }
@@ -166,6 +174,7 @@ type ParseContext =
   | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
+  | "enumMember"
   | "expression";
 
 const CONTEXT_GUARDS: ReadonlyArray<
@@ -176,6 +185,10 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["propertyDeclaration", [isPropertyDeclaration]],
   ["parameter", [isParameter]],
   ["typeParameter", [isTypeParameterDeclaration]],
+  // EnumMember is neither a TypeNode nor an Expression, so it falls through to
+  // "source" without this guard and comparison against a parsed enum member
+  // always fails. Must stay above the catch-all guards below.
+  ["enumMember", [isEnumMember]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -276,6 +289,12 @@ function createTree(code: string, context: ParseContext): Node | null {
       const declaration = (sf.statements[0] as VariableStatement)
         .declarationList.declarations[0];
       return declaration.initializer ?? null;
+    }
+
+    case "enumMember": {
+      const sf = createSource(`enum _ { ${code} }`);
+      const enumDecl = sf.statements[0] as EnumDeclaration;
+      return enumDecl.members[0] ?? null;
     }
 
     case "source":
@@ -429,6 +448,11 @@ class Explorer {
 
     // Handle PropertyAssignment (object literal properties)
     if (isPropertyAssignment(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle EnumMember (enum members with an optional initializer)
+    if (isEnumMember(node)) {
       return node.initializer ? new Explorer(node.initializer) : new Explorer();
     }
 
@@ -737,6 +761,32 @@ class Explorer {
         result[name] = c;
       }
     });
+    return result;
+  }
+
+  // Finds all enum declarations in the current tree
+  get enums(): { [key: string]: Explorer } {
+    const enumDeclarations = this.getAll(SyntaxKind.EnumDeclaration);
+    const result: { [key: string]: Explorer } = {};
+    enumDeclarations.forEach((enumDeclaration) => {
+      const name = (enumDeclaration.tree as EnumDeclaration).name?.text;
+      if (name) {
+        result[name] = enumDeclaration;
+      }
+    });
+    return result;
+  }
+
+  // Finds all members of an enum
+  get enumMembers(): { [key: string]: Explorer } {
+    const result: { [key: string]: Explorer } = {};
+    if (this.tree && isEnumDeclaration(this.tree)) {
+      this.getAll(SyntaxKind.EnumMember).forEach((member) => {
+        const memberName = (member.tree as EnumMember).name.getText();
+        result[memberName] = member;
+      });
+    }
+
     return result;
   }
 
