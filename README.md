@@ -11,6 +11,15 @@ BSD-3-Clause © [freeCodeCamp.org](https://freecodecamp.org)
 [daviddm-image]: https://david-dm.org/freeCodeCamp/curriculum-helpers.svg?theme=shields.io
 [daviddm-url]: https://david-dm.org/freeCodeCamp/curriculum-helpers
 
+## Development
+
+This repository uses Node.js 26 and pnpm 12.18.0. To select the pinned Node.js version with nvm and install pnpm, run:
+
+```bash
+nvm use
+npm install --global pnpm@12.18.0
+```
+
 ## Running tests
 
 To run the tests in watch mode, you can use the following command:
