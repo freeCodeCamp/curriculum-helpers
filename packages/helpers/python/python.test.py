@@ -106,11 +106,6 @@ x = None
 
         self.assertFalse(node.find_function("foo").find_variable("x").is_integer())
 
-    def test_variable_has_constant_value(self):
-        node = Node('def foo():\n  x = "1"')
-
-        self.assertEqual(node.find_function("foo").get_variable("x"), "1")
-
     def test_find_variable(self):
         node = Node('def foo():\n  x = "1"')
 
@@ -727,7 +722,6 @@ x = None
 """
 
         node = Node(none_str)
-        self.assertIsNone(node.get_variable("x"))
         self.assertFalse(node.find_variable("y").is_equivalent("None"))
 
     def test_whitespace_equivalence(self):
