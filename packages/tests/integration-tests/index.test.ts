@@ -282,7 +282,7 @@ for(let i = 0; i < 3; i++) {
 
       expect(spy).toHaveBeenCalledWith({
         type: "error",
-        text: "JSHandle@error",
+        text: "Error: test error",
       });
     });
 
