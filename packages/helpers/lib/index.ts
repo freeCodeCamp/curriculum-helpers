@@ -152,13 +152,18 @@ export function spyOnCallbacks(
 }
 
 /**
- * Removes every HTML-comment from the string that is provided
+ * Removes HTML comments, preserving comment markers in tag attributes.
+ * Raw-text elements and other context-dependent HTML syntax are not parsed.
  * @param {String} str a HTML-string where the comments need to be removed of
  * @returns {String}
  */
 
 export function removeHtmlComments(str: string): string {
-  return str.replace(/<!--[\s\S]*?(-->|$)/g, "");
+  // Match tags first so comment markers inside attributes stay intact.
+  return str.replace(
+    /<!--[\s\S]*?(?:-->|$)|<\/?[a-z](?:[^>"']|"[^"]*(?:"|$)|'[^']*(?:'|$))*(?:>|$)/gi,
+    (token) => (token.startsWith("<!--") ? "" : token),
+  );
 }
 
 /**
@@ -168,11 +173,17 @@ export function removeHtmlComments(str: string): string {
  */
 
 export function removeCssComments(str: string): string {
-  return str.replace(/\/\*[\s\S]+?\*\//g, "");
+  // Strings and URLs can contain comment markers. Consume identifiers too,
+  // so a function whose name ends in "url" is not mistaken for url().
+  return str.replace(
+    /"(?:\\[\s\S]|[^"\\\r\n\f])*"?|'(?:\\[\s\S]|[^'\\\r\n\f])*'?|url\((?!\s*["'])(?:\\[\s\S]|[^\\)"'])*(?:\)|$)|[-\w]+|\/\*[\s\S]*?(?:\*\/|$)/gi,
+    (token) => (token.startsWith("/*") ? "" : token),
+  );
 }
 
 /**
- * Removes every JS-comment from the string that is provided
+ * Removes JavaScript comments with a lightweight scanner.
+ * JSX, regex literals, and template interpolations are not fully parsed.
  * @param {String} codeStr a JS-string where the comments need to be removed of
  * @returns {String}
  */
@@ -425,8 +436,14 @@ export const python = {
     return null;
   },
 
+  // F-string replacement expressions are not parsed separately from string text.
   removeComments(code: string) {
-    return code.replace(/\/\/.*|\/\*[\s\S]*?\*\/|(#.*$)/gm, "");
+    // Triple-quoted strings are strings, not comments. Match them before
+    // ordinary strings, and remove only hash comments outside those strings.
+    return code.replace(
+      /"""(?:\\[\s\S]|(?!""")[^\\])*(?:"""|$)|'''(?:\\[\s\S]|(?!''')[^\\])*(?:'''|$)|"(?:\\[\s\S]|[^"\\\r\n])*"?|'(?:\\[\s\S]|[^'\\\r\n])*'?|#[^\r\n]*/g,
+      (token) => (token.startsWith("#") ? "" : token),
+    );
   },
 
   /**

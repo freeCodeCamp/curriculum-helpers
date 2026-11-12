@@ -342,9 +342,9 @@ describe("removeJSComments", () => {
     );
   });
 
-  it("handles nested comments", () => {
+  it("ends a block comment at the first closing delimiter", () => {
     const code = `/* this is a comment /* nested comment */ */`;
-    expect(removeJSComments(code)).toBe("");
+    expect(removeJSComments(code)).toBe(" */");
   });
 
   it("should ignore comments inside multiline template strings", () => {
