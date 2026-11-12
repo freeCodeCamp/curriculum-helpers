@@ -3,7 +3,7 @@
   "description": "Shared modules.",
   "private": true,
   "engines": {
-    "pnpm": ">= 10"
+    "pnpm": ">= 12"
   },
   "scripts": {},
   "repository": {
@@ -12,6 +12,6 @@
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@types/node": "^22.15.34"
+    "@types/node": "^26.0.0"
   }
 }
