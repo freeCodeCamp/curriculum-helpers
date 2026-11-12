@@ -12,8 +12,16 @@ declare global {
 describe("Test Runner", () => {
   beforeAll(async () => {
     await page.goto("http://localhost:8080/");
-    // It shouldn't take this long, particularly now that webpack is used in a
-    // setup file, but just to be safe
+
+    // Initialize the Python runner separately because its first startup can
+    // exceed the default per-test timeout.
+    await page.evaluate(async () => {
+      await window.FCCTestRunner.createTestRunner({
+        type: "python",
+        code: { contents: "" },
+        source: "",
+      });
+    });
   }, 20000);
 
   beforeEach(async () => {
