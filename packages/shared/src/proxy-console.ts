@@ -9,6 +9,18 @@ export const LEVELS = [
 
 type Level = (typeof LEVELS)[number];
 
+const PRESERVE_HTML_ENTITIES = ["amp", "lt", "gt", "quot", "apos"];
+
+// Double-encode PRESERVE_HTML_ENTITIES so they survive decoding by sanitizeHtml
+// in freeCodeCamp/client/src/templates/Challenges/components/output.tsx
+function preserveHtmlEntities(str: string): string {
+  const entityPattern = new RegExp(
+    `&(${PRESERVE_HTML_ENTITIES.join("|")})(;?)`,
+    "g",
+  );
+  return str.replace(entityPattern, "&amp;$1$2");
+}
+
 export class ProxyConsole {
   #originalConsole: Console;
   #proxyConsole: Console;
@@ -32,7 +44,9 @@ export class ProxyConsole {
     for (const level of LEVELS) {
       this.#proxyConsole[level] = (...args: unknown[]) => {
         this.#originalConsole[level](...args);
-        const msg = args.map((arg) => this.#format(arg)).join(" ");
+        const msg = preserveHtmlEntities(
+          args.map((arg) => this.#format(arg)).join(" "),
+        );
         this.#calls.push({ level, msg });
       };
     }
