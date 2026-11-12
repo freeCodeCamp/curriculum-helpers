@@ -618,6 +618,10 @@ class Explorer {
       return this.tree.parameters.map((param) => new Explorer(param));
     }
 
+    if (isConstructorDeclaration(this.tree)) {
+      return this.tree.parameters.map((param) => new Explorer(param));
+    }
+
     return [];
   }
 
