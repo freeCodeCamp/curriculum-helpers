@@ -12,4 +12,4 @@ packages:
 minimumReleaseAge: 10080
 
 overrides:
-  enzyme>cheerio: 1.0.0-rc.3
+  enzyme>cheerio: 1.2.0
