@@ -372,6 +372,50 @@ describe("hasReturnAnnotation", () => {
       explorer.classes.Spam.methods.method.hasReturnAnnotation("number"),
     ).toBe(false);
   });
+
+  it("supports type predicate return annotations", () => {
+    const sourceCode = `
+      function isSelect(element): element is HTMLSelectElement {
+        return element instanceof HTMLSelectElement;
+      }
+      const isSelectArrow = (element): element is HTMLSelectElement =>
+        element instanceof HTMLSelectElement;
+      const isSelectExpression = function (
+        element,
+      ): element is HTMLSelectElement {
+        return element instanceof HTMLSelectElement;
+      };
+      class ElementChecker {
+        isSelect(element): element is HTMLSelectElement {
+          return element instanceof HTMLSelectElement;
+        }
+      }
+    `;
+    const explorer = new Explorer(sourceCode);
+    const functions = explorer.allFunctions;
+
+    expect(
+      functions.isSelect.hasReturnAnnotation("element is HTMLSelectElement"),
+    ).toBe(true);
+    expect(
+      functions.isSelectArrow.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      functions.isSelectExpression.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      explorer.classes.ElementChecker.methods.isSelect.hasReturnAnnotation(
+        "element is HTMLSelectElement",
+      ),
+    ).toBe(true);
+    expect(
+      functions.isSelect.hasReturnAnnotation("element is HTMLDivElement"),
+    ).toBe(false);
+  });
 });
 
 describe("hasReturn", () => {

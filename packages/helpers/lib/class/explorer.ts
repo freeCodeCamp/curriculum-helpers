@@ -66,6 +66,7 @@ import {
   isCallExpression,
   isNewExpression,
   isTypeNode,
+  isTypePredicateNode,
 } from "typescript";
 
 type TypeProp = {
@@ -166,6 +167,7 @@ type ParseContext =
   | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
+  | "typePredicate"
   | "expression";
 
 const CONTEXT_GUARDS: ReadonlyArray<
@@ -176,6 +178,9 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["propertyDeclaration", [isPropertyDeclaration]],
   ["parameter", [isParameter]],
   ["typeParameter", [isTypeParameterDeclaration]],
+  // Type predicates are valid only in a function's return type position. This
+  // guard must precede the type-reference fallback because they are type nodes.
+  ["typePredicate", [isTypePredicateNode]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -269,6 +274,12 @@ function createTree(code: string, context: ParseContext): Node | null {
       const declaration = (sf.statements[0] as VariableStatement)
         .declarationList.declarations[0];
       return declaration.type ?? null;
+    }
+
+    case "typePredicate": {
+      const sf = createSource(`function _(): ${code} {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.type ?? null;
     }
 
     case "expression": {
@@ -587,8 +598,7 @@ class Explorer {
     // Check return type if we found a function node
     if (functionNode?.type) {
       const returnAnnotation = new Explorer(functionNode.type);
-      const explorerAnnotation = new Explorer(annotation, "typeReference");
-      return returnAnnotation.matches(explorerAnnotation);
+      return returnAnnotation.matches(annotation);
     }
 
     return false;
