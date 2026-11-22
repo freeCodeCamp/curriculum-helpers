@@ -12,6 +12,7 @@ import {
   ArrowFunction,
   isArrayLiteralExpression,
   FunctionExpression,
+  IfStatement,
   InterfaceDeclaration,
   ClassDeclaration,
   MethodDeclaration,
@@ -21,6 +22,8 @@ import {
   ObjectLiteralExpression,
   isSourceFile,
   isBlock,
+  isIfStatement,
+  isConditionalExpression,
   isVariableStatement,
   isParameter,
   isPropertyDeclaration,
@@ -66,6 +69,20 @@ import {
   isCallExpression,
   isNewExpression,
   isTypeNode,
+  isForStatement,
+  isForOfStatement,
+  isForInStatement,
+  isWhileStatement,
+  isDoStatement,
+  isObjectBindingPattern,
+  isArrayBindingPattern,
+  isBindingElement,
+  isShorthandPropertyAssignment,
+  isStringLiteral,
+  isNumericLiteral,
+  isTypePredicateNode,
+  ObjectBindingPattern,
+  ArrayBindingPattern,
 } from "typescript";
 
 type TypeProp = {
@@ -158,6 +175,37 @@ function getBody(tree: Node): Node | undefined {
   }
 }
 
+// Retrieves the binding pattern (object or array) of a variable declaration's
+// name, if it uses destructuring (e.g. "const { a, b } = obj")
+function getBindingPattern(
+  tree: Node,
+): ObjectBindingPattern | ArrayBindingPattern | undefined {
+  if (isVariableStatement(tree)) {
+    const { name } = tree.declarationList.declarations[0];
+    return isObjectBindingPattern(name) || isArrayBindingPattern(name)
+      ? name
+      : undefined;
+  }
+
+  return undefined;
+}
+
+// Builds a name -> Explorer map from an object/array binding pattern's
+// elements. Array pattern holes (e.g. "const [, b] = arr") are skipped.
+function collectDestructuredElements(
+  pattern: ObjectBindingPattern | ArrayBindingPattern,
+): { [key: string]: Explorer } {
+  const result: { [key: string]: Explorer } = {};
+
+  pattern.elements.forEach((element) => {
+    if (isBindingElement(element) && isIdentifier(element.name)) {
+      result[element.name.text] = new Explorer(element);
+    }
+  });
+
+  return result;
+}
+
 type ParseContext =
   | "source"
   | "method"
@@ -166,7 +214,10 @@ type ParseContext =
   | "typeParameter"
   | "propertyDeclaration"
   | "typeReference"
-  | "expression";
+  | "typePredicate"
+  | "expression"
+  | "bindingElement"
+  | "objectProperty";
 
 const CONTEXT_GUARDS: ReadonlyArray<
   [ParseContext, ReadonlyArray<(node: Node) => boolean>]
@@ -176,6 +227,14 @@ const CONTEXT_GUARDS: ReadonlyArray<
   ["propertyDeclaration", [isPropertyDeclaration]],
   ["parameter", [isParameter]],
   ["typeParameter", [isTypeParameterDeclaration]],
+  ["bindingElement", [isBindingElement]],
+  // Object literal properties (explicit "x: 10" or shorthand "x") — matches()
+  // needs to wrap the code back inside "{ }" to parse it the same way.
+  ["objectProperty", [isPropertyAssignment, isShorthandPropertyAssignment]],
+  // Type predicates (e.g. "x is Foo"), only valid in a function's return
+  // type position — must be checked before the "typeReference" catch-all
+  // below, since isTypeNode() also matches TypePredicateNode.
+  ["typePredicate", [isTypePredicateNode]],
   // Type nodes — getAnnotation() / hasReturnAnnotation() return new Explorer(node.type).
   // Without these, matches() falls through to "source" and comparison always fails.
   [
@@ -264,6 +323,16 @@ function createTree(code: string, context: ParseContext): Node | null {
       return classDecl.members.find(isPropertyDeclaration) ?? null;
     }
 
+    // Wraps the code as an object destructuring element, e.g. "a",
+    // "b: renamed = 5", or "...rest" all parse validly inside "{ }"
+    case "bindingElement": {
+      const sf = createSource(`const { ${code} } = _;`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      const pattern = declaration.name as ObjectBindingPattern;
+      return pattern.elements[0] ?? null;
+    }
+
     case "typeReference": {
       const sf = createSource(`let _: ${code};`);
       const declaration = (sf.statements[0] as VariableStatement)
@@ -271,11 +340,29 @@ function createTree(code: string, context: ParseContext): Node | null {
       return declaration.type ?? null;
     }
 
+    // Type predicates are only valid syntax in a function's return type
+    // position, e.g. "function _(): x is Foo {}"
+    case "typePredicate": {
+      const sf = createSource(`function _(): ${code} {}`);
+      const funcDecl = sf.statements[0] as FunctionDeclaration;
+      return funcDecl.type ?? null;
+    }
+
     case "expression": {
       const sf = createSource(`const _ = ${code};`);
       const declaration = (sf.statements[0] as VariableStatement)
         .declarationList.declarations[0];
       return declaration.initializer ?? null;
+    }
+
+    // Wraps the code as an object literal property, e.g. "x: 10" or the
+    // shorthand "x", both of which parse validly inside "{ }"
+    case "objectProperty": {
+      const sf = createSource(`const _ = { ${code} };`);
+      const declaration = (sf.statements[0] as VariableStatement)
+        .declarationList.declarations[0];
+      const objectLiteral = declaration.initializer as ObjectLiteralExpression;
+      return objectLiteral.properties[0] ?? null;
     }
 
     case "source":
@@ -305,7 +392,22 @@ const areNodesEquivalent = (
   node1 = unwrap(node1);
   node2 = unwrap(node2);
 
-  if (node1.kind !== node2.kind) return false;
+  if (node1.kind !== node2.kind) {
+    // Object literal property names can be written as an identifier (x),
+    // string literal ("x"), or numeric literal (1) interchangeably. Treat
+    // them as equivalent when comparing the name of a PropertyAssignment.
+    const isPropertyName = (node: Node): node is Identifier =>
+      !!node.parent &&
+      isPropertyAssignment(node.parent) &&
+      node.parent.name === node &&
+      (isIdentifier(node) || isStringLiteral(node) || isNumericLiteral(node));
+
+    if (isPropertyName(node1) && isPropertyName(node2)) {
+      return node1.text === node2.text;
+    }
+
+    return false;
+  }
 
   const children1 = removeSemicolons(node1.getChildren());
   const children2 = removeSemicolons(node2.getChildren());
@@ -335,8 +437,16 @@ const areNodesEquivalent = (
 class Explorer {
   private tree: Node | null;
   private context: ParseContext;
+  // For a VariableStatement with multiple declarators (e.g. "const a = 1, b = 2;"),
+  // identifies which declarator this Explorer refers to, so getters like `value`
+  // can resolve the correct one instead of always defaulting to declarations[0].
+  private declaratorName?: string;
 
-  constructor(tree: Node | string = "", context: ParseContext = "source") {
+  constructor(
+    tree: Node | string = "",
+    context: ParseContext = "source",
+    declaratorName?: string,
+  ) {
     if (typeof tree === "string") {
       this.tree = createTree(tree, context);
       this.context = context;
@@ -344,6 +454,8 @@ class Explorer {
       this.tree = tree;
       this.context = inferContext(tree);
     }
+
+    this.declaratorName = declaratorName;
   }
 
   isEmpty(): boolean {
@@ -395,17 +507,73 @@ class Explorer {
     return explorers;
   }
 
-  // Finds all variable statements
+  // Finds all variable statements with a simple (non-destructured) name.
+  // Handles multiple declarators in a single statement (e.g. "const a = 1, b = 2;").
+  // Use `destructuringStmts` for "const { a, b } = obj;" / "const [a, b] = arr;"
   get variables(): { [key: string]: Explorer } {
     const variables = this.getAll(SyntaxKind.VariableStatement);
     const result: { [key: string]: Explorer } = {};
     variables.forEach((variable) => {
-      const declaration = (variable.tree as VariableStatement).declarationList
-        .declarations[0];
-      const name = (declaration.name as Identifier).text;
-      result[name] = variable;
+      const { declarations } = (variable.tree as VariableStatement)
+        .declarationList;
+      declarations.forEach((declaration) => {
+        if (isIdentifier(declaration.name)) {
+          const name = declaration.name.text;
+          result[name] = new Explorer(variable.tree as Node, "source", name);
+        }
+      });
     });
     return result;
+  }
+
+  // Finds all variable statements using destructuring (object or array
+  // patterns) in the current scope. Chain `.destructuredVariables` on each
+  // result to get the individual bound names.
+  get destructuringStmts(): Explorer[] {
+    return this.getAll(SyntaxKind.VariableStatement).filter((stmt) =>
+      stmt.tree ? getBindingPattern(stmt.tree) !== undefined : false,
+    );
+  }
+
+  // Finds the destructuring statement (from `destructuringStmts`) that
+  // declares the specified local variable name, or an empty Explorer if none does
+  findDestructuringStmt(name: string): Explorer {
+    return (
+      this.destructuringStmts.find((stmt) =>
+        Object.hasOwn(stmt.destructuredVariables, name),
+      ) ?? new Explorer()
+    );
+  }
+
+  // Retrieves the variables bound by a destructuring assignment (e.g.
+  // "const { a, b: renamed = 5, ...rest } = obj"), keyed by their local
+  // (bound) name
+  get destructuredVariables(): { [key: string]: Explorer } {
+    if (!this.tree) {
+      return {};
+    }
+
+    const pattern = getBindingPattern(this.tree);
+    return pattern ? collectDestructuredElements(pattern) : {};
+  }
+
+  // Retrieves the original property name of a renamed destructured element
+  // (e.g. "b" in "const { b: renamed } = obj"), or an empty Explorer otherwise
+  get propertyName(): Explorer {
+    if (!this.tree || !isBindingElement(this.tree) || !this.tree.propertyName) {
+      return new Explorer();
+    }
+
+    return isIdentifier(this.tree.propertyName)
+      ? new Explorer(this.tree.propertyName)
+      : new Explorer();
+  }
+
+  // Checks if a destructured element is a rest element (e.g. "...rest")
+  isRestElement(): boolean {
+    return (
+      !!this.tree && isBindingElement(this.tree) && !!this.tree.dotDotDotToken
+    );
   }
 
   // Retrieves the assigned value of a variable, property, parameter, or property assignment
@@ -416,9 +584,23 @@ class Explorer {
 
     const node = this.tree!;
 
-    // Handle VariableStatement
+    // Handle BindingElement default value (e.g. destructured "{ a = 1 }")
+    if (isBindingElement(node)) {
+      return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle VariableStatement. If this Explorer was created for a specific
+    // declarator (see `variables`), use that one instead of always defaulting
+    // to the first declarator, so "const a = 1, b = 2;" resolves correctly.
     if (isVariableStatement(node)) {
-      const { initializer } = node.declarationList.declarations[0];
+      const { declarations } = node.declarationList;
+      const declaration =
+        (this.declaratorName &&
+          declarations.find(
+            (d) => isIdentifier(d.name) && d.name.text === this.declaratorName,
+          )) ||
+        declarations[0];
+      const { initializer } = declaration;
       return initializer ? new Explorer(initializer) : new Explorer();
     }
 
@@ -430,6 +612,26 @@ class Explorer {
     // Handle PropertyAssignment (object literal properties)
     if (isPropertyAssignment(node)) {
       return node.initializer ? new Explorer(node.initializer) : new Explorer();
+    }
+
+    // Handle ShorthandPropertyAssignment (e.g. "{ name }"), whose value is
+    // the referenced identifier itself (same name as the property)
+    if (isShorthandPropertyAssignment(node)) {
+      return new Explorer(node.name);
+    }
+
+    // Handle constructor property assignments (this.x = y), as returned by
+    // constructorProps, which wraps the assignment in an ExpressionStatement
+    const expr = isExpressionStatement(node) ? node.expression : node;
+    if (isBinaryExpression(expr) && isPropertyAccessExpression(expr.left)) {
+      const propAccess = expr.left;
+      // Ensure it's accessing a property on 'this'
+      if (
+        propAccess.expression.kind === SyntaxKind.ThisKeyword &&
+        isIdentifier(propAccess.name)
+      ) {
+        return expr.right ? new Explorer(expr.right) : new Explorer();
+      }
     }
 
     return new Explorer();
@@ -586,9 +788,11 @@ class Explorer {
 
     // Check return type if we found a function node
     if (functionNode?.type) {
+      // The return type node's inferred context (e.g. "typeReference" or
+      // "typePredicate") determines how the annotation string is wrapped
+      // for comparison, so both sides are parsed the same way.
       const returnAnnotation = new Explorer(functionNode.type);
-      const explorerAnnotation = new Explorer(annotation, "typeReference");
-      return returnAnnotation.matches(explorerAnnotation);
+      return returnAnnotation.matches(annotation);
     }
 
     return false;
@@ -615,6 +819,10 @@ class Explorer {
     }
 
     if (isMethodDeclaration(this.tree)) {
+      return this.tree.parameters.map((param) => new Explorer(param));
+    }
+
+    if (isConstructorDeclaration(this.tree)) {
       return this.tree.parameters.map((param) => new Explorer(param));
     }
 
@@ -865,10 +1073,19 @@ class Explorer {
     const result: { [key: string]: Explorer } = {};
     objectLiteral.properties.forEach((property) => {
       if (isPropertyAssignment(property)) {
-        if (property.name && isIdentifier(property.name)) {
-          const name = property.name.text;
-          result[name] = new Explorer(property);
+        const { name } = property;
+        if (
+          isIdentifier(name) ||
+          isStringLiteral(name) ||
+          isNumericLiteral(name)
+        ) {
+          result[name.text] = new Explorer(property);
         }
+      }
+
+      if (isShorthandPropertyAssignment(property)) {
+        const name = property.name.text;
+        result[name] = new Explorer(property);
       }
     });
 
@@ -1106,6 +1323,181 @@ class Explorer {
   hasNonNullAssertion(): boolean {
     if (!this.tree) return false;
     return isNonNullExpression(this.tree);
+  }
+
+  // Finds all if statements in the current scope
+  get ifStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.IfStatement);
+  }
+
+  // Finds all "for" loops (for (init; condition; incrementor) {...}) in the current scope
+  get forStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForStatement);
+  }
+
+  // Finds all "for...of" loops in the current scope
+  get forOfStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForOfStatement);
+  }
+
+  // Finds all "for...in" loops in the current scope
+  get forInStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.ForInStatement);
+  }
+
+  // Finds all "while" loops in the current scope
+  get whileStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.WhileStatement);
+  }
+
+  // Finds all "do...while" loops in the current scope
+  get doWhileStatements(): Explorer[] {
+    return this.getAll(SyntaxKind.DoStatement);
+  }
+
+  // Retrieves the condition expression of an if statement, ternary (conditional)
+  // expression, while/do-while loop, or "for" loop (if it has one)
+  get condition(): Explorer {
+    if (!this.tree) return new Explorer();
+    if (
+      isIfStatement(this.tree) ||
+      isWhileStatement(this.tree) ||
+      isDoStatement(this.tree)
+    ) {
+      return new Explorer(this.tree.expression);
+    }
+
+    if (isConditionalExpression(this.tree)) {
+      return new Explorer(this.tree.condition);
+    }
+
+    if (isForStatement(this.tree)) {
+      return this.tree.condition
+        ? new Explorer(this.tree.condition)
+        : new Explorer();
+    }
+
+    return new Explorer();
+  }
+
+  // Retrieves the body of an if statement, while/do-while loop, or
+  // for/for-of/for-in loop
+  get body(): Explorer {
+    if (!this.tree) return new Explorer();
+    if (isIfStatement(this.tree)) return new Explorer(this.tree.thenStatement);
+
+    if (
+      isWhileStatement(this.tree) ||
+      isDoStatement(this.tree) ||
+      isForStatement(this.tree) ||
+      isForOfStatement(this.tree) ||
+      isForInStatement(this.tree)
+    ) {
+      return new Explorer(this.tree.statement);
+    }
+
+    return new Explorer();
+  }
+
+  // Retrieves the initializer of a classic "for" loop, or the declaration/
+  // expression bound in a "for...of"/"for...in" loop
+  get initializer(): Explorer {
+    if (!this.tree) return new Explorer();
+
+    if (
+      isForStatement(this.tree) ||
+      isForOfStatement(this.tree) ||
+      isForInStatement(this.tree)
+    ) {
+      return this.tree.initializer
+        ? new Explorer(this.tree.initializer)
+        : new Explorer();
+    }
+
+    return new Explorer();
+  }
+
+  // Retrieves the incrementor expression of a classic "for" loop (e.g. "i++")
+  get incrementor(): Explorer {
+    if (!this.tree || !isForStatement(this.tree)) return new Explorer();
+    return this.tree.incrementor
+      ? new Explorer(this.tree.incrementor)
+      : new Explorer();
+  }
+
+  // Retrieves the collection/iterable being looped over in a "for...of" or
+  // "for...in" loop
+  get iterable(): Explorer {
+    if (
+      !this.tree ||
+      (!isForOfStatement(this.tree) && !isForInStatement(this.tree))
+    ) {
+      return new Explorer();
+    }
+
+    return new Explorer(this.tree.expression);
+  }
+
+  // Checks if a "for...of" loop uses the "for await...of" syntax
+  isAwaitFor(): boolean {
+    if (!this.tree || !isForOfStatement(this.tree)) return false;
+    return this.tree.awaitModifier !== undefined;
+  }
+
+  // Retrieves the "true" branch expression of a ternary (conditional) expression
+  get whenTrue(): Explorer {
+    if (!this.tree || !isConditionalExpression(this.tree)) {
+      return new Explorer();
+    }
+
+    return new Explorer(this.tree.whenTrue);
+  }
+
+  // Retrieves the "false" branch expression of a ternary (conditional) expression
+  get whenFalse(): Explorer {
+    if (!this.tree || !isConditionalExpression(this.tree)) {
+      return new Explorer();
+    }
+
+    return new Explorer(this.tree.whenFalse);
+  }
+
+  // Checks if the current node is a ternary (conditional) expression
+  isTernary(): boolean {
+    return !!this.tree && isConditionalExpression(this.tree);
+  }
+
+  // Retrieves all "else if" statements chained off of an if statement, in order
+  get elseIfStatements(): Explorer[] {
+    if (!this.tree || !isIfStatement(this.tree)) {
+      return [];
+    }
+
+    const result: Explorer[] = [];
+    let current: IfStatement = this.tree;
+    while (current.elseStatement && isIfStatement(current.elseStatement)) {
+      current = current.elseStatement;
+      result.push(new Explorer(current));
+    }
+
+    return result;
+  }
+
+  // Retrieves the final "else" statement of an if statement (skipping any
+  // "else if" links in the chain), if it exists
+  get elseStatement(): Explorer {
+    if (!this.tree || !isIfStatement(this.tree)) {
+      return new Explorer();
+    }
+
+    let current: IfStatement = this.tree;
+    while (current.elseStatement && isIfStatement(current.elseStatement)) {
+      current = current.elseStatement;
+    }
+
+    return current.elseStatement
+      ? new Explorer(current.elseStatement)
+      : new Explorer();
   }
 }
 
