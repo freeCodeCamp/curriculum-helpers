@@ -1,6 +1,14 @@
 import { Block, CodeNode } from "./class/node";
 import { options } from "./option-types";
 
+const commentSeparator = (comment: string, before: string, after: string) => {
+  const newlines = comment.match(/[\r\n\u2028\u2029]/g);
+  if (newlines) return newlines.join("");
+  return before && after && !/\s$/.test(before) && !/^\s/.test(after)
+    ? " "
+    : "";
+};
+
 export const compile = (cst: CodeNode, options: Partial<options> = {}) => {
   const keepProtected = options.safe === true || options.keepProtected === true;
   let firstSeen = false;
@@ -11,7 +19,7 @@ export const compile = (cst: CodeNode, options: Partial<options> = {}) => {
     let lines;
 
     if ("nodes" in node) {
-      for (const child of node.nodes) {
+      for (const [index, child] of node.nodes.entries()) {
         switch (child.type) {
           case "block":
             if (options.first && firstSeen === true) {
@@ -32,6 +40,18 @@ export const compile = (cst: CodeNode, options: Partial<options> = {}) => {
             }
 
             firstSeen = true;
+            if (
+              (options.language || "javascript").toLowerCase() === "javascript"
+            ) {
+              // Comments separate tokens, and their line terminators can
+              // affect automatic semicolon insertion.
+              output += commentSeparator(
+                walk(child),
+                output,
+                node.nodes[index + 1]?.value || "",
+              );
+            }
+
             break;
           case "line":
             if (options.first && firstSeen === true) {
