@@ -290,13 +290,6 @@ class Node:
                         return Node(node)
         return Node()
 
-    def get_variable(self, name):
-        var = self.find_variable(name)
-        if var != Node():
-            return var.tree.value.value
-        else:
-            return None
-
     def has_function(self, name):
         return self.find_function(name) != Node()
 
