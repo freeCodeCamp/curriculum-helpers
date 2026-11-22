@@ -277,6 +277,27 @@ describe("allFunctions", () => {
     const functions = explorer.allFunctions;
     expect(Object.keys(functions)).toHaveLength(3);
   });
+
+  it("finds every function in a statement with multiple declarations", () => {
+    const explorer = new Explorer(
+      "const first = () => 1, second = function () { return 2; };",
+    );
+    const functions = explorer.allFunctions;
+    expect(Object.keys(functions)).toEqual(["first", "second"]);
+    expect(functions.first.hasReturn("1")).toBe(true);
+    expect(functions.second.hasReturn("2")).toBe(true);
+  });
+
+  it("finds functions when the first declaration is not a function", () => {
+    const explorer = new Explorer(
+      "const first = 1, second = (x: number): string => 'two', third = 3;",
+    );
+    const functions = explorer.allFunctions;
+    expect(Object.keys(functions)).toEqual(["second"]);
+    expect(functions.second.parameters).toHaveLength(1);
+    expect(functions.second.parameters[0].matches("x: number")).toBe(true);
+    expect(functions.second.hasReturnAnnotation("string")).toBe(true);
+  });
 });
 
 describe("parameters", () => {
