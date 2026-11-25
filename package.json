@@ -77,8 +77,9 @@
     "access": "public"
   },
   "engines": {
-    "pnpm": ">= 10"
+    "pnpm": ">= 12"
   },
+  "packageManager": "pnpm@12.18.0",
   "lint-staged": {
     "*.{ts,js,mjs,cjs,jsx,tsx}": [
       "eslint --fix",
