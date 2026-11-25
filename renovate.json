@@ -1,4 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>freeCodeCamp/renovate-config"]
+  "extends": [
+    "github>freecodecamp/renovate-config",
+    "github>freecodecamp/renovate-config:automerge"
+  ]
 }
