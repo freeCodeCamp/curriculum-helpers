@@ -94,10 +94,8 @@ class Node:
             return False
         dec_list = (f"@{Node(node)}" for node in self.tree.decorator_list)
         dec_str = "\n".join(dec_list) + "\n" if dec_list else ""
-        if id := getattr(self.tree.returns, "id", False):
-            returns = f" -> {id}"
-        elif hasattr(self.tree.returns, "value"):
-            returns = f" -> {self.tree.returns.value}"
+        if self.tree.returns:
+            returns = f" -> {ast.unparse(self.tree.returns)}"
         else:
             returns = ""
         async_kw = ""

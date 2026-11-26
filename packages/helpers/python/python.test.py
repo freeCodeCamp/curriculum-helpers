@@ -314,6 +314,23 @@ def spam(a: str, b: bool) -> None:
         self.assertFalse(node.find_function("foo").has_args("a, b"))
         self.assertTrue(node.find_function("spam").has_args("a: str, b: bool"))
 
+    def test_has_args_complex_returns(self):
+        code_str = """
+def move(self) -> (int, int):
+    return (0, 0)
+
+def search(self) -> tuple[int, int]:
+    return (0, 0)
+
+def names(self) -> list[str]:
+    return []
+"""
+        node = Node(code_str)
+
+        self.assertTrue(node.find_function("move").has_args("self"))
+        self.assertTrue(node.find_function("search").has_args("self"))
+        self.assertTrue(node.find_function("names").has_args("self"))
+
     def test_has_returns(self):
         code_str = """
 def foo() -> int:
